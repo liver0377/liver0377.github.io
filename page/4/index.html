@@ -190,6 +190,55 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2022/03/10/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E7%AA%97%E5%8F%A3%E7%AE%A1%E7%90%86/" target="_self">
+          [TCP/IP详解]:TCP数据流与窗口管理
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2022/03/10/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E7%AA%97%E5%8F%A3%E7%AE%A1%E7%90%86/" target="_self">
+          
+          
+            
+          
+          1. 交互式通信
+交互式TCP连接
+交互式TCP连接指的是该连接需要在客户和服务器之间传输用户输入信息，如按键操作，短消息或者是鼠标操作，这些操作会产生交互式数据, 一般都是一些比较小的报文段
+
+例: ssh
+ssh(Secure Shell, 安全外壳协议), 是一种安全的远程登录协议, 会在数据传输之前将用户输入的信息进行加密
+ssh会在远程系统上调用一个shell, 对用户的输入字符做出回显
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-03-10 14:20" pubdate>
+              2022-03-10
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2022/03/09/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%B6%85%E6%97%B6%E4%B8%8E%E9%87%8D%E4%BC%A0/" target="_self">
           [TCP/IP详解]:TCP超时与重传
         </a>
@@ -638,58 +687,6 @@ Write-Ahead Logging(WAL)
             <i class="iconfont icon-date"></i>
             <time datetime="2022-02-09 15:01" pubdate>
               2022-02-09
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2022/02/08/CMU15445-%E4%B8%A4%E9%98%B6%E6%AE%B5%E9%94%81/" target="_self">
-          [CMU15445]:两阶段锁
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2022/02/08/CMU15445-%E4%B8%A4%E9%98%B6%E6%AE%B5%E9%94%81/" target="_self">
-          
-          
-            
-          
-          Two-Phase Locking Protocol当一个调度遵循两阶段锁协议的时候，它就一定是冲突可串行化的，该协议将一个事务分成了两个阶段
-
-增长阶段(growing phase)
-该阶段中一个事务可以获得锁，但不能释放任何锁
-
-缩减阶段(shrinking phase)
-该阶段中一个事务可以释放锁，但是不能获得任何新锁
-
-
-一个事务一开始时是处于增长阶段，一旦事务释放了锁，它就进入了缩减阶段
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2022-02-08 15:31" pubdate>
-              2022-02-08
             </time>
           </div>
         

@@ -190,6 +190,54 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2022/03/29/UNP-%E5%AD%97%E8%8A%82-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/" target="_self">
+          [UNP]:字节-地址转换函数
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2022/03/29/UNP-%E5%AD%97%E8%8A%82-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/" target="_self">
+          
+          
+            
+          
+          1. 值-结果参数值-结果类型参数通常与套接字结构一起使用，是指这样一种参数:
+其通常是某个整型变量的指针，当其被传递给函数时，函数需要用到它的值，通常用于标识套接字结构的大小，
+当函数执行完毕，指针指向的值可能会发生改变，其内容通常为函数在套接字结构中写入的字节大小
+
+例子
+12345struct sodkaddr_un cli;socklen_t len;len = sizeof(cli);g
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-03-29 19:50" pubdate>
+              2022-03-29
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/unp/">unp</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E5%9C%B0%E5%9D%80%E7%BB%93%E6%9E%84/" target="_self">
           [UNP]:套接字地址结构
         </a>
@@ -605,65 +653,6 @@ xv6中采用的也是分时复用，即每个进程在CPU上运行一段时间�
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
             <time datetime="2022-03-29 09:53" pubdate>
-              2022-03-29
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/xv6/">xv6</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2022/03/29/xv6-trap/" target="_self">
-          [xv6]:trap
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2022/03/29/xv6-trap/" target="_self">
-          
-          
-            
-          
-          
-简介
-xv6中的中断类型分为三种:
-
-系统调用
-系统调用由ecall指令引发, 系统会由用户态陷入内核态(监管者模式, supervisor model)
-
-异常
-异常通常是指用户或者内核做了一些不合法的事，如除以0或者使用无效虚拟地址
-
-中断
-设备中断：当一个设备发出中断信号时，系统需要做出响应的响应
-时钟中断：当时钟发出中断时，就需要CPU放弃当前进程，重新调度
-
-
-trap
-在xv6中，统
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2022-03-29 09:50" pubdate>
               2022-03-29
             </time>
           </div>

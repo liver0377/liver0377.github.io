@@ -190,6 +190,65 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2022/03/29/xv6-trap/" target="_self">
+          [xv6]:trap
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2022/03/29/xv6-trap/" target="_self">
+          
+          
+            
+          
+          
+简介
+xv6中的中断类型分为三种:
+
+系统调用
+系统调用由ecall指令引发, 系统会由用户态陷入内核态(监管者模式, supervisor model)
+
+异常
+异常通常是指用户或者内核做了一些不合法的事，如除以0或者使用无效虚拟地址
+
+中断
+设备中断：当一个设备发出中断信号时，系统需要做出响应的响应
+时钟中断：当时钟发出中断时，就需要CPU放弃当前进程，重新调度
+
+
+trap
+在xv6中，统
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-03-29 09:50" pubdate>
+              2022-03-29
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/xv6/">xv6</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2022/03/29/xv6-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8/" target="_self">
           [xv6]:内核启动
         </a>
@@ -630,55 +689,6 @@ TCP采取了拥塞控制算法来防止网络因为大规模的通信负载而�
             <i class="iconfont icon-date"></i>
             <time datetime="2022-03-12 13:24" pubdate>
               2022-03-12
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2022/03/10/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E7%AA%97%E5%8F%A3%E7%AE%A1%E7%90%86/" target="_self">
-          [TCP/IP详解]:TCP数据流与窗口管理
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2022/03/10/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E7%AA%97%E5%8F%A3%E7%AE%A1%E7%90%86/" target="_self">
-          
-          
-            
-          
-          1. 交互式通信
-交互式TCP连接
-交互式TCP连接指的是该连接需要在客户和服务器之间传输用户输入信息，如按键操作，短消息或者是鼠标操作，这些操作会产生交互式数据, 一般都是一些比较小的报文段
-
-例: ssh
-ssh(Secure Shell, 安全外壳协议), 是一种安全的远程登录协议, 会在数据传输之前将用户输入的信息进行加密
-ssh会在远程系统上调用一个shell, 对用户的输入字符做出回显
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2022-03-10 14:20" pubdate>
-              2022-03-10
             </time>
           </div>
         

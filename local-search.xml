@@ -4,6 +4,25 @@
   
   
   <entry>
+    <title>[UNP]:Unix域套接字</title>
+    <link href="/2022/04/04/UNP-Unix%E5%9F%9F%E5%A5%97%E6%8E%A5%E5%AD%97/"/>
+    <url>/2022/04/04/UNP-Unix%E5%9F%9F%E5%A5%97%E6%8E%A5%E5%AD%97/</url>
+    
+    <content type="html"><![CDATA[<p>Unix Domain协议是一个在单主机上执行进程间通信的IPC方法， 使用Unix Domain套接字有以下几个理由:</p><ul><li><p>UNIX域套接字域TCP套接字相比，在同一台主机的传输速度前者是后者的两倍</p><p>UNIX域套接字仅仅复制数据，并不执行协议处理，不需要添加或删除网络报头，无需计算校验和，不产生顺序号，也不需要发送确认报文</p></li><li><p>UNIX域套接字可以在同一台主机上各进程之间传递文件描述符</p></li><li><p>UNIX域套接字使用路径名来表示协议地址</p></li></ul><h3 id="1-Unix-Domain套接字地址结构"><a href="#1-Unix-Domain套接字地址结构" class="headerlink" title="1. Unix Domain套接字地址结构"></a>1. Unix Domain套接字地址结构</h3><ul><li><p>sockaddr_un</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> UNIX_PATH_MAX 108 </span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_un</span>&#123;</span><br>    <span class="hljs-keyword">sa_family_t</span>    sun_family;                  <span class="hljs-comment">// AF_LOCAL </span><br>    <span class="hljs-keyword">char</span>           sun_path[UNIX_PATH_MAX];     <span class="hljs-comment">// 路径名，必须以空字符结尾</span><br>&#125;<br></code></pre></td></tr></table></figure><ul><li><p>sun_family</p><p>协议族，Unix Domain套接字即是AF_LOCAL</p></li><li><p>sun_path</p><p>路径名，用于标识协议地址</p></li></ul></li></ul><h3 id="2-socketpair"><a href="#2-socketpair" class="headerlink" title="2. socketpair()"></a>2. socketpair()</h3><p>该函数用于创建两个套接字，调用完成后，这两个套接字就会自行<code>connect()</code>, 有点类似于管道, 该函数只适用于Unix Domain套接字</p><ul><li><p>socketpair</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">socketpair</span><span class="hljs-params">(<span class="hljs-keyword">int</span> family, <span class="hljs-keyword">int</span> type, <span class="hljs-keyword">int</span> protocol, <span class="hljs-keyword">int</span> sockfd[<span class="hljs-number">2</span>])</span></span>;<br>                                              <span class="hljs-comment">// return : 成功返回0， 失败返回-1</span><br></code></pre></td></tr></table></figure><ul><li><p>family + protocol</p><p>对于Unix Domain套接字来说，family必须置为<strong>AF_LOCOL</strong>, protocol必须置为0</p></li><li><p>type</p><p>套接字的类型，可以是<strong>SOCK_STREAM</strong>或<strong>SOCK_DGRAM</strong>, 通常是SOCK_STREAM</p></li><li><p>sockfd[2]</p><p>类似于管道的返回方式，sockfd[0], sockfd[1]是两个套接字，两个管道之间是全双工的连接</p></li></ul></li></ul><h3 id="3-Unix-Domain套接字限制"><a href="#3-Unix-Domain套接字限制" class="headerlink" title="3. Unix Domain套接字限制"></a>3. Unix Domain套接字限制</h3><p><img src="1.png" alt="1"></p><h3 id="4-客户-服务器程序"><a href="#4-客户-服务器程序" class="headerlink" title="4. 客户/服务器程序"></a>4. 客户/服务器程序</h3><p>在客户/服务器程序中，使用Unix Domain套接字与使用普通的套接字j基本上没什么区别，最大的区别就是多了上面所说的那些限制</p><p>注: <strong>当使用Unix Domain 数据报套接字协议时，必须显式绑定bind一个路径名到套接字</strong></p><h3 id="5-描述符传递"><a href="#5-描述符传递" class="headerlink" title="5. 描述符传递"></a>5. 描述符传递</h3><p>使用Unix Domain套接字进行文件描述符传递的流程如下</p><ul><li><p>两个进程分别创建Unix Domain套接字(通常是SOCK_STREM类型)</p></li><li><p>服务器端依旧是进行常规的套接字操作流程:</p><ul><li>bind()路径名到指定套接字</li></ul></li><li><p>客户端打开一个文件描述符，创建<code>msghdr</code>结构，在其中的辅助数据<code>msg_control</code>字段包含给定的文件描述符</p><p>调用<code>sendmsg()</code>发送给服务器进程，此时该文件描述符处于<strong>in flight</strong></p><p>注： <strong>一旦子进程发送了这个打开的文件描述符，它就可以exit()了，即使这样做会关闭其所有的打开着的文件描述符</strong></p><p><strong>对于接受进程来说，该描述符依旧处于打开状态</strong></p><blockquote><p>发送一个文件描述符会使文件描述符的引用计数 + 1</p></blockquote></li><li><p>接受进程调用<code>recvmsg()</code>接受该描述符</p></li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>unp</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>[UNP]:高级IO</title>
     <link href="/2022/04/02/UNP-%E9%AB%98%E7%BA%A7IO/"/>
     <url>/2022/04/02/UNP-%E9%AB%98%E7%BA%A7IO/</url>

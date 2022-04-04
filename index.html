@@ -190,6 +190,56 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2022/04/04/UNP-Unix%E5%9F%9F%E5%A5%97%E6%8E%A5%E5%AD%97/" target="_self">
+          [UNP]:Unix域套接字
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2022/04/04/UNP-Unix%E5%9F%9F%E5%A5%97%E6%8E%A5%E5%AD%97/" target="_self">
+          
+          
+            
+          
+          Unix Domain协议是一个在单主机上执行进程间通信的IPC方法， 使用Unix Domain套接字有以下几个理由:
+
+UNIX域套接字域TCP套接字相比，在同一台主机的传输速度前者是后者的两倍
+UNIX域套接字仅仅复制数据，并不执行协议处理，不需要添加或删除网络报头，无需计算校验和，不产生顺序号，也不需要发送确认报文
+
+UNIX域套接字可以在同一台主机上各进程之间传递文件描述符
+
+UNIX域
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-04-04 15:25" pubdate>
+              2022-04-04
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/unp/">unp</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2022/04/02/UNP-%E9%AB%98%E7%BA%A7IO/" target="_self">
           [UNP]:高级IO
         </a>
@@ -626,54 +676,6 @@ fa
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
             <time datetime="2022-03-29 21:27" pubdate>
-              2022-03-29
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/unp/">unp</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2022/03/29/UNP-%E5%AD%97%E8%8A%82-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/" target="_self">
-          [UNP]:字节-地址转换函数
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2022/03/29/UNP-%E5%AD%97%E8%8A%82-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/" target="_self">
-          
-          
-            
-          
-          1. 值-结果参数值-结果类型参数通常与套接字结构一起使用，是指这样一种参数:
-其通常是某个整型变量的指针，当其被传递给函数时，函数需要用到它的值，通常用于标识套接字结构的大小，
-当函数执行完毕，指针指向的值可能会发生改变，其内容通常为函数在套接字结构中写入的字节大小
-
-例子
-12345struct sodkaddr_un cli;socklen_t len;len = sizeof(cli);g
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2022-03-29 19:50" pubdate>
               2022-03-29
             </time>
           </div>
