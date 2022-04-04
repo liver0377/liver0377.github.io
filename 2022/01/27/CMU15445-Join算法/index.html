@@ -1,0 +1,667 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="joins一个好的数据库设计的目标是尽量减少信息的重复，因此，需要连接来重构原始表。 本课程将介绍用于合并两个表的内部等值连接(inner equal-join)算法, 等值连接可以被修改以支持其他种类的连接，并且 等值连接也是实战中使用的最多的连接方式 等值连接使用记号  表示 操作的输出 假设有两个表R, S, 它们其中的tuple分别为r, s, 那么join操作在逻辑上的结果就是将两个表中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU15445]:Join算法">
+<meta property="og:url" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="joins一个好的数据库设计的目标是尽量减少信息的重复，因此，需要连接来重构原始表。 本课程将介绍用于合并两个表的内部等值连接(inner equal-join)算法, 等值连接可以被修改以支持其他种类的连接，并且 等值连接也是实战中使用的最多的连接方式 等值连接使用记号  表示 操作的输出 假设有两个表R, S, 它们其中的tuple分别为r, s, 那么join操作在逻辑上的结果就是将两个表中">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/1.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/2.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/3.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/4.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/5.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/6.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/7.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/8.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/9.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/10.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/11.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/12.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/13.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/14.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/15.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/16.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/17.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/18.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/19.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/20.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/21.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/22.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/23.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/24.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/25.png">
+<meta property="og:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/26.png">
+<meta property="article:published_time" content="2022-01-27T07:28:02.000Z">
+<meta property="article:modified_time" content="2022-01-27T12:26:14.135Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/01/27/CMU15445-Join%E7%AE%97%E6%B3%95/1.png">
+  
+  <title>[CMU15445]:Join算法 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[CMU15445]:Join算法">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-27 15:28" pubdate>
+        2022年1月27日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[CMU15445]:Join算法</h1>
+            
+            <div class="markdown-body">
+              <h4 id="joins"><a href="#joins" class="headerlink" title="joins"></a>joins</h4><p>一个好的数据库设计的目标是尽量减少信息的重复，因此，需要连接来重构原始表。</p>
+<p>本课程将介绍用于合并两个表的内部<strong>等值连接</strong>(<strong>inner equal-join</strong>)算法, 等值连接可以被修改以支持其他种类的连接，并且</p>
+<p>等值连接也是实战中使用的最多的连接方式</p>
+<p>等值连接使用记号</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p>表示</p>
+<p><strong>操作的输出</strong></p>
+<p>假设有两个表R, S, 它们其中的tuple分别为r, s, 那么join操作在逻辑上的结果就是将两个表中某个属性上相同的tuple  r, s组合起来，形成一个新的tuple</p>
+<p>事实上，实际的join操作的输出结果根据数据库<code>存储模型</code>、<code>查询计划</code>的不同也有所不同，主要的输出结果有<strong>Data</strong>和<strong>Record Id</strong>两种</p>
+<ul>
+<li><p>Data</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>该方式中，join操作的结果返回的就是将两个表中的的tuple组合在一起，形成一个新的更长的tuple作为中间结果,该方法被称为<strong>early materialization</strong></p>
+<ul>
+<li><p>优点</p>
+<p>在查询的后续操作中，就不需要回头继续取数据了，因为数据已经全部拿过来了</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>在该查询树中，如果输出结果为Data那么就不需要回头，从叶子节点可以一直走到根节点处</p>
+</li>
+<li><p>缺点</p>
+<p>该方法缺点页十分明显，就是在查询过程中取出了很多的无用数据，比较占用内存空间</p>
+</li>
+</ul>
+</li>
+<li><p>Record Id</p>
+<p>该方法中，只拷贝那些<code>join</code>操作需要的key以及匹配tuple的<code>record Id</code>,join操作形成的结果如下所示</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>之所以需要存储RID是因为在后续操作中如果查询计划需要别的属性就可以通过它们来找到相应tuple的位置，该方法被称为<strong>late materialization</strong></p>
+<ul>
+<li><p>优点</p>
+<p>该方法对于<strong>列存储</strong>来说十分理想，因为如果join操作输出结果为data,那么列存储就需要访问很多page来获取那些可能不需要的属性，而在该方法中，只需要访问4列即可，很显然能够节省开销</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>Cost Analysis</strong></p>
+<p>在这里，当评判一个join算法的优劣时，只考虑他们在进行joins时所需的磁盘I/O次数，不需要考虑计算输出结果的的开销，这是由于在不同算法中计算输出结果的开销与算法本身无关</p>
+<blockquote>
+<p>接下来会使用到的变量</p>
+<p> • M:外表R中的page数目, m:外表R中的tuple总数</p>
+<p> • N:内标S中的page数目，n:内标S中的tuple总数</p>
+</blockquote>
+<h4 id="Nested-Loop-Join"><a href="#Nested-Loop-Join" class="headerlink" title="Nested Loop Join"></a>Nested Loop Join</h4><p>该方法是最慢的方法，即<strong>嵌套循环</strong></p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<ul>
+<li><p>复杂度分析</p>
+<p>对于外表R中的每一个tuple, DBMS都需要扫描一遍内表S，即取出其所有的page, 将整个表的tuple与R的tuple进行比对</p>
+<p>故对内表S来说，需要的I/O次数为<code>m * N</code></p>
+<p>而遍历一遍外表R也需要取出其所有的page, 故总I/O次数为:</p>
+<p><strong>M + m * N</strong></p>
+</li>
+<li><p>例子</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+<p>如果将tuple量更小的表S作为内表，能够稍微减少一点join所需要的时间</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+<p><strong>Block Nested Loop Join</strong></p>
+<p>该算法是对<strong>Nested Loop Join</strong>算法的改进, 其基本思想是:<strong>对于外表R中的每个page, 依次取出内表S中的Page, 两个Page之间再进行join操作</strong></p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+</li>
+<li><p>复杂度分析</p>
+<p>外表R的每个Page都需要和内表S的所有Page进行配对，需要<code>M * N*</code>次I/O</p>
+<p>取出外表R的所有Page,需要M次I/O, 故最终的I/O次数为:</p>
+<p><strong>M + M * N</strong></p>
+</li>
+<li><p>例子</p>
+<p><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<p>可以看到时间由一个小时缩短到了50s, 但还是很慢</p>
+<p>在此基础之上，如果能够充分利用内存，假设内存能够容纳的下B个Page, 最好情况下，使用B-2个作为外表R的buffer page, 使用1个作为内表S的buffer page, 使用一个作为输出buffer page, 那么，时间复杂度可以重新计算为；</p>
+<p><strong>M + ($lceil M / (B- 2) rceil$ *  N)</strong></p>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+</li>
+<li><p>最好情况下的例子</p>
+<p><img src="11.png" srcset="/img/loading.gif" lazyload alt="11"></p>
+<p>同样的数据量，现在被缩短为了0.15秒</p>
+</li>
+</ul>
+<p><strong>Indexed Nested Loop Join</strong></p>
+<p>之前的几种join算法表现都不是很好，是因为他们他们都采用了扫描的方式，如果DBMS在跟定的属性上已经建立了索引，那么就可以使用索引来进行查找，这样可以节约很大的开销</p>
+<p><img src="12.png" srcset="/img/loading.gif" lazyload alt="12"></p>
+<p>在该算法中，DBMS可以利用已有的索引或者临时建立一个索引用于给<strong>内表进行查找</strong>，每次内表进行查找的时间就可以缩短为常数时间C,</p>
+<p>如果是Hash Index的话最好情况时O(1), 最坏情况时O(n), 如果B+树的话就是O(lg(n)), 这里的n的索引中数据的规模</p>
+<ul>
+<li><p>复杂度计算</p>
+<p>使用了索引之后，需要进行的I/O次数为</p>
+<p>**M + (m * C) **</p>
+</li>
+</ul>
+<p><strong>Nested Loop Join总结</strong></p>
+<ul>
+<li>永远使用较小的表作为外表</li>
+<li>设置尽可能多的buffer page</li>
+<li>内表最好使用索引，否则就只能按序扫描</li>
+</ul>
+<h4 id="Sort-Merge-join"><a href="#Sort-Merge-join" class="headerlink" title="Sort-Merge join"></a>Sort-Merge join</h4><p>该算法的基本思想是对两个表的指定key进行排序，排序算法可以使用之前的外归并排序，然后使用两个游标分别对两个表进行扫描</p>
+<p><img src="13.png" srcset="/img/loading.gif" lazyload alt="13"></p>
+<p>上面的算法只是简写，在扫描过程中有可能会发生回溯现象，下面这张图是教材中的算法描述</p>
+<p><img src="14.png" srcset="/img/loading.gif" lazyload alt="14"></p>
+<ul>
+<li><p>例子</p>
+<p><img src="15.png" srcset="/img/loading.gif" lazyload alt="15"></p>
+<p><img src="16.png" srcset="/img/loading.gif" lazyload alt="16"></p>
+<p><img src="17.png" srcset="/img/loading.gif" lazyload alt="17"></p>
+<p>下面发生了回溯</p>
+<p><img src="18.png" srcset="/img/loading.gif" lazyload alt="18"></p>
+</li>
+<li><p>复杂度分析</p>
+<p>最坏情况下，即两张表中所有的key完全相同，那么每次内表都得从头回溯，比较次数为 <code>M * N</code></p>
+<p>最好情况下，一次回溯都没有，那么比较次数为<code>M + N</code></p>
+<p>下面给出排序加上merge操作的总复杂度</p>
+<p><img src="19.png" srcset="/img/loading.gif" lazyload alt="19"></p>
+</li>
+<li><p>例子<br><img src="20.png" srcset="/img/loading.gif" lazyload alt="20"></p>
+</li>
+</ul>
+<h4 id="Hash-join"><a href="#Hash-join" class="headerlink" title="Hash join"></a>Hash join</h4><p>Hash join是最快的方法，它的基本思想是<strong>通过join上的key的哈希函数的值，将一个表分成多个块存储在不同的bucket当中，另一张表也通过相同的哈希函数，对表中的每一行进行映射，每映射到一个桶，就在该桶中进行匹配，如果发现了相同的key,那么就可以输出</strong></p>
+<p><img src="21.png" srcset="/img/loading.gif" lazyload alt="21"></p>
+<p>该方法思想十分简单，并且速度也十分快</p>
+<p>具体来说可以分为两个阶段：</p>
+<ul>
+<li><p>Phase #1 build</p>
+<p>扫描外表R，将join所需的attribute作为哈希函数的输入进行映射，哈希表的value则依赖与具体实现</p>
+</li>
+<li><p>Phase #2 Probe</p>
+<p>对内表S中的每个条目，使用相同的哈希函数进行映射，映射到某个bucket 之后，将其attribute与该bucket的所有条目进行比对，如果key相同则输出</p>
+</li>
+</ul>
+<p>如果DBMS已知外表的大小，那么就可以使用静态哈希表，如果外表大小未知的话，那么可以采用动态哈希表或者使用overflow pages</p>
+<p>有些实现还使用了<code>布隆过滤器</code>作为辅助，用于在Phase #2中快速进行判断attribute是否在bucket中</p>
+<p>下面是一个关于布隆过滤器的连接</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/43263751">https://zhuanlan.zhihu.com/p/43263751</a></p>
+<p><strong>Grace Hash join</strong></p>
+<p><code>Grace Hash join</code>是基本hash join的拓展，其不仅将外表属性映射到哈希表中，同时还将内表映射到哈希表中</p>
+<p>该方法适用于hash join方法下bucket不能够全部放入内存的情况</p>
+<p>同样，Grace Hash join也分为两个阶段:</p>
+<ul>
+<li><p>Phase  #1 Build</p>
+<p>DBMS会扫描两个表，使用相同的哈希函数填充哈希表</p>
+<p><img src="22.png" srcset="/img/loading.gif" lazyload alt="22"></p>
+<p>由于可能会发生哈希碰撞，所以可能会产生overflow pages, 当overflow pages到达一定阙值时，可以采用<strong>recursive partitioning</strong>的策略，即将这些overflow pages进行重新分区，采用不同的哈希函数进行映射</p>
+<p><img src="23.png" srcset="/img/loading.gif" lazyload alt="23"></p>
+<p>原本多个overflow pages可以减少为较少的分区，这样就可以递归的执行直到所有的bucket都能够被放进内存</p>
+</li>
+<li><p>Phase #2 Probe</p>
+<p>对于同一层级的bucket, 对它们使用nested Loop join, 进而找出所有匹配的tuple, 由于所有的bucket 都在内存当中,所以nested Loop Join也十分快速</p>
+<p><img src="24.png" srcset="/img/loading.gif" lazyload alt="24"></p>
+</li>
+<li><p>复杂度分析</p>
+<p><img src="25.png" srcset="/img/loading.gif" lazyload alt="25"></p>
+</li>
+</ul>
+<h4 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h4><p><img src="26.png" srcset="/img/loading.gif" lazyload alt="26"></p>
+<p><strong>总结</strong></p>
+<p>Hash Join 在绝大多数场景下是最优选择，但当查询包含 ORDER BY 或者数据极其不均匀的情况下，Sort-Merge Join 会是更好的选择，DBMSs 在执行查询时，可能使用其中的一种到两种方法</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/28/CMU15445-%E6%9F%A5%E8%AF%A2%E5%A4%84%E7%90%861/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[CMU15445]:查询处理1</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/26/CMU15445-%E6%8E%92%E5%BA%8F%E4%B8%8E%E8%81%9A%E5%90%88/">
+                        <span class="hidden-mobile">[CMU15445]:排序与聚合</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

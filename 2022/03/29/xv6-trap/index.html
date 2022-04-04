@@ -1,0 +1,645 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="简介 xv6中的中断类型分为三种:  系统调用 系统调用由ecall指令引发, 系统会由用户态陷入内核态(监管者模式, supervisor model)  异常 异常通常是指用户或者内核做了一些不合法的事，如除以0或者使用无效虚拟地址  中断 设备中断：当一个设备发出中断信号时，系统需要做出响应的响应 时钟中断：当时钟发出中断时，就需要CPU放弃当前进程，重新调度   trap 在xv6中，统">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[xv6]:trap">
+<meta property="og:url" content="http://example.com/2022/03/29/xv6-trap/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="简介 xv6中的中断类型分为三种:  系统调用 系统调用由ecall指令引发, 系统会由用户态陷入内核态(监管者模式, supervisor model)  异常 异常通常是指用户或者内核做了一些不合法的事，如除以0或者使用无效虚拟地址  中断 设备中断：当一个设备发出中断信号时，系统需要做出响应的响应 时钟中断：当时钟发出中断时，就需要CPU放弃当前进程，重新调度   trap 在xv6中，统">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-03-29T01:50:09.000Z">
+<meta property="article:modified_time" content="2022-03-29T01:50:44.877Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="xv6">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>[xv6]:trap - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[xv6]:trap">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-29 09:50" pubdate>
+        2022年3月29日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      12k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      39 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[xv6]:trap</h1>
+            
+            <div class="markdown-body">
+              <ul>
+<li><p>简介</p>
+<p>xv6中的中断类型分为三种:</p>
+<ul>
+<li><p>系统调用</p>
+<p>系统调用由<code>ecall</code>指令引发, 系统会由用户态陷入内核态(监管者模式, supervisor model)</p>
+</li>
+<li><p>异常</p>
+<p>异常通常是指用户或者内核做了一些不合法的事，如除以0或者使用无效虚拟地址</p>
+</li>
+<li><p>中断</p>
+<p>设备中断：当一个设备发出中断信号时，系统需要做出响应的响应</p>
+<p>时钟中断：当时钟发出中断时，就需要CPU放弃当前进程，重新调度</p>
+</li>
+</ul>
+<p><strong>trap</strong></p>
+<p>在xv6中，统一将上面的三种中断称为<strong>trap</strong>,  以系统调用为例，当执行系统调用时，用户会由用户态进入到内核态，完成一些动作，然后返回， 这个过程对于被中断的进程来说是<strong>透明</strong>的</p>
+<p><strong>四个阶段</strong></p>
+<p>xv6对于trap的处理通常分为四个阶段:</p>
+<ul>
+<li><p>硬件自动处理</p>
+<p>当用户执行指令(如ecall)陷入trap时，硬件会自动的执行一些动作，通常是设置某些寄存器(如pc)的状态</p>
+</li>
+<li><p>进入汇编入口</p>
+<p>如上所说，陷入trap时pc的值可能会被置为某些特定寄存器的值，因此，在陷入中断之前，如果我们能够手动设置这些寄存器，那么当陷入中断时，就可以让程序跳转到指定的位置, 在xv6中，这个位置经常被设置为<code>*.S</code>文件中的某个label</p>
+<p>而在这些汇编入口中，可以执行一些预处理，如寄存器的保存，页表的切换等等</p>
+</li>
+<li><p>执行C处理程序</p>
+<p>通过跳转指令(jr), 可以从汇编入口跳转到对应的C处理程序， 这些程序会对中断的类型进行更加精确的判断</p>
+</li>
+<li><p>执行系统调用或者设备驱动服务</p>
+<p>同样，这里也是更高层的C代码</p>
+</li>
+</ul>
+<p>其实还有第五个阶段，就是从中断中返回，同样，该过程需要做的就是恢复寄存器的值，切换页表，最后执行一条特殊的返回指令(如<code>sret</code>)真正地返回原状态</p>
+</li>
+</ul>
+<h3 id="1-内核Trap机制"><a href="#1-内核Trap机制" class="headerlink" title="1. 内核Trap机制"></a>1. 内核Trap机制</h3><p>之前说过，riscv中有三种模式: **M(机器模式), S(监管者模式), U(用户模式)**，在riscv中，当发生中断时，程序的控制权不会交给权限更低的模式,  因此，在S模式下发生的中断，永远不会交给U模式进行处理. </p>
+<p>接下来将会介绍从U模式陷入S模式的相关机制</p>
+<p><strong>状态控制寄存器</strong></p>
+<p>当执行中断指令时，会有一些寄存器被自动的修改，其中，就包括了<strong>状态控制寄存器(CSR)</strong>, 当陷入S模式时，硬件所做的操作如下</p>
+<ul>
+<li>发生异常的指令的PC被存入<code>sepc</code></li>
+<li><code>scause</code>被置为异常的类型</li>
+<li><code>sstatus</code>的SIE字段被置为0， 用于关闭中断， <code>sstaus</code>的SPP字段被保存为中断发生前的模式</li>
+<li>将模式转换为<strong>S</strong></li>
+<li>pc被设置为<code>stvec</code></li>
+<li>最后，执行新的pc</li>
+</ul>
+<p>在上面的过程中，页表，即<code>stap</code>寄存器的值并没有改变，因此需要我们手动编码进行修改, 同时，用户的寄存器也没有保存，同样需要我们手动完成</p>
+<h3 id="2-用户态-gt-内核态"><a href="#2-用户态-gt-内核态" class="headerlink" title="2. 用户态-&gt;内核态"></a>2. 用户态-&gt;内核态</h3><p>下面是xv6的源码分析, 仍然是以ecall指令为例</p>
+<ul>
+<li><p>当执行ecall指令前，<code>stvec</code>的值为<code>kernel/trampoline.S</code>的<code>uservec</code>的地址</p>
+</li>
+<li><p>进程执行uservec段的汇编代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><code class="hljs asm">uservec:    <br>	    # 该段为用户中断(ecall)的起始地址<br>        # 使用监管者模式，但是仍然使用用户的页表<br>        # trap.c sets stvec to point here, so<br>        # traps from user space start here,<br>        # in supervisor mode, but with a<br>        # user page table.<br>        #<br>        # sscratch points to where the process&#x27;s p-&gt;trapframe is<br>        # mapped into user space, at TRAPFRAME.<br>        #<br>        <br>	   # swap a0 and sscratch<br>        # so that a0 is TRAPFRAME<br>        # 将TRAPFRAME的地址置于a0中，原a0寄存器的值写入到了sscratch寄存器中<br>        # 这里暂时借用了a0寄存器用做基址，存储TRAPFRAME<br>        csrrw a0, sscratch, a0<br><br>        # save the user registers in TRAPFRAME<br>        # 保存用户(Caller)寄存器<br>        # sd为存储双字(64bit)指令，ra --&gt; ao + 40<br>        sd ra, 40(a0)<br>        sd sp, 48(a0)<br>        sd gp, 56(a0)<br>        sd tp, 64(a0)<br>        sd t0, 72(a0)<br>        sd t1, 80(a0)<br>        sd t2, 88(a0)<br>        sd s0, 96(a0)<br>        sd s1, 104(a0)<br>        sd a1, 120(a0)<br>        sd a2, 128(a0)<br>        sd a3, 136(a0)<br>        sd a4, 144(a0)<br>        sd a5, 152(a0)<br>        sd a6, 160(a0)<br>        sd a7, 168(a0)<br>        sd s2, 176(a0)<br>        sd s3, 184(a0)<br>        sd s4, 192(a0)<br>        sd s5, 200(a0)<br>        sd s6, 208(a0)<br>        sd s7, 216(a0)<br>        sd s8, 224(a0)<br>        sd s9, 232(a0)<br>        sd s10, 240(a0)<br>        sd s11, 248(a0)<br>        sd t3, 256(a0)<br>        sd t4, 264(a0)<br>        sd t5, 272(a0)<br>        sd t6, 280(a0)<br><br>	    # save the user a0 in p-&gt;trapframe-&gt;a0<br>        # 之前使用a0寄存器作为基址，现在将a0寄存器的原本值保存到trapframe中<br>        csrr t0, sscratch<br>        sd t0, 112(a0)<br>        <br>        # 下面这些操作会读取陷入监管者模式前用户的TRAPFRAME中的某些寄存器<br>        # restore kernel stack pointer from p-&gt;trapframe-&gt;kernel_sp<br>        # 读取sp<br>        ld sp, 8(a0)<br><br>        # make tp hold the current hartid, from p-&gt;trapframe-&gt;kernel_hartid<br>        # 读取tp, tp是线程id<br>        ld tp, 32(a0)<br><br>        # load the address of usertrap(), p-&gt;trapframe-&gt;kernel_trap<br>        # 读取TRAPFRAME中的usertrap()的地址 <br>        ld t0, 16(a0)<br><br>        # restore kernel page table from p-&gt;trapframe-&gt;kernel_satp<br>        # 从TRAPFRAME首部取出kernel page table, 然后将其置于satp<br>        # 此刻，进程使用的便是内核页表了<br>        ld t1, 0(a0)<br>        csrw satp, t1<br>        # sfence.vma 指令用于刷新TLB, 当两个参数均为x0(zero)的时候，就会刷新整个TLB表<br>        sfence.vma zero, zero<br><br>        # a0 is no longer valid, since the kernel page<br>        # table does not specially map p-&gt;tf.<br><br>        # jump to usertrap(), which does not return<br>        # 执行usertrap()<br>        jr t0<br></code></pre></td></tr></table></figure>
+
+<p>这里执行的操作包括: <strong>保存用户寄存器</strong>, <strong>切换用户页表为内核页表</strong>，<strong>读取sp指针</strong>, 最后跳转到<code>usertrap</code>函数, 该函数的地址保存在进程</p>
+<p><code>TRAPFRAME + 16</code>地址处</p>
+<p>在这里可以看出，<strong>TRAPFRAME</strong>的作用就是在进行模式切换的时候，保存这些用户寄存器</p>
+</li>
+<li><p>程序来到trap.c, 执行<code>usertrap()</code>函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">usertrap</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> which_dev = <span class="hljs-number">0</span>;<br><br>  <span class="hljs-comment">// 当陷入trap进入监督者模式的时候，sstatus寄存器的SPP字段会保存</span><br>  <span class="hljs-comment">// 陷入trap前的模式(硬件自动完成), 在这里检查其是否是从用户模式陷入的中断</span><br>  <span class="hljs-keyword">if</span>((r_sstatus() &amp; SSTATUS_SPP) != <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;usertrap: not from user mode&quot;</span>);<br><br>  <span class="hljs-comment">// send interrupts and exceptions to kerneltrap(),</span><br>  <span class="hljs-comment">// since we&#x27;re now in the kernel.</span><br>  <span class="hljs-comment">// 将stvec的值改为kernelvec </span><br>  <span class="hljs-comment">// 因为我们现在已经进入内核模式了，在内核模式陷入中断也会</span><br>  <span class="hljs-comment">// 将PC的值指向stvec</span><br>  w_stvec((uint64)kernelvec);<br><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br>  <br>  <span class="hljs-comment">// save user program counter.</span><br>  <span class="hljs-comment">// 导致trap发生的指令(ecall)的PC会被置于sepc寄存器中</span><br>  <span class="hljs-comment">// 在这里，将其置于进程的trapframe中</span><br>  p-&gt;trapframe-&gt;epc = r_sepc();<br>  <br>  <span class="hljs-comment">// scause寄存器中会存储导致trap的类型</span><br>  <span class="hljs-keyword">if</span>(r_scause() == <span class="hljs-number">8</span>)&#123;<br>    <span class="hljs-comment">// system call</span><br><br>    <span class="hljs-keyword">if</span>(p-&gt;killed)<br>      <span class="hljs-built_in">exit</span>(<span class="hljs-number">-1</span>);<br><br>    <span class="hljs-comment">// sepc points to the ecall instruction,</span><br>    <span class="hljs-comment">// but we want to return to the next instruction.</span><br>    <span class="hljs-comment">// 这里很关键, epc在执行完ecall指令后会被置为ecall指令的地址，我们应该将其置为下一条指令的地址</span><br>    <span class="hljs-comment">// 不然会陷入无限循环</span><br>    p-&gt;trapframe-&gt;epc += <span class="hljs-number">4</span>;<br><br>    <span class="hljs-comment">// an interrupt will change sstatus &amp;c registers,</span><br>    <span class="hljs-comment">// so don&#x27;t enable until done with those registers.</span><br>    <span class="hljs-comment">// 在trampoline.S中保存完用户模式下的寄存器之后，就可以打开设备中断了</span><br>    intr_on();<br><br>    <span class="hljs-comment">// 系统调用的入口</span><br>    syscall();<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>((which_dev = devintr()) != <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-comment">// ok</span><br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;usertrap(): unexpected scause %p pid=%d\n&quot;</span>, r_scause(), p-&gt;pid);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;            sepc=%p stval=%p\n&quot;</span>, r_sepc(), r_stval());<br>    p-&gt;killed = <span class="hljs-number">1</span>;<br>  &#125;<br><br>  <span class="hljs-keyword">if</span>(p-&gt;killed)<br>    <span class="hljs-built_in">exit</span>(<span class="hljs-number">-1</span>);<br><br>  <span class="hljs-comment">// give up the CPU if this is a timer interrupt.</span><br>  <span class="hljs-comment">// 软件中断</span><br>  <span class="hljs-keyword">if</span>(which_dev == <span class="hljs-number">2</span>)<br>    yield();<br><br>  usertrapret();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在这里会执行一些检查操作，并且执行如下动作:</p>
+<ul>
+<li><p>将<code>stvec</code>改为内核中断处理程序的地址，因为此时进程已经进入了内核态</p>
+</li>
+<li><p>将<code>p-&gt;trapframe-&gt;epc</code>置为ecall的下一条指令，在从中断返回时会跳转到该位置</p>
+</li>
+<li><p>打开中断，此时用户寄存器已经保存完毕，也切换为了内核页表，可以打开中断</p>
+<blockquote>
+<p>再次之前，RISCV在进入trap的时候已经隐式地执行了关中断操作</p>
+</blockquote>
+</li>
+<li><p>执行系统调用</p>
+</li>
+<li><p>准备中断返回，执行<code>uertrapret()</code>中断返回程序</p>
+</li>
+</ul>
+</li>
+<li><p>执行<code>usertrapret()</code>, 进行中断返回</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">usertrapret</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br><br>  <span class="hljs-comment">// we&#x27;re about to switch the destination of traps from</span><br>  <span class="hljs-comment">// kerneltrap() to usertrap(), so turn off interrupts until</span><br>  <span class="hljs-comment">// we&#x27;re back in user space, where usertrap() is correct.</span><br>  <span class="hljs-comment">// 关中断</span><br>  intr_off();<br><br>  <span class="hljs-comment">// send syscalls, interrupts, and exceptions to trampoline.S</span><br>  <span class="hljs-comment">// 将stvec置为trampoline.S中的uservec</span><br>  w_stvec(TRAMPOLINE + (uservec - trampoline));<br><br>  <span class="hljs-comment">// set up trapframe values that uservec will need when</span><br>  <span class="hljs-comment">// the process next re-enters the kernel.</span><br>  <span class="hljs-comment">// 保存进程的内核trapframe中的内核相关变量</span><br>  p-&gt;trapframe-&gt;kernel_satp = r_satp();         <span class="hljs-comment">// kernel page table</span><br>  p-&gt;trapframe-&gt;kernel_sp = p-&gt;kstack + PGSIZE; <span class="hljs-comment">// process&#x27;s kernel stack</span><br>  p-&gt;trapframe-&gt;kernel_trap = (uint64)usertrap;<br>  p-&gt;trapframe-&gt;kernel_hartid = r_tp();         <span class="hljs-comment">// hartid for cpuid()</span><br><br>  <span class="hljs-comment">// set up the registers that trampoline.S&#x27;s sret will use</span><br>  <span class="hljs-comment">// to get to user space.</span><br>  <span class="hljs-comment">// 从监管者模式中返回到用户模式需要执行sret指令</span><br>  <span class="hljs-comment">// 该指令会将pc设置为spec, 将权限由监管者模式置为sstaus.ssp字段所规定的模式 </span><br>  <span class="hljs-comment">// set S Previous Privilege mode to User.</span><br>  <span class="hljs-comment">// 设置sstatus的ssp字段为用户模式</span><br>  <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> x = r_sstatus();<br>  x &amp;= ~SSTATUS_SPP; <span class="hljs-comment">// clear SPP to 0 for user mode</span><br>  x |= SSTATUS_SPIE; <span class="hljs-comment">// enable interrupts in user mode</span><br>  w_sstatus(x);<br><br>  <span class="hljs-comment">// set S Exception Program Counter to the saved user pc.</span><br>  <span class="hljs-comment">// ecall的下一条指令</span><br>  w_sepc(p-&gt;trapframe-&gt;epc);<br><br>  <span class="hljs-comment">// tell trampoline.S the user page table to switch to.</span><br>  uint64 satp = MAKE_SATP(p-&gt;pagetable);<br><br>  <span class="hljs-comment">// jump to trampoline.S at the top of memory, which </span><br>  <span class="hljs-comment">// switches to the user page table, restores user registers,</span><br>  <span class="hljs-comment">// and switches to user mode with sret.</span><br>  <span class="hljs-comment">// fn是trampoline.S中userret处的地址</span><br>  uint64 fn = TRAMPOLINE + (userret - trampoline);<br>  <span class="hljs-comment">// 该行的意思时，将fn解释成一个void (*)(uint64, uint64)类型的函数，然后以TRAPFRAME,</span><br>  <span class="hljs-comment">// satp作为参数调用</span><br>  ((<span class="hljs-keyword">void</span> (*)(uint64,uint64))fn)(TRAPFRAME, satp);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>该函数中执行的操作包括:</p>
+<ul>
+<li>关中断，因为接下来要修改寄存器的值</li>
+<li>修改<code>stvec</code>, 使其恢复为<code>trampoline.S</code>中的<code>uservec</code></li>
+<li>修改<code>spec</code>, 将其置为<code>p-&gt;trapframe-epc</code>， 即中断指令的下一条地址</li>
+<li>修改<code>sstatus</code>的SPP字段，将其置为为用户模式</li>
+<li>跳转到<code>trampoline.S</code>的<code>userret</code></li>
+</ul>
+</li>
+<li><p>执行<code>userret</code>处的汇编代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs asm">userret:<br>        # 该段指令负责将进程由监管者模式转换为用户模式<br>        # 具体工作包括:<br>        # 1. 恢复用户寄存器<br>        # 2. 从内核页表切换为用户页表<br>        # 3. 执行sret指令真正的返回, 该指令会修改sstaus, 以及pc<br>        # userret(TRAPFRAME, pagetable)<br>        # switch from kernel to user.<br>        # usertrapret() calls here.<br>        # a0: TRAPFRAME, in user page table.<br>        # a1: user page table, for satp.<br><br>        # switch to the user page table.<br>        # 切换用户页表<br>        csrw satp, a1<br>        sfence.vma zero, zero<br><br>        # put the saved user a0 in sscratch, so we<br>        # can swap it with our a0 (TRAPFRAME) in the last step.<br>        # 与之前保存时的动作对应<br>        ld t0, 112(a0)<br>        csrw sscratch, t0<br><br>        # restore all but a0 from TRAPFRAME<br>        ld ra, 40(a0)<br>        ld sp, 48(a0)<br>        ld gp, 56(a0)<br>        ld tp, 64(a0)<br>        ld t0, 72(a0)<br>        ld t1, 80(a0)<br>        ld t2, 88(a0)<br>        ld s0, 96(a0)<br>        ld s1, 104(a0)<br>        ld a1, 120(a0)<br>        ld a2, 128(a0)<br>        ld a3, 136(a0)<br>        ld a4, 144(a0)<br>        ld a5, 152(a0)<br>        ld a6, 160(a0)<br>        ld a7, 168(a0)<br>        ld s2, 176(a0)<br>        ld s3, 184(a0)<br>        ld s4, 192(a0)<br>        ld s5, 200(a0)<br>        ld s6, 208(a0)<br>        ld s7, 216(a0)<br>        ld s8, 224(a0)<br>        ld s9, 232(a0)<br>        ld s10, 240(a0)<br>        ld s11, 248(a0)<br>        ld t3, 256(a0)<br>        ld t4, 264(a0)<br>        ld t5, 272(a0)<br>        ld t6, 280(a0)<br><br>	    # restore user a0, and save TRAPFRAME in sscratch<br>        csrrw a0, sscratch, a0<br>        <br>        # return to user mode and user pc.<br>        # usertrapret() set up sstatus and sepc.<br>        # 真正的返回<br>        sret<br></code></pre></td></tr></table></figure>
+
+<p>该阶段所做的操作包括:</p>
+<ul>
+<li>恢复用户寄存器</li>
+<li>切换回用户页表</li>
+<li>执行<code>sret</code>中断返回指令, 该指令会将pc置为<code>spec</code>, 将模式置为<code>sstaus</code>的SPP字段，即之前设置的用户模式</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-内核中的trap"><a href="#3-内核中的trap" class="headerlink" title="3. 内核中的trap"></a>3. 内核中的trap</h3><p>内核态的<code>trap</code>不会发生模式的转变，因此没有用户态的中断那么复杂</p>
+<p>当trap发生在内核态时，我们不需要对 <code>satp</code>进行处理，因为不需要更换模式，也就不需要更改页表</p>
+<p>这里只需要在该进程对应的内核栈中开辟一段新的frame，将这些值保存在当前内核栈上就行了</p>
+<ul>
+<li><p>kernelvec.S</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><code class="hljs asm">	#<br>        # interrupts and exceptions while in supervisor<br>        # mode come here.<br>        #<br>        # push all registers, call kerneltrap(), restore, return.<br>        #<br>        # 内核态下的中断处理<br>        # 当发生中断或异常时，只需要给当前的内核栈开辟新的空间(frame)<br>        # 然后保存当前的寄存器即可<br>        # 当中断处理结束，恢复寄存器，释放内核栈空间<br>.globl kerneltrap<br>.globl kernelvec<br>.align 4<br>kernelvec:<br>        // make room to save registers.<br>        // 在内核(监管者)模式下，如果发生中断，不需要更换页表操作<br>        addi sp, sp, -256<br><br>        // save the registers.<br>        sd ra, 0(sp)<br>        sd sp, 8(sp)<br>        sd gp, 16(sp)<br>        sd tp, 24(sp)<br>        sd t0, 32(sp)<br>        sd t1, 40(sp)<br>        sd t2, 48(sp)<br>        sd s0, 56(sp)<br>        sd s1, 64(sp)<br>        sd a0, 72(sp)<br>        sd a1, 80(sp)<br>        sd a2, 88(sp)<br>        sd a3, 96(sp)<br>        sd a4, 104(sp)<br>        sd a5, 112(sp)<br>        sd a6, 120(sp)<br>        sd a7, 128(sp)<br>        sd s2, 136(sp)<br>        sd s3, 144(sp)<br>        sd s4, 152(sp)<br>        sd s5, 160(sp)<br>        sd s6, 168(sp)<br>        sd s7, 176(sp)<br>        sd s8, 184(sp)<br>        sd s9, 192(sp)<br>        sd s10, 200(sp)<br>        sd s11, 208(sp)<br>        sd t3, 216(sp)<br>        sd t4, 224(sp)<br>        sd t5, 232(sp)<br>        sd t6, 240(sp)<br><br>	// call the C trap handler in trap.c<br>        call kerneltrap<br><br>        // restore registers.<br>        ld ra, 0(sp)<br>        ld sp, 8(sp)<br>        ld gp, 16(sp)<br>        // not this, in case we moved CPUs: ld tp, 24(sp)<br>        ld t0, 32(sp)<br>        ld t1, 40(sp)<br>        ld t2, 48(sp)<br>        ld s0, 56(sp)<br>        ld s1, 64(sp)<br>        ld a0, 72(sp)<br>        ld a1, 80(sp)<br>        ld a2, 88(sp)<br>        ld a3, 96(sp)<br>        ld a4, 104(sp)<br>        ld a5, 112(sp)<br>        ld a6, 120(sp)<br>        ld a7, 128(sp)<br>        ld s2, 136(sp)<br>        ld s3, 144(sp)<br>        ld s4, 152(sp)<br>        ld s5, 160(sp)<br>        ld s6, 168(sp)<br>        ld s7, 176(sp)<br>        ld s8, 184(sp)<br>        ld s9, 192(sp)<br>        ld s10, 200(sp)<br>        ld s11, 208(sp)<br>        ld t3, 216(sp)<br>        ld t4, 224(sp)<br>        ld t5, 232(sp)<br>        ld t6, 240(sp)<br><br>        addi sp, sp, 256<br><br>        // return to whatever we were doing in the kernel.<br>        sret<br><br>        #<br>        # machine-mode timer interrupt.<br>        #<br>.globl timervec<br>.align 4<br>timervec:<br>        # start.c has set up the memory that mscratch points to:<br>        # scratch[0,8,16] : register save area.<br>        # scratch[32] : address of CLINT&#x27;s MTIMECMP register.<br>        # scratch[40] : desired interval between interrupts.<br>        <br>        csrrw a0, mscratch, a0<br>        sd a1, 0(a0)<br>        sd a2, 8(a0)<br>        sd a3, 16(a0)<br><br>        # schedule the next timer interrupt<br>        # by adding interval to mtimecmp.<br>        ld a1, 32(a0) # CLINT_MTIMECMP(hart)<br>        ld a2, 40(a0) # interval<br>        ld a3, 0(a1)<br>        add a3, a3, a2<br>        sd a3, 0(a1)<br><br>        # raise a supervisor software interrupt.<br>	li a1, 2<br>        csrw sip, a1<br><br>        ld a3, 16(a0)<br>        ld a2, 8(a0)<br>        ld a1, 0(a0)<br>        csrrw a0, mscratch, a0<br><br>        mret<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p>内核trap处理程序只需要处理三种trap：</p>
+<ul>
+<li><p>如果是硬件中断，就调用相应处理程序处理</p>
+<p>如果是时钟中断(时钟中断属于硬件中断)，那么就让出处理器（由于调度给其它进程的时候， 可能会导致新的<code>traps</code>, <code>sepc</code> 、<code>sstatus</code>寄存器可能被修改，因此最后要对其进行恢复)</p>
+</li>
+<li><p>如果是异常,那么xv6会并调用 <code>panic</code>终止执行</p>
+</li>
+</ul>
+<p>内核态陷阱处理完毕时，直接从frame中取出寄存器的值，然后删去之前在内核栈中开辟的空间</p>
+<ul>
+<li><p>trap.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span> </span><br><span class="hljs-function"><span class="hljs-title">kerneltrap</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> which_dev = <span class="hljs-number">0</span>;<br>  uint64 sepc = r_sepc();<br>  uint64 sstatus = r_sstatus();<br>  uint64 scause = r_scause();<br>  <br>  <span class="hljs-keyword">if</span>((sstatus &amp; SSTATUS_SPP) == <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;kerneltrap: not from supervisor mode&quot;</span>);<br>  <span class="hljs-keyword">if</span>(intr_get() != <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;kerneltrap: interrupts enabled&quot;</span>);<br><br>  <span class="hljs-keyword">if</span>((which_dev = devintr()) == <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;scause %p\n&quot;</span>, scause);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;sepc=%p stval=%p\n&quot;</span>, r_sepc(), r_stval());<br>    panic(<span class="hljs-string">&quot;kerneltrap&quot;</span>);<br>  &#125;<br><br>  <span class="hljs-comment">// give up the CPU if this is a timer interrupt.</span><br>  <span class="hljs-keyword">if</span>(which_dev == <span class="hljs-number">2</span> &amp;&amp; myproc() != <span class="hljs-number">0</span> &amp;&amp; myproc()-&gt;state == RUNNING)<br>    yield();<br><br>  <span class="hljs-comment">// the yield() may have caused some traps to occur,</span><br>  <span class="hljs-comment">// so restore trap registers for use by kernelvec.S&#x27;s sepc instruction.</span><br>  w_sepc(sepc);<br>  w_sstatus(sstatus);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="4-page-fault-技巧"><a href="#4-page-fault-技巧" class="headerlink" title="4. page fault 技巧"></a>4. page fault 技巧</h3><p>当CPU无法转换一个虚拟地址时，即相应的用户页表里没有这一项映射，或者相关权限要求不满足时，就会产生我们熟知的page fault根据执行指令的不同，缺页错误又可以细分为三种：</p>
+<ul>
+<li><strong>Load Page Faults</strong>：无法转换的虚拟地址位于一条加载（读）指令中。Scause：13</li>
+<li><strong>Store Page Faults</strong>：无法转换的虚拟地址位于一条存储（写）指令中。Scause：15</li>
+<li><strong>Instruction Page Faults</strong>：无法转换的虚拟地址位于一条执行指令中。Scause：12</li>
+</ul>
+<p>RISC-V会将代表缺页错误类型的数字存放进<code>scause</code>寄存器中，同时将无法转换的虚拟地址存放在<code>stval</code>寄存器中</p>
+<h4 id="1-copy-on-write-COW"><a href="#1-copy-on-write-COW" class="headerlink" title="1. copy-on-write(COW)"></a>1. copy-on-write(COW)</h4><ul>
+<li><p>使用场景</p>
+<p>在程序中，当我们调用 <code>fork</code>创建一个子进程后，经常第一件事情就是调用 <code>exec</code>运行一些其他程序。这里看起来有点浪费，因为 <code>fork</code>创建了父进程<code>page</code>的完整的拷贝，而 <code>exec</code>做的第一件事情就是创造新的<code>page</code>, 然后释放这些拷贝而来的<code>page</code></p>
+</li>
+<li><p>基本思想</p>
+<p>与上面问题对应的优化则是：当我们创建子进程时，直接共享父进程的物理页</p>
+<blockquote>
+<p> 这里可以设置子进程的PTE指向父进程对应的物理页，然后将共享的页设置为read-only, 以确保隔离性</p>
+</blockquote>
+<p>在某个时间点，当某个进程需要更改共享的内容时，我们会得到<code>page fault</code>,  此时内核将页错误相关的物理页拷贝到新分配的物理页中，并将新分配的物理页映射到发生异常的进程里，由于新分配的<code>page</code>现在仅对父/子进程可见，原<code>page</code>现在仅对子/父进程有效，因此，内核会自动将这些<code>page</code>设置为可读写</p>
+</li>
+<li><p>引用计数</p>
+<p>当一个进程决定释放一个页或者结束本进程时，我们不能立即释放相应的物理页，因为可能还有其他进程也在使用这些物理页。所以我们需要对于每一个物理页的引用进行计数，当某个进程释放一个物理页时，我们将物理页的引用数减1。如果引用数等于0，那么我们才真正去释放物理页</p>
+</li>
+</ul>
+<h4 id="2-zero-fill-on-demand"><a href="#2-zero-fill-on-demand" class="headerlink" title="2. zero fill on demand"></a>2. zero fill on demand</h4><p>当编译器在生成二进制文件时，会向BSS区填写未被初始化或者初始化为0的全局变量。但其实这里的BSS区域特别浪费空间：假如在C语言中定义了一个特别大的矩阵作为全局变量，它的元素初始值都是0，那么我们没有必要为这个矩阵所有元素分配空间，只需要记住这个矩阵的内容是0就行。</p>
+<p>具体的操作就是在物理内存中，我们只分配一个内容全是0的页。然后将所有虚拟地址空间中存储值全为0的页都映射到这一个物理页上，并抹去映射中 <code>PTE_W</code>相关的flag标记</p>
+<p>之后在某个时间点，应用程序尝试写BSS中的一个页时，就会得到<code>page fault</code>，进入陷阱。这时我们就可以在物理内存中申请一个真正的物理页，将其内容设置为0，设置相应的PTE为可写，然后将发生异常的虚拟的页指向刚申请的物理页</p>
+<h4 id="3-demand-paging"><a href="#3-demand-paging" class="headerlink" title="3. demand paging"></a>3. demand paging</h4><p>XV6会将用户空间里的所有有效区域（text区， data区）全部映射至页表中，并将它们从磁盘中全部加载到内存里。这其实是一个代价很高的操作，我们并不一定需要将整个二进制都加载到内存中，可以直到应用程序实际需要这些指令的时候再加载内存。</p>
+<p>所以我们为<code>text</code>和<code>data</code>分配好地址段，但是相应的PTE并不对应任何物理页。对于这些PTE，我们只需要将<code>valid bit</code>位设置为0即可。当发生<code>page fault</code>时，我们在<code>page fault</code>处理程序中再去从程序文件中读取相应页的数据，加载到内存中，然后将这些物理页映射到页表中，最后再重新执行指令</p>
+<h4 id="4-lazy-page-allocation"><a href="#4-lazy-page-allocation" class="headerlink" title="4. lazy page allocation"></a>4. lazy page allocation</h4><p>在XV6中，一旦调用了 <code>sbrk</code>，内核会立即分配应用程序所需要的物理内存。但是实际上应用程序很难预测自己需要多少内存，所以通常应用程序倾向于申请多于自己所需要的内存。这意味着进程的内存消耗会增加许多，但是有部分内存永远也不会被应用程序所使用到。</p>
+<p>利用lazy allocation我们可以解决这里的问题。即像 <code>sbrk</code>这样的系统调用并不会真正去分配物理内存。如果应用程序使用到了新申请的那部分内存，就会触发页错误。这时page fault handler才去实际分配一个物理页，将这个页映射到用户页表中，最后重新执行指令。</p>
+<blockquote>
+<p>内存耗尽:</p>
+<p>当发生<strong>内存耗尽</strong>的情况，可以选择<strong>撤回</strong>操作，即将内存中的某些<code>Page</code>刷新回磁盘，然后它们的位置就空出来了</p>
+</blockquote>
+<p>上面这些技术均是关于<code>page fault</code>的一些技巧，更重要的是它们对于进程来说完全是透明的，硬件会自动的完成这些事</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/xv6/">xv6</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[xv6]:内存管理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-%E5%86%85%E6%A0%B8%E5%90%AF%E5%8A%A8/">
+                        <span class="hidden-mobile">[xv6]:内核启动</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

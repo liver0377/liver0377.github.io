@@ -1,0 +1,684 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="Crash Recovery崩溃恢复是数据库中必不可少的组成部分，它用于将数据库恢复至故障发生之前的一致性状态，为了确保数据库的一致性，原子性以及持久性，就必须要使用恢复算法，恢复算法由两部分组成  在进行普通事务处理时，需要维护额外的数据，如日志，这样可以在后续崩溃时的恢复操作中使用到  ——&gt;(接下来的内容) 在数据库发生崩溃时，为了维护数据库的一致性、原子性、持久性，所采取的动作  在">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU15445]:日志恢复系统">
+<meta property="og:url" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="Crash Recovery崩溃恢复是数据库中必不可少的组成部分，它用于将数据库恢复至故障发生之前的一致性状态，为了确保数据库的一致性，原子性以及持久性，就必须要使用恢复算法，恢复算法由两部分组成  在进行普通事务处理时，需要维护额外的数据，如日志，这样可以在后续崩溃时的恢复操作中使用到  ——&gt;(接下来的内容) 在数据库发生崩溃时，为了维护数据库的一致性、原子性、持久性，所采取的动作  在">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/1.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/2.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/3.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/4.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/5.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/6.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/7.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/8.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/9.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/10.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/11.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/12.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/13.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/14.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/15.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/16.png">
+<meta property="og:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/17.png">
+<meta property="article:published_time" content="2022-02-13T03:49:22.000Z">
+<meta property="article:modified_time" content="2022-02-14T02:35:53.922Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/1.png">
+  
+  <title>[CMU15445]:日志恢复系统 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[CMU15445]:日志恢复系统">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-02-13 11:49" pubdate>
+        2022年2月13日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      12 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[CMU15445]:日志恢复系统</h1>
+            
+            <div class="markdown-body">
+              <h3 id="Crash-Recovery"><a href="#Crash-Recovery" class="headerlink" title="Crash Recovery"></a>Crash Recovery</h3><p><strong>崩溃恢复</strong>是数据库中必不可少的组成部分，它用于将数据库恢复至故障发生之前的一致性状态，为了确保数据库的一致性，原子性以及持久性，就必须要使用<strong>恢复算法</strong>，恢复算法由两部分组成</p>
+<ul>
+<li>在进行普通事务处理时，需要维护额外的数据，如日志，这样可以在后续崩溃时的恢复操作中使用到  ——&gt;(接下来的内容)</li>
+<li>在数据库发生崩溃时，为了维护数据库的一致性、原子性、持久性，所采取的动作</li>
+</ul>
+<p>在崩溃恢复操作中需要使用到的两个关键步骤被称为<strong>redo(重做)<strong>和</strong>undo(撤销)</strong></p>
+<ul>
+<li><p>redo</p>
+<p>将事务更新过的值都重新置为<strong>新值</strong></p>
+</li>
+<li><p>undo</p>
+<p>将事务更新过的值都置为<strong>旧值</strong></p>
+</li>
+</ul>
+<h3 id="Failure-Classification"><a href="#Failure-Classification" class="headerlink" title="Failure Classification"></a>Failure Classification</h3><p>系统中可能会发生多种故障</p>
+<ul>
+<li><p>事务故障</p>
+<p>有两种错误可能造成事务执行失败</p>
+<ul>
+<li><p>逻辑错误</p>
+<p>如事务违反了完整性约束</p>
+</li>
+<li><p>系统错误</p>
+<p>如系统进入了死锁</p>
+</li>
+</ul>
+</li>
+<li><p>系统崩溃</p>
+<ul>
+<li><p>软件错误</p>
+<p>如内部发生的除0的操作，系统必须停止运行</p>
+</li>
+<li><p>硬件错误</p>
+<p>如系统断电了，同样会引起系统的停止</p>
+</li>
+</ul>
+<p>上面的错误会到导致系统停止运行，进而导致内存中的数据丢失，在这里我们做出假设，认为这些错误不会导致磁盘上面的数据丢失，这也被称作<code>fail-stop</code>假设</p>
+</li>
+</ul>
+<p>上面两种故障均可以进行恢复</p>
+<ul>
+<li><p>磁盘故障</p>
+<p>磁盘发生了故障，那么这种故障就是不可恢复的</p>
+</li>
+</ul>
+<h3 id="Buffer-Pool-Management-Policies"><a href="#Buffer-Pool-Management-Policies" class="headerlink" title="Buffer Pool Management Policies"></a>Buffer Pool Management Policies</h3><p>接下来将会介绍DBMS在进行事务处理时有关buffer pool的一些细节</p>
+<ul>
+<li><p>抢占策略</p>
+<p>如果一个<strong>未提交(活跃)<strong>状态的事务修改过的块可以被写入到磁盘，那么就称该策略为</strong>抢占(steal)策略</strong>,否则被称为<strong>非抢占策略</strong></p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+</li>
+<li><p>强制策略</p>
+<p>如果事务在提交时会强制将所有修改过的块都输出到磁盘，那么该策略被称为<strong>强制(force)策略</strong>，否则被称为<strong>非强制策略</strong></p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>当使用强制策略时，进行崩溃恢复操作时比较简单，因为不需要考虑<em>提交后数据丢失</em>的情况，但是使用强制策略会导致<strong>频繁的块的输出操作</strong>，使得其在运行时的效率比较低，大多数系统采用的是非强制策略</p>
+</li>
+<li><p>No-Steal + Force</p>
+<p>最简单的崩溃恢复方法就是采用: <strong>No-Steal + Force</strong>策略来实现，下面给出例子</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>上面是初始状态，经过两次write操作(A=3, B=8)之后变为了下面这样</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>下一步是T2的commit操作，但是<code>Force</code>策略与<code>No-Steal</code>策略在此产生了矛盾，<code>No-Steal</code>策略要求不能将T1修改过的块写入到磁盘，而<code>Force</code>策略则要求必须将T2修改过的块在此时输出到磁盘，此时就会发生下面这种情况</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<p>DBMS会拷贝一个新的tuple，其中只包含T2事务修改的数据，然后将其写回磁盘</p>
+<ul>
+<li>优缺点分析<ul>
+<li>不需要使用<code>undo</code>操作，因为未提交的数据根本就没有输出到磁盘</li>
+<li>不需要使用<code>redo</code>操作，因为所有提交的数据都被写入到了磁盘</li>
+<li>限制1：如果一个事务所需要的数据不能够全部放入内存当中，那么该事务在这种策略下就不能够执行，因为该策略要求在事务提交之前不能够将脏page写回磁盘</li>
+<li>限制2：如果事务更新了多个page(假设为4个), 由于操作系统无法为我们保证多个page写回磁盘这步操作的原子性，因此假设在将2个page写回磁盘过后系统崩溃，那么就会发生更新撕裂的问题</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Shadow-Paging"><a href="#Shadow-Paging" class="headerlink" title="Shadow Paging"></a>Shadow Paging</h3><p><strong>影子分页</strong>计数采用页表拷贝的方式来保证数据库的崩溃可恢复性，这是一个No-Steal + Force策略的实现</p>
+<p>在该技术当中，有两个页表:<strong>master page table, shadow page table</strong>，还有一个单独的<strong>DB Root</strong> page, 指向<code>master page table</code>整体布局如图所示</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+<p><code>shadow page table</code>是<code>master page table</code>的一分拷贝，当事务对page进行修改的时候，DBMS就会拷贝一份新的page, 并修改<code>shadow page table</code>上的指针，对这份拷贝page应用事务的修改，当事务的write操作结束并且执行commit之后，就会更改<code>DB Root</code>， 使之指向<code>shadow page table</code>, 即<code>shadow page table</code>代替了原来的<code>master page table</code></p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+<ul>
+<li><p>综合分析</p>
+<ul>
+<li><p>当发生崩溃时回滚十分简单</p>
+<p>undo: 移除所有的shadwo page</p>
+<p>redo: 不需要</p>
+</li>
+<li><p>缺点</p>
+<ol>
+<li><p>拷贝整个<code>page table</code>的代价比较昂贵</p>
+</li>
+<li><p>commit代价过高</p>
+<p><code>DB Root</code>, <code>shadow page table</code>, 被更新的所有page，都需要被刷新回磁盘</p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Journal-File"><a href="#Journal-File" class="headerlink" title="Journal File"></a>Journal File</h3><p>SQLite在2010年之前使用过一种被称作<strong>Journal File</strong>的方案，该方案中，当事务修改一个page的时候，首先将其拷贝到磁盘中一个被称作<code>journal file</code>的地区，如果事务执行过程中发生了崩溃，就会检查<code>journal file</code>中是否有page存在，如果有，就会使用这些page来进行undo操作</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+<p><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+<p><img src="11.png" srcset="/img/loading.gif" lazyload alt="11"></p>
+<h3 id="Write-Ahead-Logging"><a href="#Write-Ahead-Logging" class="headerlink" title="Write-Ahead Logging"></a>Write-Ahead Logging</h3><p><strong>先写日志(WAL)<strong>协议要求在主存中的数据块输出到数据库磁盘</strong>之前</strong>，与该数据块有关的所有日志记录必须首先输出到磁盘(稳定存储器)上, 通常是一个<code>log file</code>, 这是一个Steal + No-Force的例子</p>
+<p><strong>几乎所有的主流数据库系统都在使用这个协议</strong>，因为该协议具有最快的运行时速度，但是WAL恢复的时长要比<code>Shadow Paging</code>稍微慢一点</p>
+<ul>
+<li><p>日志记录</p>
+<p>一个日志记录具有一些字段</p>
+<ul>
+<li>Transaction Id (事务 id)</li>
+<li>Object Id (数据记录 id)</li>
+<li>Before Value (修改前的值)，用于 undo 操作</li>
+<li>After Value (修改后的值)，用于 redo 操作</li>
+</ul>
+<p>故一条日志记录看起来像这样<code>&lt;Ti, Xj, V1, V2&gt;</code></p>
+<p>与此同时还有一些其他的日志记录：</p>
+<ul>
+<li>&lt;Ti start&gt;: 事务开始</li>
+<li>&lt;Ti commit&gt;: 事务提交 </li>
+<li>&lt;Ti abort&gt;: 事务中止</li>
+</ul>
+</li>
+<li><p>例子</p>
+<p><img src="12.png" srcset="/img/loading.gif" lazyload alt="12"></p>
+<ul>
+<li>当事务执行时，每执行一条语句对数据项进行修改，就会在<code>WAL Buffer</code>中保存指定的记录，然后再修改buffer pool中数据项的值</li>
+<li>当事务执行到commit语句的时候，就会将<code>WAL Buffer</code>中的内容写到磁盘的<code>log file</code>中,此时整个事务就算是提交了</li>
+<li>尽管数据项还没有被刷新会磁盘，但是磁盘中已经有相应的日志了，即使发生了崩溃，也能够根据log file进行恢复</li>
+</ul>
+</li>
+<li><p>group commit</p>
+<p>在上面的方案中，每次有一个事务进行提交时就会将<code>WAL Buffer</code>中的内容刷新回<code>log file</code>中，可以使用一种被称为<strong>group commit</strong>的优化策略，在该策略当中，<code>WAL Buffer</code>设置为两个，刷盘的时机变为：</p>
+<ol>
+<li><p><code>WAL Buffer</code> 满时刷盘</p>
+<p>当一个<code>WAL Buffer</code> 满了的时候，就会将其刷盘，与此同时，日志记录都保存在另一个<code>WAL Buffer</code>中</p>
+<p><img src="13.png" srcset="/img/loading.gif" lazyload alt="13"></p>
+</li>
+<li><p>超过指定时间</p>
+<p>有时<code>WAL Buffer</code>可能还没有满，但是所有的事务都在处于等待状态，此时如果超过了一定的时间段，<code>WAL Buffer</code>也会自动刷新</p>
+</li>
+</ol>
+</li>
+<li><p>效率分析</p>
+<p><img src="14.png" srcset="/img/loading.gif" lazyload alt="14"></p>
+<p>大部分数据库更看重运行时效率，因此几乎所有 DBMS 使用 No-Force + Steal 的 buffer pool policy</p>
+</li>
+</ul>
+<h3 id="Logging-Scheme"><a href="#Logging-Scheme" class="headerlink" title="Logging Scheme"></a>Logging Scheme</h3><p>在这里我们会介绍关于日志记录的不同形式，通常有两种日志记录的方案：<strong>physical logging</strong>, <strong>logical logging</strong></p>
+<ul>
+<li><p>physical logging</p>
+<p>在该模式下的日志记录记录的是底层数据的修改</p>
+</li>
+<li><p>logical logging</p>
+<p>该模式下记录的是SQL语句逻辑上的修改</p>
+</li>
+</ul>
+<p>下面是一个例子</p>
+<p><img src="15.png" srcset="/img/loading.gif" lazyload alt="15"></p>
+<p>注意到上面的例子中还有关于索引信息的日志，事实上，大多数数据库系统也会为索引的修改记录日志</p>
+<ul>
+<li><p>优缺点</p>
+<p><code>Logical Scheme</code>所记录的字节数更少，但是一个问题就是假设使用一个update语句更新了大量tuple,那么在进行redo的时候就必须重新执行一遍该update语句，因为我们不知道update语句的实际更新究竟写入了多少数据到磁盘，而使用<code>Physical Scheme</code>就不会有这种情况 </p>
+</li>
+</ul>
+<p>当今大多数数据库使用的是一种混合模式，被称为<strong>Physiological Scheme</strong></p>
+<p><img src="16.png" srcset="/img/loading.gif" lazyload alt="16"></p>
+<p>可以看到，该模式下记录了一些底层的<code>page_id</code>, 但使用了<code>slot_id</code>这种逻辑单位而不是<code>offset</code></p>
+<h3 id="Check-Point"><a href="#Check-Point" class="headerlink" title="Check Point"></a>Check Point</h3><p>如果放任 WAL 增长，它可以随着新的操作执行而无限增长。如此这般，在故障恢复时，DBMS 需要读取更多的日志，执行更多的恢复和回滚操作。为了避免这种情况出现，DBMS 需要周期性地记录 checkpoint，即将所有日志记录和数据页都持久化到存储设备中，然后在日志中写入一条 <code>&lt;CHECKPOINT&gt;</code> 记录，举例如下：</p>
+<p><img src="17.png" srcset="/img/loading.gif" lazyload alt="17"></p>
+<p>当 DBMS 发生崩溃时，所有在最新的 checkpoint 之前提交的事务可以直接忽略，如 T1。T2 和 T3 在 checkpoint 前尚未 commit。其中，T2 需要 redo，因为它在 checkpoint 之后，crash 之前提交了，即已经告诉用户事务提交成功；T3 需要 undo，因为它在 crash 之前尚未 commit，即尚未告诉用户事务提交成功。</p>
+<p>实现 checkpoints 有需要要考虑的问题：</p>
+<ol>
+<li>在于要保证 checkpoint 的正确性，我们需要暂停所有事务</li>
+<li>故障恢复时，扫描数据找到未提交的事务可能需要较长的时间</li>
+<li>如何决定 DBMS 执行 checkpoint 的周期，太频繁将导致运行时性能下降；等太久将使得 checkpoint 的内容更多，更耗时，同时数据恢复也要消耗更长的时间</li>
+</ol>
+<p><strong>Conclusion</strong></p>
+<p>WAL几乎总是最佳选择</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[CMU15445]:恢复算法</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/02/12/CMU15445-%E5%A4%9A%E7%89%88%E6%9C%AC%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6/">
+                        <span class="hidden-mobile">[CMU15445]:多版本并发控制</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

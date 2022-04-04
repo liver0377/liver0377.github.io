@@ -1,0 +1,772 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="计算机网络与因特网一、什么是因特网因特网有以下两种描述方式  具体构成描述 服务描述  1.具体构成描述因特网是一个互联了全世界数十亿计算机设备的网络 基本术语:  主机&#x2F;端系统:手机、电脑、电视等一切与因特网相连的终端设备  通信链路:网络中两个节点之间的物理通道称为通信链路。通信链路的传输介质主要有双绞线、光纤和微波  分组交换机  分组交换机从它的一条入通信线路接受到达的分组，并从它的一条出">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[计算机网络_自顶向下]:计算机与因特网">
+<meta property="og:url" content="http://example.com/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="计算机网络与因特网一、什么是因特网因特网有以下两种描述方式  具体构成描述 服务描述  1.具体构成描述因特网是一个互联了全世界数十亿计算机设备的网络 基本术语:  主机&#x2F;端系统:手机、电脑、电视等一切与因特网相连的终端设备  通信链路:网络中两个节点之间的物理通道称为通信链路。通信链路的传输介质主要有双绞线、光纤和微波  分组交换机  分组交换机从它的一条入通信线路接受到达的分组，并从它的一条出">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/1.png">
+<meta property="og:image" content="http://example.com/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/2.png">
+<meta property="og:image" content="http://example.com/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/3.png">
+<meta property="og:image" content="http://example.com/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/4.png">
+<meta property="og:image" content="http://example.com/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/5.png">
+<meta property="article:published_time" content="2022-02-28T07:31:03.000Z">
+<meta property="article:modified_time" content="2022-02-28T07:33:12.670Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/1.png">
+  
+  <title>[计算机网络_自顶向下]:计算机与因特网 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[计算机网络_自顶向下]:计算机与因特网">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-02-28 15:31" pubdate>
+        2022年2月28日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.2k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      13 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[计算机网络_自顶向下]:计算机与因特网</h1>
+            
+            <div class="markdown-body">
+              <h1 id="计算机网络与因特网"><a href="#计算机网络与因特网" class="headerlink" title="计算机网络与因特网"></a>计算机网络与因特网</h1><h3 id="一、什么是因特网"><a href="#一、什么是因特网" class="headerlink" title="一、什么是因特网"></a>一、什么是因特网</h3><p>因特网有以下两种描述方式</p>
+<ol>
+<li>具体构成描述</li>
+<li>服务描述</li>
+</ol>
+<h4 id="1-具体构成描述"><a href="#1-具体构成描述" class="headerlink" title="1.具体构成描述"></a>1.具体构成描述</h4><p>因特网是一个互联了全世界数十亿计算机设备的网络</p>
+<p><strong>基本术语:</strong></p>
+<ul>
+<li><p>主机/端系统:手机、电脑、电视等一切与因特网相连的终端设备</p>
+</li>
+<li><p>通信链路:网络中两个节点之间的<strong>物理通道</strong>称为通信链路。通信链路的传输介质主要有双绞线、光纤和微波</p>
+</li>
+<li><p>分组交换机</p>
+<ul>
+<li>分组交换机从它的一条入通信线路接受到达的分组，并从它的一条出通信链路转发该分组</li>
+<li>当今最常见的分组交换机有<strong>路由器</strong>和<strong>链路层交换机</strong>两种</li>
+</ul>
+</li>
+<li><p>路径:从发送端到接收端，一个分组所经历的一系列通信链路和分组交换机</p>
+</li>
+<li><p>ISP(因特网服务提供商/Internet Service Provider)</p>
+<ul>
+<li>端系统通过ISP接入因特网</li>
+<li>每个ISP本身就是由多台交换机和通信链路组成的通信网络</li>
+<li>ISP分层级，较低层的ISP通过较高层的ISP完成互联</li>
+</ul>
+</li>
+<li><p>协议</p>
+<ul>
+<li>端系统，交换机和其他因特网部件都要通过运行一系列协议控制因特网中信息的接受与发入</li>
+<li><strong>TCP</strong>(Transmition Controal Protocal):传输控制协议</li>
+<li><strong>IP</strong>(Internet Protocol):网际协议</li>
+</ul>
+</li>
+<li><p>RFC(Request for comment):因特网协议标准文档</p>
+</li>
+</ul>
+<h4 id="2-服务描述"><a href="#2-服务描述" class="headerlink" title="2.服务描述"></a>2.服务描述</h4><p>因特网是为应用程序提供服务的基础设施</p>
+<p><strong>基本术语：</strong></p>
+<ul>
+<li><p>分布式应用程序:运行在端系统上的应用程序</p>
+</li>
+<li><p>套接字接口</p>
+<p>运行在不同端系统上应用程序之间发送数据必须得遵循一套规则，因特网套接字接口就是这样的一套规则集合</p>
+</li>
+</ul>
+<h4 id="3-协议"><a href="#3-协议" class="headerlink" title="3.协议"></a>3.协议</h4><p>协议定义了两个或多个通信实体之间交换的报文的格式和顺序，以及报文发送或接收一条报文或其他时间所采取的的动作</p>
+<h3 id="二、网络边缘"><a href="#二、网络边缘" class="headerlink" title="二、网络边缘"></a>二、网络边缘</h3><p>主机与端系统均位于端系统的边缘，主机又可以细分为<strong>客户</strong>和<strong>服务器</strong></p>
+<h4 id="1-接入网"><a href="#1-接入网" class="headerlink" title="1.接入网"></a>1.接入网</h4><p>指将端系统连接到其<strong>边缘路由器</strong>的网络</p>
+<p><strong>家庭接入:DSL,电缆，FTTH，拨号和卫星</strong></p>
+<ul>
+<li><p>DSL(Digital Subscriber line)</p>
+<p>DSL即<strong>数字用户线</strong>，住户从提供本地电话接入的本地电话公司出获得DSL因特网接入，本地的电话公司即为它的ISP，物理线路使用双绞铜线</p>
+<ul>
+<li>调制解调器:  即俗称的”猫”,将数字信号转变为模拟信号</li>
+<li>DSLAM(数字用户线接入复用器):  位于本地中心局，来自家庭的模拟信号在DSLAM解码为数字信号</li>
+</ul>
+<p>家庭电话线能同时传输数据和传统的电话信号，这两种信号使用不同频率编码</p>
+</li>
+<li><p>电缆网络</p>
+<p>住户从提供有线电视的公司取得电缆因特网接入</p>
+<ul>
+<li><p>HFC:混合光纤同轴系统</p>
+<p>有线电视公司采用光缆将电缆头端连接到地区枢纽，之后采用传统的同轴电缆到达各个家庭</p>
+</li>
+</ul>
+<p>与DSL类似，电缆网络也有类似的调制解调器和端接系统</p>
+<ul>
+<li>电缆调制解调器</li>
+<li>电缆调制解调器端接系统CMTS</li>
+</ul>
+<p>电缆因特网接入的一个重要特征为<strong>共享广播媒体</strong>，如果有多个用户同时经<strong>下行信道</strong>，个人网速将大大下降</p>
+</li>
+<li><p>FTTH(光纤到户)</p>
+<p>从本地中心局直接到家庭提供了一条光纤路径</p>
+<ul>
+<li><p>两种光纤分布体系结构</p>
+<ol>
+<li><p>有源光纤网络(AON)</p>
+</li>
+<li><p>无源光纤网络(PON)</p>
+<p>每个家庭具有一个光纤网络端接器(ONT),由专门的光纤接入到邻近的分配器，一个分配器可连接几十个家庭，把这些家庭的信号通过一根光纤连接到本地电话公司的中心局的光纤线路端接器(OLT),OLT最终与因特网相连接</p>
+</li>
+</ol>
+</li>
+<li><p>光纤网速极快，不同的速率对应不同的花费</p>
+</li>
+</ul>
+</li>
+<li><p>拨号接入</p>
+<p>与DSL模式基本相同，但是速率很慢，只有56kbps</p>
+</li>
+<li><p>卫星</p>
+<p>通过卫星链路与因特网相连</p>
+</li>
+</ul>
+<p><strong>企业接入：以太网和WIFI</strong></p>
+<ul>
+<li><p>LAN:局域网</p>
+</li>
+<li><p>以太网是目前公司，家庭，大学中最流行的网络接入技术</p>
+<p>端设备与以太网交换机相连，以太网交换机再与更大的因特网相连</p>
+</li>
+<li><p>无线LAN(WIFI)</p>
+<p>无线用户从/到一个接入点发送/接受分组，该接入点与企业网相连,企业网再与有线因特网相连</p>
+</li>
+</ul>
+<p><strong>广域无线技术:4G</strong></p>
+<h3 id="三、网络核心"><a href="#三、网络核心" class="headerlink" title="三、网络核心"></a>三、网络核心</h3><p>网络核心，即互联因特网端系统的分组交换机和链路构成的网状网络</p>
+<h4 id="1-分组交换"><a href="#1-分组交换" class="headerlink" title="1.分组交换"></a>1.分组交换</h4><p><strong>基本术语:</strong></p>
+<ul>
+<li>报文:端系统之间彼此发送的信息统称为报文</li>
+<li>分组:原系统将要发送的长报文划分为较小的数据块，称之为分组</li>
+</ul>
+<p><strong>存储转发运输</strong></p>
+<ul>
+<li><p>交换机在开始向输出链路传输该分组的第一个比特之前，必须接收到整个分组</p>
+</li>
+<li><p>已经到达交换机的分组的一部分将作为缓存存储在交换机中</p>
+</li>
+</ul>
+<p><strong>排队时延和分组丢失</strong></p>
+<ul>
+<li><p>分组交换机与多条链路相连，对于每条与之相连的链路，交换机都有一个与之对应的<strong>输出缓存</strong>，也称输出队列</p>
+</li>
+<li><p>如果到达的分组需要传输到某条链路，但该条链路已经被其他分组占满，则该分组必须在输出缓存中等待，产生<strong>排队时延</strong></p>
+</li>
+<li><p>排队时延取决于网路的拥塞程度</p>
+</li>
+</ul>
+<p><strong>转发表和路由选择协议</strong></p>
+<ul>
+<li><p>IP地址</p>
+<p>因特网中的每一个端系统都有一个IP地址</p>
+<p>当源主机要向目的端系统发送一个分组时，源在该分组的首部包含了目的地的IP地址，每到达一个路由器,路由器都会检查该IP地址的<strong>一部分</strong></p>
+</li>
+<li><p>转发表</p>
+<p>每个路由器都有一个转发表，用来将IP地址映射成输出链路</p>
+</li>
+</ul>
+<h4 id="2-电路交换"><a href="#2-电路交换" class="headerlink" title="2.电路交换"></a>2.电路交换</h4><ul>
+<li>电路交换与分组交换截然不同，在发送方发送信息之前，网络必须得在发送方与接收方之间创建一条连接，创建连接后，发送结束前，该连接上的所有链路都将为这个连接所占用</li>
+<li>使用电路交换的链路上的数据流通速率是恒定的，没有延迟</li>
+</ul>
+<p><strong>电路交换网络的复用</strong></p>
+<p>复用即使一条链路能都被多条连接使用，电路交换的复用主要有两种:<strong>频分复用(FDM)</strong>,<strong>时分复用(TD)</strong></p>
+<p><strong>频分复用</strong></p>
+<ul>
+<li>对于FDM，链路的频谱由跨越网络创建的所有连接共享</li>
+<li>该链路上的每一个连接都拥有一段单独的频谱，频谱的宽度被称为<strong>带宽</strong></li>
+</ul>
+<p><strong>时分复用</strong></p>
+<ul>
+<li>TMD链路的连接过程中，时间被划分为固定的<strong>帧</strong>，每个<strong>帧</strong>又被划分为固定数量的<strong>时隙</strong></li>
+<li>该链路的每一帧的固定位置上的时隙均由特定的连接使用</li>
+<li>对于TDM,一条电路的传输速率等于帧速率乘以一个时隙中的比特速率</li>
+</ul>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<h4 id="分组交换与电路交换的对比"><a href="#分组交换与电路交换的对比" class="headerlink" title="分组交换与电路交换的对比"></a>分组交换与电路交换的对比</h4><ul>
+<li><p>电路交换特点:</p>
+<p>实时性强，时延小，交换设备成本低，同时由于是独占线路，所以不会产生丢包，但同时也会带来线路利用率低，电路接续时间长，通信效率低，不同类型终端用户不能进行通信等缺点</p>
+</li>
+<li><p>分组交换特点:</p>
+<p>效率高，因为不必占用链路，但是当输入信号过多时，会产生延迟</p>
+</li>
+</ul>
+<p>在因特网中，数据的传输具有突发性，某一时刻的数据量可能会突然膨胀，此时如果使用电路交换这种固定分配的策略就不是很适合，所以，因特网使用的是<strong>分组交换</strong></p>
+<p>下面给出一个例子</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>可以看出，在给定的条件下，采用电路交换只能固定的将链路带宽分为10个用户，而分组交换则可以支持更多的用户，因为仅有0.004的概率下有超过10个用户同时发送报文</p>
+<h3 id="四、时延、丢包和吞吐量"><a href="#四、时延、丢包和吞吐量" class="headerlink" title="四、时延、丢包和吞吐量"></a>四、时延、丢包和吞吐量</h3><h4 id="时延"><a href="#时延" class="headerlink" title="时延"></a>时延</h4><p><strong>时延概述</strong></p>
+<p>分组从源出发沿着路径传输时，会经历不同的时延，具体包括<strong>节点处理时延，排队时延，传输时延，传播时延</strong>，累加起来为<strong>节点总时延</strong></p>
+<ul>
+<li><p>处理时延</p>
+<p>路由器在处理分组时需要检查分组的首部并决定将该分组导向何处，产生处理时延</p>
+</li>
+<li><p>排队时延</p>
+<p>当分组在链路上排队等待传输时，会产生排队时延</p>
+</li>
+<li><p>传输时延</p>
+<p>是指<strong>将所有的比特从路由器中推向链路</strong>产生的时延</p>
+</li>
+<li><p>传播时延</p>
+<p><strong>比特在链路中传播产生的时延</strong>，由于比特在电缆、光纤等物理媒介中的速度接近光速，所以传播时延一般较小</p>
+<p>但如果链路很长，比如通向卫星，传播时延也不能忽略</p>
+</li>
+</ul>
+<p><strong>排队时延</strong></p>
+<p>排队时延很大程度上取决于<strong>流量到达队列的速度，链路的传播速率，到达流量的性质（突发性或周期性）</strong></p>
+<p>记R为传输速率，即将比特从路由器推向链路的速率，分组均为L比特，a表示分组到达队列的平均速率，单位为分组/s</p>
+<ul>
+<li>流量强度: La/R,用来表示流量的大小</li>
+<li><strong>设计系统时流量强度不能大于1</strong>，否则分组到达队列的速率将超过分组出队列的速率，延时将趋向无穷大</li>
+<li>随着流量强度逐渐趋向于1,平均排队时延将迅速增加</li>
+</ul>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p><strong>丢包</strong></p>
+<p>现实中路由器的缓存是有限的，如果需要排队的分组数量超过了路由器的缓存，余下的分组数据将会被丢失，称之为<strong>丢包</strong></p>
+<p><strong>端到端时延</strong></p>
+<p>设在路径上有N-1个节点(交换机),如不考虑排队延时，则从一个端系统到另一个端系统的总延时为:</p>
+<p>$d<del>end-end</del>=N(d<del>proc</del>+d<del>trans</del>+d<del>prop</del>)$</p>
+<ul>
+<li><p>$dproc:$每台路由器和源主机的处理时延</p>
+</li>
+<li><p>$dprop:$每条链路的传播时延</p>
+</li>
+<li><p>$dtrans:$ 每台路由器的传输时延</p>
+</li>
+</ul>
+<p><strong>其他时延</strong></p>
+<ul>
+<li>向共享媒体传输分组的端系统有可能有意的延迟它的传输</li>
+<li>在IP语音(VoIp)的应用中，发送方在传递分组之前必须先用编码的数字化语音填充分组，产生的时延被称为分组化时延</li>
+</ul>
+<h4 id="吞吐量"><a href="#吞吐量" class="headerlink" title="吞吐量"></a>吞吐量</h4><ul>
+<li><p>瞬时吞吐量: 目的端系统接收到文件的瞬间速率</p>
+</li>
+<li><p>平均吞吐量:将总数据除以总时间可得到平均吞吐量</p>
+</li>
+<li><p>瓶颈链路</p>
+<ul>
+<li><p>通常情况下，网络核心中的传输速率都非常高，所以瓶颈通常在接入网，在源到目的地的路径中,吞吐量为该链接中所有链路中的最小传输速率</p>
+<p>即吞吐量=min{$R_1,R_2,R_3$}</p>
+</li>
+<li><p>如果接入用户非常多，他们都通过网络核心的某一条链路进行传播，此时网络核心链路的传输速率可能会限制整个连接的传输速率</p>
+</li>
+<li><p>在连接中对总吞吐量产生决定影响的链路称为<strong>瓶颈链路</strong></p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="五、协议层次及其服务模型"><a href="#五、协议层次及其服务模型" class="headerlink" title="五、协议层次及其服务模型"></a>五、协议层次及其服务模型</h4><p>网络设计者以分层的方式阻止协议以及实现这些协议的软件和硬件，各层的所有协议被称为<strong>协议栈</strong></p>
+<h4 id="因特网协议栈"><a href="#因特网协议栈" class="headerlink" title="因特网协议栈"></a>因特网协议栈</h4><p>因特网协议栈由五个层次组成:应用层，运输层，网络层，链路层，物理层</p>
+<ul>
+<li>应用层<ul>
+<li>应用层是网络应用程序以及他们的应用层协议存留的地方，包括HTTP,SMP,FTP等协议</li>
+<li>应用层的信息分组称之为<strong>报文(message)</strong></li>
+</ul>
+</li>
+<li>运输层<ul>
+<li>运输层在应用程序之间传递应用层报文</li>
+<li>因特网中包含两种运输协议,HTTP,UDP</li>
+<li>运输层的分组被称为<strong>报文段(segment)</strong></li>
+</ul>
+</li>
+<li>网络层<ul>
+<li>网络层解决在一个单一网络上传输数据包的问题</li>
+<li>网际协议IP包含在网络层中</li>
+<li>网络层的分组被称之为<strong>数据包(datagram)</strong></li>
+</ul>
+</li>
+<li>链路层<ul>
+<li>链路层是数据包从一个设备的网络层传输到另外一个设备的网络层的方法</li>
+<li>包括以太网,WIFI,和电缆接入网的DOCSIS等协议</li>
+<li>链路层的分组被称之为<strong>帧</strong></li>
+</ul>
+</li>
+<li>物理层<ul>
+<li>将链路层帧中的一个个比特从一个节点移到下一个节点</li>
+</ul>
+</li>
+</ul>
+<p>下面是五层协议栈的图示以及每层中一些对应的具体协议</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>下面是实际传输过程中数据时如何被传输的，可以看到交换机中只实现了两层，而路由器中只实现了三层</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<h4 id="OSI模型"><a href="#OSI模型" class="headerlink" title="OSI模型"></a>OSI模型</h4><p>国际标准化组织ISO提出计算机网络围绕7层组织，提出了开放系统互联模型(OSI)</p>
+<p>OSI参考模型的7层是:<strong>应用层，表示层，会话层，运输层，网络层，数据链路层和物理层</strong></p>
+<p>同名的5层功能基本下相同，下面介绍表示层和会话层</p>
+<p><strong>表示层</strong></p>
+<ul>
+<li>表示层（Presentation Layer）把数据转换为能与接收者的系统格式兼容并适合传输的格式</li>
+</ul>
+<p><strong>会话层</strong></p>
+<ul>
+<li>会话层（Session Layer）负责在数据传输中设置和维护计算机网络中两台计算机之间的通信连接</li>
+</ul>
+<p>因特网中并没有该两层，如果应用程序开发者需要这些服务，可自行构建对应功能</p>
+<h4 id="封装"><a href="#封装" class="headerlink" title="封装"></a>封装</h4><p>网络协议中的层级由上至下，会对数据包进行封装，即添加上各种附加信息</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[计算机网络_自顶向下]:应用层</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/">
+                        <span class="hidden-mobile">[CMU15445]:恢复算法</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

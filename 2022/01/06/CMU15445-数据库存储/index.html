@@ -1,0 +1,608 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="基于日志的page组织 在某些数据库中，page中放置的并不是单纯的tuple, 而是包含了对于数据库的改动，比如插入、删除、更新等  优点 当使用日志文件组织数据库时，进行的I&#x2F;O都是顺序的，只需要在page后面不断追加记录即可 如果使用slot array方式存储tuple, 那么当tuple分散在不同的page时，就需要访问多个page，效率就会降低   ​        此外，使用日志对数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU15445]:数据库存储">
+<meta property="og:url" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="基于日志的page组织 在某些数据库中，page中放置的并不是单纯的tuple, 而是包含了对于数据库的改动，比如插入、删除、更新等  优点 当使用日志文件组织数据库时，进行的I&#x2F;O都是顺序的，只需要在page后面不断追加记录即可 如果使用slot array方式存储tuple, 那么当tuple分散在不同的page时，就需要访问多个page，效率就会降低   ​        此外，使用日志对数">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/1.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/2.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/3.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/4.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/5.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/6.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/7.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/8.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/9.png">
+<meta property="og:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/10.png">
+<meta property="article:published_time" content="2022-01-06T10:15:11.000Z">
+<meta property="article:modified_time" content="2022-01-06T14:52:07.548Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/1.png">
+  
+  <title>[CMU15445]:数据库存储 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[CMU15445]:数据库存储">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-06 18:15" pubdate>
+        2022年1月6日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.9k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      6 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[CMU15445]:数据库存储</h1>
+            
+            <div class="markdown-body">
+              <h4 id="基于日志的page组织"><a href="#基于日志的page组织" class="headerlink" title="基于日志的page组织"></a>基于日志的page组织</h4><p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p>在某些数据库中，page中放置的并不是单纯的tuple, 而是包含了对于数据库的改动，比如插入、删除、更新等</p>
+<ul>
+<li><p>优点</p>
+<p>当使用日志文件组织数据库时，进行的I/O都是顺序的，只需要在page后面不断追加记录即可</p>
+<p>如果使用slot array方式存储tuple, 那么当tuple分散在不同的page时，就需要访问多个page，效率就会降低</p>
+</li>
+</ul>
+<p>​        此外，使用日志对数据库文件进行组织，便于回滚到以前的某一个状态，只需要沿着记录还原出原来的tuple即可</p>
+<ul>
+<li><p>缺点</p>
+<p>读取tuple时会比较慢，因为记录的是日志，如果想要获取某个tuple的状态，就必须要找到所有对这个tuple有改动的日志记录，</p>
+<p>如果日志数量比较庞大，就会比较慢</p>
+<p><strong>解决方法</strong></p>
+<p>一种常见的优化方法是索引和压缩技术</p>
+<p>首先使用索引快速找到针对于某一个tuple的修改记录</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>事实上，与一条tuple有关的所有记录，都可以被压缩成一条记录，采用压缩技术可以节省很大空间同时加快查找速度</p>
+<p>上面的page可以被压缩成如下</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+</li>
+</ul>
+<h4 id="sql中的数值存储类型"><a href="#sql中的数值存储类型" class="headerlink" title="sql中的数值存储类型"></a>sql中的数值存储类型</h4><p>在sql中，小数可以使用定点存储也可以采用浮点存储，不同的厂商有不同的选取，但有两个结论是不变的</p>
+<ul>
+<li><strong>定点运算比浮点运算慢</strong></li>
+<li><strong>定点运算的精度往往比较低，但是数值一定是准确的，浮点运算的精度比较高，但是数值可能不准确</strong></li>
+</ul>
+<p>sql中定点的数据类型如<code>decimal</code>, 浮点的数据类型如<code>float, real/double</code></p>
+<p>看下面的例子就知道了</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>原因是由于如今计算机中对于浮点运算只需要采用一条指令即可，而对于定点运算则需要进行一些程序运算</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<h4 id="大对象存储"><a href="#大对象存储" class="headerlink" title="大对象存储"></a>大对象存储</h4><p>有时一个tuple中的某个属性可能无法完整的和其他tuple属性存储在一个page中，此时可以将其额外存储在一个page上，我们将其称为</p>
+<p><code>overflow page</code></p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+<p>不同厂商对overflow page大小也有着不同规定，可以看上面的图片</p>
+<ul>
+<li><p>在原tuple的对应位置可以存储overflow page的指针，这样当访问大对象时，可以通过指针来找到这些大对象</p>
+<p>有的对象可能一个page 都放不下，此时可以采用链表的形式，在overflow page中留下一些位置来指向下一个overflow page，在其</p>
+<p>它overflow page中继续存储</p>
+</li>
+</ul>
+<h4 id="external-vaule-storage"><a href="#external-vaule-storage" class="headerlink" title="external vaule storage"></a>external vaule storage</h4><p>这个词不大好翻译，姑且将其称之为外部存储</p>
+<p>外部存储指的是将文件全部存储在外部磁盘中，这些磁盘不属于数据库，数据库只对他们有读取的权利，在数据库中只存放这些文件在操作系统文件系统中的位置，比如说相对路径</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+<p>这个技术主要是针对于那些超大文件，比如视频网站中的视频文件，将那些视频文件放在数据库磁盘中无疑是浪费空间，因为</p>
+<p>我们需要的往往是高性能数据库，数据库中的磁盘容量十分宝贵</p>
+<ul>
+<li><p>blob</p>
+<p>这些大型的文件通常被称之为<strong>blob(binary large object)</strong></p>
+</li>
+</ul>
+<h4 id="工作负载"><a href="#工作负载" class="headerlink" title="工作负载"></a>工作负载</h4><p>数据库中有着两种不同的负载，下面主要介绍两种</p>
+<ul>
+<li><p>OLTP(Online Transcation Processing)</p>
+<p>OLTP指那些访问数据量小的操作，常见的电商交易中对订单以及交易记录的更新，更多情况下是对数据库中的文件进行写操作</p>
+</li>
+<li><p>OLAP( Online Analytical Processing)</p>
+<p>这种操作往往意味着复杂的查询，更多的是读取操作</p>
+</li>
+<li><p>HTAP( Hybrid Transaction + Analytical Processing)</p>
+<p>该情况指的是在一个数据库上同时使用OLAP和OLTP</p>
+<p>它们对应的查询情况的复杂度以及读写情况如下图</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+</li>
+</ul>
+<h4 id="数据库存储模型"><a href="#数据库存储模型" class="headerlink" title="数据库存储模型"></a>数据库存储模型</h4><ul>
+<li><p>N-ary model(NSM)</p>
+<p>在该模型中，DBSM将一个tuple中的所有元素连续地存储在一个单独的page中，即“行存储”</p>
+<p><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<ul>
+<li><p>优点</p>
+<ul>
+<li><p>快速的删除，更新，插入</p>
+</li>
+<li><p>对于需要整个tuple的查询友好</p>
+</li>
+</ul>
+</li>
+<li><p>缺点</p>
+<ul>
+<li><p>对于需要某一列或者几列的一次大量地查询不友好</p>
+<p>因为如果想要拿到tuple中的某一列，在该模型中，就得取一整个tuple,那么大量的不需要的tuple属性就会被拿到buffer </p>
+<p>pool，污染缓冲池</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>对于OLTP来说，它往往需要次数密集地整个tuple的插入或者删除，这正好是NSM的适用场景，</p>
+<p>相反，这种场景不适用于OLAP</p>
+</li>
+<li><p>分解存储模型(Decomposition Storage Model, DSM)</p>
+<p>在该模型中，DBSM会将tuple中的属性连续地放在page中，即”列存储”</p>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+<ul>
+<li><p>优点</p>
+<ul>
+<li><p>在查询时减少了无用功，因为它仅仅读取那些需要的数据</p>
+</li>
+<li><p>空间被更好地压缩</p>
+<p>因为一个page中存储的都是相同类型的数据，所以可以只存储数据与某个数据的差值，而没必要存储整个数据</p>
+</li>
+</ul>
+</li>
+<li><p>缺点</p>
+<p>在进行完整查询，删除，更新时都非常慢，因为tuple被分散在各个page，如果想要对一个tuple进行操作，就必须要要访问很多page</p>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/07/CMU15445-%E7%BC%93%E5%86%B2%E6%B1%A0/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[CMU15445]:缓冲池</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/">
+                        <span class="hidden-mobile">数据库系统概念:数据存储结构</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

@@ -1,0 +1,599 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="page的组织一个数据库会被映射为多个不同的文件，一个文件在逻辑上会被组织为tuple的序列，这些tuple被映射到磁盘块上 一个文件可以被细分为页，页是数据传输的单位，一个页包含若干条tuple  数据库的page 数据库的页与操作系统的页有所不同，通常不同的厂商会指定不同的数据库页大小   heap file heap file是pages的集合，在heap file中，page内的tuple">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库系统概念:数据存储结构">
+<meta property="og:url" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="page的组织一个数据库会被映射为多个不同的文件，一个文件在逻辑上会被组织为tuple的序列，这些tuple被映射到磁盘块上 一个文件可以被细分为页，页是数据传输的单位，一个页包含若干条tuple  数据库的page 数据库的页与操作系统的页有所不同，通常不同的厂商会指定不同的数据库页大小   heap file heap file是pages的集合，在heap file中，page内的tuple">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/1.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/2.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/3.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/4.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/5.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/6.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/7.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/8.png">
+<meta property="og:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/9.png">
+<meta property="article:published_time" content="2022-01-04T10:59:37.000Z">
+<meta property="article:modified_time" content="2022-01-04T14:51:17.267Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/1.png">
+  
+  <title>数据库系统概念:数据存储结构 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="数据库系统概念:数据存储结构">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-04 18:59" pubdate>
+        2022年1月4日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.6k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      5 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">数据库系统概念:数据存储结构</h1>
+            
+            <div class="markdown-body">
+              <h4 id="page的组织"><a href="#page的组织" class="headerlink" title="page的组织"></a>page的组织</h4><p>一个数据库会被映射为多个不同的文件，一个文件在逻辑上会被组织为tuple的序列，这些tuple被映射到磁盘块上</p>
+<p>一个文件可以被细分为<strong>页</strong>，页是数据传输的单位，一个页包含若干条tuple</p>
+<ul>
+<li><p>数据库的page</p>
+<p>数据库的页与操作系统的页有所不同，通常不同的厂商会指定不同的数据库页大小</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+</li>
+<li><p>heap file</p>
+<p>heap file是pages的集合，在heap file中，page内的tuple都是以随机次序存储的，heap file满足以下功能</p>
+<ol>
+<li>create/get/write/delete page</li>
+<li>遍历所有的页</li>
+</ol>
+<p>通常heap file有两种实现方式:Linked List, Page Directory</p>
+<ul>
+<li><p>Linked List</p>
+<p>该方式中，在文件的首部有一个header page,其中，该page记录了两个指针</p>
+<ol>
+<li>free page list</li>
+<li>date page list</li>
+</ol>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>但这种方式进行页查找时效率很低，所以使用厂商很少</p>
+</li>
+<li><p>Page Directory</p>
+<p>page directory 是一种比较常见的方式, 它提供了一种映射：<code>page id -&gt; offset in file</code>, 这样我们可以通过 page id 找到对应的数据</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="tuple的组织"><a href="#tuple的组织" class="headerlink" title="tuple的组织"></a>tuple的组织</h4><p>tuple的组织有两种方法</p>
+<ol>
+<li>存储一种固定长度的tuple</li>
+<li>使用变长的tuple</li>
+</ol>
+<ul>
+<li><p>定长tuple</p>
+<p>使用定长tuple时实现比较简单，但是存在一些问题</p>
+<ol>
+<li>页的大小可能不是块的整数倍，由此导致可能会有某条tuple的一部分在一个页中，另一个部分在另一个页中</li>
+<li>在该结构中删除一条tuple会比较困难，因为会产生空隙</li>
+</ol>
+<p><strong>如何解决</strong></p>
+<ol>
+<li><p>确保tuple只存在于一个块中，所以在一个块中只分配他能够完整容纳的最多的数目</p>
+</li>
+<li><p>将删除tuple后面的每个tuple都向前移一位，但这样效率十分低下</p>
+<p>或者直接将最后一条tuple移动到被删除tuple所在的空间</p>
+</li>
+</ol>
+<p>为了找到空闲的tuple空间，可以使用free list来进行查找，在文件的开头可以分配一定数量的字节，称为<strong>文件头</strong>，其tuple了下一个内容被删除的第一条tuple的地址，以此类推</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+</li>
+</ul>
+<p>​            如果采用free list, 插入或者删除就十分方便</p>
+<ul>
+<li><p>变长tuple</p>
+<p>由于数据库中的varchar，所以经常会导致数据库中变长tuple的产生，对于变长tuple的使用，通常存在两个问题</p>
+<ol>
+<li>如何表示单条tuple，使得这条tuple能够被轻松地提取，即使这些属性是变长的</li>
+<li>如何在一个块中存储变长的tuple，使得一个块中的tuple能够被轻松提取</li>
+</ol>
+<p><strong>如何解决</strong></p>
+<ol>
+<li><p>在tuple的首部加上header，tuple变长属性的内容</p>
+<p>初始部分通常会包含(偏移量, 长度)对，偏移量指定了该属性在tuple中的位置，长度指定了该属性的长度</p>
+<p>一条tuple总可能还含有<strong>空位图</strong>，用于表示哪些属性是空值，综上所述，一个tuple可能如下所示</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+</li>
+<li><p>使用**分槽的页结构(slotted-page structure)**可以解决这个问题</p>
+<p>在该结构中，每个page的首部有一个header, tuple了</p>
+<ul>
+<li>一个以每条tuple的位置以及大小为元素组成的数组slot array</li>
+<li>slot array最后一个元素的位置</li>
+</ul>
+<p>该结构看起来像这样</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+<ul>
+<li><p>tuple的插入</p>
+<p>当插入tuple时，slot array自后向前增长，tuple自后向前增长</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+</li>
+<li><p>tuple的删除</p>
+<p>当从中间删除tuple3的时候，tuple之间就会产生内部碎片，此时有两种应对方案，不同的数据库厂商所采取的措施也不同</p>
+<ol>
+<li><p>将被删除tuple之前的所有tulple都向后移一位，同时修改header中的相关数据</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+</li>
+<li><p>直接将原来的位置留空，不改变tuple的位置</p>
+<p>此时如果再插入一个数据，有的厂商是将数据插入空出来的位置，有的则是正常地在首部插入</p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+<h4 id="多表聚簇"><a href="#多表聚簇" class="headerlink" title="多表聚簇"></a>多表聚簇</h4><p>​      可以将多个表中的tuple放在同一个page中，这样做在执行某些查询时可以加快查询的速度</p>
+<p><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<p>如两个表进行连接时，如果这两个表中的tuple位于同一个page,那么就可以减少磁盘I/O的次数，但这样会导致一些其他的问题，如执行<code>select *</code>时原来表中聚集在一起的tuple分散在了不同的page中，查询效率反而会降低</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/06/CMU15445-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%98%E5%82%A8/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[CMU15445]:数据库存储</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/04/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E7%A0%81/">
+                        <span class="hidden-mobile">数据库系统概念:码</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

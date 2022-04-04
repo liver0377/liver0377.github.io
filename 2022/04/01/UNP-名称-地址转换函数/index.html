@@ -1,0 +1,735 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="下面将介绍名称(主机名，服务名)与地址之间的转换函数 1. gethostbyname()该函数用于从主机名获取IP地址  struct hostent 1234567struct hostent&amp;#123;    char    *h_name;        &#x2F;* 主机的官方名称 *&#x2F;    char    **h_aliases;    &#x2F;* 主机别名的指针数组 *&#x2F;    int">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[UNP]:名称-地址转换函数">
+<meta property="og:url" content="http://example.com/2022/04/01/UNP-%E5%90%8D%E7%A7%B0-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="下面将介绍名称(主机名，服务名)与地址之间的转换函数 1. gethostbyname()该函数用于从主机名获取IP地址  struct hostent 1234567struct hostent&amp;#123;    char    *h_name;        &#x2F;* 主机的官方名称 *&#x2F;    char    **h_aliases;    &#x2F;* 主机别名的指针数组 *&#x2F;    int">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/04/01/UNP-%E5%90%8D%E7%A7%B0-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/1.png">
+<meta property="og:image" content="http://example.com/2022/04/01/UNP-%E5%90%8D%E7%A7%B0-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/2.png">
+<meta property="article:published_time" content="2022-04-01T12:35:47.000Z">
+<meta property="article:modified_time" content="2022-04-01T12:37:07.966Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="unp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/04/01/UNP-%E5%90%8D%E7%A7%B0-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/1.png">
+  
+  <title>[UNP]:名称-地址转换函数 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[UNP]:名称-地址转换函数">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-04-01 20:35" pubdate>
+        2022年4月1日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[UNP]:名称-地址转换函数</h1>
+            
+            <div class="markdown-body">
+              <p>下面将介绍名称(主机名，服务名)与地址之间的转换函数</p>
+<h3 id="1-gethostbyname"><a href="#1-gethostbyname" class="headerlink" title="1. gethostbyname()"></a>1. gethostbyname()</h3><p>该函数用于从主机名获取IP地址</p>
+<ul>
+<li><p>struct hostent</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">hostent</span>&#123;</span><br>    <span class="hljs-keyword">char</span>    *h_name;        <span class="hljs-comment">/* 主机的官方名称 */</span><br>    <span class="hljs-keyword">char</span>    **h_aliases;    <span class="hljs-comment">/* 主机别名的指针数组 */</span><br>    <span class="hljs-keyword">int</span>     h_addrtype;     <span class="hljs-comment">/* 主机IP地址的类型 */</span><br>    <span class="hljs-keyword">int</span>     h_length;       <span class="hljs-comment">/* IPv4的地址长度 */</span><br>    <span class="hljs-keyword">char</span>**  h_addr_list;    <span class="hljs-comment">/* IPV4地址列表, 以NULL结尾, 注意这里存储的部分点分十进制串，而是网络字节序 */</span><br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>图例</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+</li>
+<li><p>gethostbyname</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-function">struct hostent * <span class="hljs-title">gethostbyname</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> * hostname)</span></span><br><span class="hljs-function">                                  <span class="hljs-comment">// 成功：非空指针, 失败: NULL, h_errno被置为相关错误码</span></span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>hostname</p>
+<p>主机名，如baidu.com</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>h_errno</strong><br><code>gethostbyname()</code>的特殊之处在于，当发生错误时，它不设置<code>errno</code>，而是将全局整数变量设置为定义在<code>&lt;netdb.h&gt;</code>中的以下常量之一</p>
+<ul>
+<li>HOST_NOT_FOUND</li>
+<li>TRY_RECOVER</li>
+<li>NO_RECOVERY</li>
+<li>NO_DATA</li>
+</ul>
+<h3 id="2-gethostbyaddr"><a href="#2-gethostbyaddr" class="headerlink" title="2. gethostbyaddr()"></a>2. gethostbyaddr()</h3><p>该函数将一个二进制IP地址转换为主机名</p>
+<ul>
+<li><p>gethostbyaddr</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;netdb.h&gt;</span></span><br><br><span class="hljs-function">struct hostent *<span class="hljs-title">gethostbyaddr</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-keyword">void</span> *addr, <span class="hljs-keyword">socklen_t</span> len, <span class="hljs-keyword">int</span> family)</span></span>;<br>                                       <span class="hljs-comment">// return: 成功返回非空指针，失败返回NULL, 设置h_errno</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>addr</p>
+<p>二进制IP地址，通常传入的就是<code>in_addr</code>类型</p>
+</li>
+<li><p>len</p>
+<p>addr大小</p>
+</li>
+<li><p>family</p>
+<p>协议族</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-getservbyname-getservbyport"><a href="#3-getservbyname-getservbyport" class="headerlink" title="3. getservbyname(), getservbyport()"></a>3. getservbyname(), getservbyport()</h3><p>这两个函数用于获取相关服务(ftp, domain等)的信息</p>
+<ul>
+<li><p>struct strvent</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">servent</span></span><br><span class="hljs-class">&#123;</span><br>    <span class="hljs-keyword">char</span> * s_name;               <span class="hljs-comment">// 官方服务名称</span><br>    <span class="hljs-keyword">char</span> ** s_aliases;           <span class="hljs-comment">// 别名列表</span><br>    <span class="hljs-keyword">int</span> s_port;                  <span class="hljs-comment">// 端口号(网络字节序)</span><br>    <span class="hljs-keyword">char</span> * s_proto;              <span class="hljs-comment">// 协议</span><br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>getservbyname</p>
+<p>一般使用该函数来获取某个服务的端口号</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-function">struct servent * <span class="hljs-title">getservbyname</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> * servname, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> * protoname)</span></span>;<br>                               <span class="hljs-comment">// return: 成功返回非空指针，失败返回NULL</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>servname</p>
+<p>服务的名称，可以是<code>domain</code>, <code>ftp</code>等</p>
+</li>
+<li><p>protoname</p>
+<p>协议名，可以是<code>udp</code>, <code>tcp</code>等</p>
+<p>有的服务支持多种协议</p>
+</li>
+</ul>
+</li>
+<li><p>getservbyport</p>
+<p>一般使用该函数来获取服务名称</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-function">struct servent *<span class="hljs-title">getservbyport</span><span class="hljs-params">(<span class="hljs-keyword">int</span> port, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *protoname)</span></span>;<br>                             <span class="hljs-comment">// return: 成功返回非空指针，失败返回NULL</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>port</p>
+<p>服务所在的端口号, 必须得是网络字节序</p>
+<p>通常的使用方法如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">sptr = getservbyport(htons(<span class="hljs-number">21</span>), <span class="hljs-string">&quot;udp&quot;</span>);<br></code></pre></td></tr></table></figure></li>
+<li><p>protoname</p>
+<p>协议名</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-getaddrinfo"><a href="#4-getaddrinfo" class="headerlink" title="4. getaddrinfo()"></a>4. getaddrinfo()</h3><p>该函数能够处理名称到地址以及服务到端口这两种转换</p>
+<ul>
+<li><p>getaddrinfo</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">getaddrinfo</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> * hostname, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> * service, </span></span><br><span class="hljs-params"><span class="hljs-function">                     <span class="hljs-keyword">const</span> struct addrinfo *hints,struct addrinfo **result)</span></span>;<br>                                            <span class="hljs-comment">//return: 成功返回0, 失败返回非0错误值</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>hostname</p>
+<p>主机名</p>
+</li>
+<li><p>service</p>
+<p>服务名, 可以是字符串，也可以是网络字节序的端口号</p>
+</li>
+<li><p>hints</p>
+<ul>
+<li><p>addrinfo</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">addrinfo</span>&#123;</span><br>	<span class="hljs-keyword">int</span> ai_flags;                      <span class="hljs-comment">// 选项</span><br>	<span class="hljs-keyword">int</span> ai_family;                     <span class="hljs-comment">// 地址族</span><br>	<span class="hljs-keyword">int</span> ai_socktype;                   <span class="hljs-comment">// 套接字类型</span><br>	<span class="hljs-keyword">int</span> ai_protocol;                   <span class="hljs-comment">// 协议类型</span><br>	<span class="hljs-keyword">socklen_t</span> ai_addrlen;              <span class="hljs-comment">// ai_addr链表的大小</span><br>	<span class="hljs-keyword">char</span> * ai_canonname;               <span class="hljs-comment">// 主机名</span><br>	<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr</span> * <span class="hljs-title">ai_addr</span>;</span>         <span class="hljs-comment">// ptr to socket address structure</span><br>	<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">addrinfo</span> * <span class="hljs-title">ai_next</span>;</span>         <span class="hljs-comment">// ptr to next structure in linked list</span><br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p>该参数用于对函数的返回值进行<strong>过滤</strong>，如在<code>ai_socktype</code>字段填入SOCK_DGRAM, 那么函数就只会返回数据报套接字的信息</p>
+<p>hints参数中只能对以下字段进行设置</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">可以设置的成员</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>ai_flags</code></td>
+<td align="left">零个或多个在一起的AI_XXX值.</td>
+</tr>
+<tr>
+<td align="left"><code>ai_family</code></td>
+<td align="left">某个AF_XXX</td>
+</tr>
+<tr>
+<td align="left"><code>ai_socktype</code></td>
+<td align="left">某个SOCK_XXX值</td>
+</tr>
+<tr>
+<td align="left"><code>ai_protocol</code></td>
+<td align="left">某个写控制协议</td>
+</tr>
+</tbody></table>
+<p><code>ai_flags</code>可以设置的值如下</p>
+<table>
+<thead>
+<tr>
+<th align="left">ai_flags可能值</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>AI_PASSIVE</code></td>
+<td align="left">套接字将用于被动打开。</td>
+</tr>
+<tr>
+<td align="left"><code>AI_CANONNAME</code></td>
+<td align="left">告知 getaddrinfo 函数返回主机的规范名字</td>
+</tr>
+<tr>
+<td align="left"><code>AI_NUMERICHOST</code></td>
+<td align="left">防止任何类型的名字到地址映射， hostname参数必须为一个地址串</td>
+</tr>
+<tr>
+<td align="left"><code>AI_NUMERICSERV</code></td>
+<td align="left">防止任何类型的名字到服务的映射,service 参数必须是一个十进制端口号数串</td>
+</tr>
+<tr>
+<td align="left"><code>AI_V4MAPPED</code></td>
+<td align="left">如果同时指定 ai_family 成员的值为 AF_INET6,那么如果没有可用的AAAA记录，就返回与A记录对应的IPV4映射的IPV6地址</td>
+</tr>
+<tr>
+<td align="left"><code>AI_ALL</code></td>
+<td align="left">如果同时指定 AI_V4MAPPED 标志，那么除了返回与AAAA记录对应的IPV6地址外，还返回与A记录对应的IPV4映射的IPV6地址</td>
+</tr>
+<tr>
+<td align="left"><code>AI_ADDRCONFIG</code></td>
+<td align="left">按照所在主机的配置选择返回地址类型，也就是只查找与所在主机回馈接口以外的网络接口配置的IP地址版本一致的地址</td>
+</tr>
+</tbody></table>
+<ul>
+<li><p>AI_CANONNAME</p>
+<p>如果在<code>hints</code>中设置了该标志，那么返回的<code>result</code>链表的第一个节点的<code>ai_canonname</code>字段将包含所查找主机的规范名</p>
+</li>
+</ul>
+</li>
+<li><p>result</p>
+<p>该参数返回最终的查询结果，是一个链表的首地址, 看起来像这样</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+</li>
+</ul>
+<blockquote>
+<p>该函数虽然功能很强大，但是有点过于复杂，UNP中也认为其并不好用，故在此不做过多描述</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="5-gai-strerror"><a href="#5-gai-strerror" class="headerlink" title="5. gai_strerror()"></a>5. gai_strerror()</h3><p>该函数用于解析getaddrinfo()返回的非零错误值，将<code>errno</code>转换为字符串</p>
+<ul>
+<li><p>gai_strerror</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-function"><span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> * <span class="hljs-title">gai_strerror</span><span class="hljs-params">(<span class="hljs-keyword">int</span> error)</span></span>;<br>                                              <span class="hljs-comment">// return：指向错误描述消息字符串的指针</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>error</p>
+<p>错误号</p>
+</li>
+</ul>
+<p>具体的错误消息如下</p>
+<table>
+<thead>
+<tr>
+<th align="left">常数</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>EAI_AGAIN</code></td>
+<td align="left">名字解析中临时失败</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_BADFLAGS</code></td>
+<td align="left">ai_flags的值无效</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_FAIL</code></td>
+<td align="left">名字解析中不可恢复地失败</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_FAMILY</code></td>
+<td align="left">不支持 ai_family</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_MEMORY</code></td>
+<td align="left">内存分配失败</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_NONAME</code></td>
+<td align="left">hostname或service未提供，或者不可知</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_OVERFLOW</code></td>
+<td align="left">用户参数缓冲区溢出（仅限 getnameinfo 函数）</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_SERVICE</code></td>
+<td align="left">不支持 ai_socktype 类型的service</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_SOCKTYPE</code></td>
+<td align="left">不支持 ai_socktype</td>
+</tr>
+<tr>
+<td align="left"><code>EAI_SYSTEM</code></td>
+<td align="left">在errno变量中有系统错误返回</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h3 id="6-freeaddrinfo"><a href="#6-freeaddrinfo" class="headerlink" title="6. freeaddrinfo()"></a>6. freeaddrinfo()</h3><p>该函数同样与<code>getaddrinfo()</code>搭配使用, <code>getaddrinfo()</code>中返回的链表结构全部都是动态分配的(malloc), 需要调用<code>freeaddrinfo()</code>来将这些动态分配的结构释放</p>
+<ul>
+<li><p>freeaddrinfo</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">freeaddrinfo</span><span class="hljs-params">(struct addrinfo *ai)</span></span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>ai</p>
+<p>该参数应该指向由<code>getaddrinfo()</code>返回的第一个<code>addrinfo</code>结构</p>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/unp/">unp</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/04/02/UNP-%E9%AB%98%E7%BA%A7IO/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[UNP]:高级IO</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/04/01/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E9%80%89%E9%A1%B9/">
+                        <span class="hidden-mobile">[UNP]:套接字选项</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

@@ -1,0 +1,736 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="3.1 Page Table下图展示了RISC-V页表真正的细节，它采用的是多级页表的方案，一共有三级，整体上是一个树形的结构。这种树形结构的多级页表节省了大量内存空间 为了跟踪装载页表的页是否有效，引入页目录PD(Page Directory，即高两级的页表，xv6并没有严格区分页目录和页表) 页目录指出装载页表或下一级页目录的物理页帧的位置；或者告诉我们页表或下一级页目录的整个页不包含有效页，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[xv6]:内存管理">
+<meta property="og:url" content="http://example.com/2022/03/29/xv6-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="3.1 Page Table下图展示了RISC-V页表真正的细节，它采用的是多级页表的方案，一共有三级，整体上是一个树形的结构。这种树形结构的多级页表节省了大量内存空间 为了跟踪装载页表的页是否有效，引入页目录PD(Page Directory，即高两级的页表，xv6并没有严格区分页目录和页表) 页目录指出装载页表或下一级页目录的物理页帧的位置；或者告诉我们页表或下一级页目录的整个页不包含有效页，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/1.png">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/2.png">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/3.png">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/4.png">
+<meta property="article:published_time" content="2022-03-29T01:53:18.000Z">
+<meta property="article:modified_time" content="2022-03-29T03:04:59.043Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="xv6">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/29/xv6-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/1.png">
+  
+  <title>[xv6]:内存管理 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[xv6]:内存管理">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-29 09:53" pubdate>
+        2022年3月29日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      21k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      66 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[xv6]:内存管理</h1>
+            
+            <div class="markdown-body">
+              <h2 id="3-1-Page-Table"><a href="#3-1-Page-Table" class="headerlink" title="3.1 Page Table"></a>3.1 Page Table</h2><p>下图展示了RISC-V页表真正的细节，它采用的是<strong>多级页表</strong>的方案，一共有三级，整体上是一个<strong>树形</strong>的结构。这种树形结构的多级页表节省了大量内存空间</p>
+<p>为了跟踪装载页表的页是否有效，引入<strong>页目录PD</strong>(Page Directory，即高两级的页表，xv6并没有严格区分页目录和页表)</p>
+<p>页目录指出装载页表或下一级页目录的物理页帧的位置；或者告诉我们页表或下一级页目录的整个页不包含有效页，这时页目录的<strong>页目录项PDE</strong>（Page Directory Entry）也不存在/无效。</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1.png"></p>
+<p>每级页表的大小都被设计为4KB，刚好能装进一页物理帧内, 前面提过，<code>PTE</code>用<code>uint64</code>类型来保存，因此一个<code>PTE</code>占用8B的空间，所以一个页表可以包含512个PTE</p>
+<p>在每一级页表中，都取27位索引的其中9位来找到对应的PTE。通过查找前两级页表的PTE，可以访问新的物理页帧，在该物理页帧内保存着下一级的页表。当查找最后一级页表的PTE时，才将<code>PPN</code>和<code>Offset</code>结合，得到虚拟地址所映射的真正物理地址，然后再访问用户或内核需要的内容。</p>
+<p>整个查找页表的过程一共要遍历三层，如果这三次查找有任意一次没有命中，即对应PTE不存在，这种异常的情况称为<strong>缺页错误Page-Fault</strong></p>
+<p>现在我们来看一些PTE的标志位Flags，这些标志位告诉页表硬件，关于用户进程提供的虚拟地址的一些权限信息，这将指示页表硬件怎么对待这次地址转换。</p>
+<ul>
+<li><strong>PTE_V</strong>指示PTE是否存在/有效。如果不存在，尝试引用该页时就会引发一个缺页错误异常。</li>
+<li><strong>PTE_R</strong>指示这一页物理帧是否能被读。</li>
+<li><strong>PTE_W</strong>指示这一页物理帧是否能被写。</li>
+<li><strong>PTE_X</strong>指示这一页物理帧是否能被CPU看待并转换成指令来执行。</li>
+<li><strong>PTE_U</strong>指示这一页物理帧在用户模式下是否能访问。如果没有置位，则该一页物理帧只能在监管者模式下被访问。</li>
+</ul>
+<p>在xv6内核的启动阶段时，页表是被禁用的,  为了告诉RISC-V的分页硬件，现在可以使用页表了，内核必须将<strong>根页表</strong>的物理地址写入到<strong>satp</strong>寄存器中</p>
+<p><strong>每个CPU都有自己的<code>satp</code>寄存器</strong>,  CPU在执行指令时，将使用自己的<code>satp</code>寄存器里指向的根页表，完成指令中虚拟地址的转换, 正因为每个CPU有自己的<code>satp</code>寄存器，因此不同CPU可以使用不同的页表</p>
+<p>最后我们再弄清楚一些概念，<strong>物理内存</strong>通常指的是<strong>DRAM</strong>中的存储单元，物理内存中的每一字节都对应一个物理地址。而<strong>指令由始至终只使用虚拟地址</strong>，位于<code>MMU</code>的分页硬件负责，将CPU传来的虚拟地址转换为物理地址，然后将物理地址发送到DRAM以读取或写入数据</p>
+<h2 id="3-2-Kernel-Address-Space"><a href="#3-2-Kernel-Address-Space" class="headerlink" title="3.2 Kernel Address Space"></a><strong>3.2 Kernel Address Space</strong></h2><p>除了为每个用户进程都维护一个页表，xv6为内核也单独维护了一个页表。下图展示了<strong>内核的虚拟地址空间</strong>如何映射到实际的物理地址空间中。</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2.png"></p>
+<p>QEMU仿真的RAM，将从物理地址0x80000000（<strong>KERNBASE</strong>）开始，至少到0x86400000为止（<strong>PHYSTOP</strong>，在kernel/memlayout.h中定义其值为0x88000000，所以xv6的RAM实际大小为128M）</p>
+<p>QEMU同样也仿真了一些I/O设备，这些设备接口通过<strong>内存映射</strong>的方式，将设备的<strong>控制寄存器</strong>映射到物理内存中，位于KERNBASE下</p>
+<p>内核只要读出或写入这些特殊的物理地址，就能直接读写设备的控制寄存器，从而直接地与设备进行通信。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// the kernel expects there to be RAM</span><br><span class="hljs-comment">// for use by the kernel and user pages</span><br><span class="hljs-comment">// from physical address 0x80000000 to PHYSTOP.</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> KERNBASE 0x80000000L</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> PHYSTOP (KERNBASE + 128*1024*1024)</span><br><span class="hljs-comment">// 这里 PHYSTOP = 0x88000000L</span><br></code></pre></td></tr></table></figure>
+
+<p>值得提醒的是，在上图右半部分的物理内存视图中，只有从KERNBASE到PHYSTOP才对应真正的<strong>DRAM芯片</strong></p>
+<p>位于PHYSTOP上方，未使用的空间是没有DRAM芯片与之对应的，通过放置新的DRAM芯片，这部分空间可以被扩展并使用。而位于KERNBASE下方，访问相应的物理地址，实际上是直接访问相关I/O设备的控制寄存器，而不是访问DRAM芯片。</p>
+<ul>
+<li><p>直接映射</p>
+<p>在内核未启用页表的时候，访问RAM以及经过内存映射的设备控制寄存器时，内核的虚拟地址将采用<strong>直接映射</strong>的方式进行转换，即虚拟地址与实际物理地址相同。这种直接映射，也会在初始化内核页表的过程中（kernel/vm.c的kvminit），记录到内核页表中，即使内核开始使用页表，这种直接映射的布局也被保留了下来</p>
+</li>
+</ul>
+<p>内核的虚拟地址空间中，也有一些部分<strong>不仅仅使用直接映射</strong>。上图的左半部分展示了，除了直接映射之外，还有一些额外的布局与设置，它们位于内核虚拟地址空间的顶部，在初始化了内核页表，并且启用页表之后，就可以正式使用这些布局设置。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// map the trampoline page to the highest address,</span><br><span class="hljs-comment">// in both user and kernel space.</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> TRAMPOLINE (MAXVA - PGSIZE)</span><br><br><span class="hljs-comment">// map kernel stacks beneath the trampoline,</span><br><span class="hljs-comment">// each surrounded by invalid guard pages.</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> KSTACK(p) (TRAMPOLINE - ((p)+1)* 2*PGSIZE)</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>trampoline</strong></p>
+<p>它被映射到虚拟地址空间的顶端，用户和内核的页表里都有这一项映射，摆放的位置相同，trampoline页被映射了两次，一次映射到虚拟地址空间的顶端，一次是直接映射（trampoline页位于RAM中）。</p>
+</li>
+<li><p><strong>内核栈</strong></p>
+<p>每个进程都对应一个内核栈,  更准确地说，每个进程在用户空间执行指令时使用的是用户栈，而在内核空间下执行时（一般称为这个用户进程的内核线程）使用的是内核栈，xv6内核是C代码，自然需要内核栈来保存关于函数调用等信息</p>
+<p>内核栈是一页页地被分配的，从靠近PHYSTOP的位置开始往下分配。因此这些内核栈也在RAM当中，自然会被直接映射到内核的虚拟地址空间里。现在我们再一次将这些内核栈映射到内核虚拟地址空间的高地址部分，这样就可以自然地在它们之间插入一些<strong>保护页guard page</strong>。保护页的PTE_V是无效的，访问它会引发缺页错误的异常，从而陷入内核，这样的设计可以防止内核栈溢出</p>
+</li>
+</ul>
+<p>对于内核代码和trampoline页，标志位PTE_R和PTE_X被设置，因此内核可以从这些页中读取内容并且直接当作指令运行。其它的页则设置标志位PTE_R和PTE_W，作为常规页进行读写。</p>
+<h2 id="3-3-Code-Creating-an-Address-Space"><a href="#3-3-Code-Creating-an-Address-Space" class="headerlink" title="3.3 Code: Creating an Address Space"></a><strong>3.3 Code: Creating an Address Space</strong></h2><p>与xv6虚拟内存系统密切相关的代码位于<code>kernel/vm.c</code>中，下面我们来分析其中一部分代码。</p>
+<p>核心的函数是<code>walk()</code>和<code>mappages()</code>,  <code>walk</code>为给定的虚拟地址，找到其相应的PTE，如果PTE不存在则新分配一页使之有效，它<strong>模仿</strong>的是真实分页硬件查找页表的过程，可以看成是查找页表的<strong>软件实现</strong>，<strong>在内核或进程的页表未初始化时，内核就用它来转换相关虚拟地址</strong><code>mappages()</code>为给定输入的映射建立<code>PTE</code>，更新页表</p>
+<p>以kvm开头的函数对内核页表进行操作，以uvm开头的函数对用户页表进行操作，函数copyout和copyin完成内核空间和用户空间之间的数据复制…</p>
+<p>在内核启动阶段，<strong>main()</strong>(kernel/main.c)将调用<strong>kvminit()</strong>, 创建内核页表,  整个工作流程如下:</p>
+<ol>
+<li>分配新的一页物理帧用于装载内核的根页表</li>
+<li>调用<code>kvmmap()</code>，在即将装载的内核页表上建立一系列的直接映射，包括I/O设备、内核代码和数据、内核空闲内存段等</li>
+<li>再把<code>trampoline</code>映射到内核虚拟地址的最顶端，完成了内核页表的初始化</li>
+</ol>
+<p>内核利用以下函数初始化内核页表时，能够正常工作，是建立在内核虚拟地址空间被<strong>直接映射</strong>到物理内存的<strong>前提</strong>下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">extern</span> <span class="hljs-keyword">char</span> etext[];  <span class="hljs-comment">// kernel.ld sets this to end of kernel code.</span><br><span class="hljs-keyword">extern</span> <span class="hljs-keyword">char</span> trampoline[]; <span class="hljs-comment">// trampoline.S</span><br><br><span class="hljs-comment">// create a direct-map page table for the kernel.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">kvminit</span><span class="hljs-params">(</span></span><br><span class="hljs-params"><span class="hljs-function">&#123;</span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// allocates a page of physical memory to hold the root page-table page. </span></span></span><br><span class="hljs-params"><span class="hljs-function">  kernel_pagetable = (<span class="hljs-keyword">pagetable_t</span>) kalloc();</span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-built_in">memset</span>(kernel_pagetable, <span class="hljs-number">0</span>, PGSIZE);</span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// include the kernel’s instructions and data, physical memory up to PHYSTOP, </span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// and memory ranges which are actually devices.</span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// install mappings into a page table for a range of virtual addresses</span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// to a corresponding range of physical addresses</span></span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// uart registers</span></span></span><br><span class="hljs-params"><span class="hljs-function">  kvmmap(UART0, UART0, PGSIZE, PTE_R | PTE_W);</span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// virtio mmio disk interface</span></span></span><br><span class="hljs-params"><span class="hljs-function">  kvmmap(VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);</span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// CLINT</span></span></span><br><span class="hljs-params"><span class="hljs-function">  kvmmap(CLINT, CLINT, <span class="hljs-number">0x10000</span>, PTE_R | PTE_W);</span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// PLIC</span></span></span><br><span class="hljs-params"><span class="hljs-function">  kvmmap(PLIC, PLIC, <span class="hljs-number">0x400000</span>, PTE_R | PTE_W);</span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// 大小为kernel text(code)的大小</span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// map kernel text executable and read-only.</span></span></span><br><span class="hljs-params"><span class="hljs-function">  kvmmap(KERNBASE, KERNBASE, (uint64)etext-KERNBASE, PTE_R | PTE_X);</span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// 从kernel text之后到PHYSTOP之前的区域都是kernel data和free memory</span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// xv6 uses the physical memory between the end of the kernel and PHYSTOP for run-time allocation. </span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// map kernel data and the physical RAM we&#x27;ll make use of.</span></span></span><br><span class="hljs-params"><span class="hljs-function">  kvmmap((uint64)etext, (uint64)etext, PHYSTOP-(uint64)etext, PTE_R | PTE_W);</span></span><br><span class="hljs-params"><span class="hljs-function"></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// map the trampoline for trap entry/exit to</span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// the highest virtual address in the kernel.</span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// TRAMPOLINE = MAXVA - PGSIZE</span></span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-comment">// 从最大虚拟地址向下分配一页给trampoline</span></span></span><br><span class="hljs-params"><span class="hljs-function">  kvmmap(TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);</span></span><br><span class="hljs-params"><span class="hljs-function">&#125;</span></span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>kvmmap(): 建立虚拟地址与物理地址的映射</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// add a mapping to the kernel page table.</span><br><span class="hljs-comment">// only used when booting.</span><br><span class="hljs-comment">// does not flush TLB or enable paging.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">kvmmap</span><span class="hljs-params">(uint64 va, uint64 pa, uint64 sz, <span class="hljs-keyword">int</span> perm)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span>(mappages(kernel_pagetable, va, sz, pa, perm) != <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;kvmmap&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>mappages(): 建立映射关系的va和pa、映射的范围大小、以及PTE的权限</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Create PTEs for virtual addresses starting at va that refer to</span><br><span class="hljs-comment">// physical addresses starting at pa. va and size might not</span><br><span class="hljs-comment">// be page-aligned. Returns 0 on success, -1 if walk() couldn&#x27;t</span><br><span class="hljs-comment">// allocate a needed page-table page.</span><br><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">mappages</span><span class="hljs-params">(<span class="hljs-keyword">pagetable_t</span> pagetable, uint64 va, uint64 size, uint64 pa, <span class="hljs-keyword">int</span> perm)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// installs PTEs for new mappings </span><br>  <span class="hljs-comment">// this mapping is separately for each virtual address in the range, at page intervals</span><br>  uint64 a, last;<br>  <span class="hljs-keyword">pte_t</span> *pte;<br><br>  a = PGROUNDDOWN(va);<br>  last = PGROUNDDOWN(va + size - <span class="hljs-number">1</span>);<br>  <span class="hljs-comment">// 为va的起始和终止地址分别向下向上取页大小4096的整</span><br>  <span class="hljs-keyword">for</span>(;;)&#123;<br>    <span class="hljs-comment">// calls walk to find the address of the PTE for that address</span><br>    <span class="hljs-keyword">if</span>((pte = walk(pagetable, a, <span class="hljs-number">1</span>)) == <span class="hljs-number">0</span>)<br>      <span class="hljs-comment">// walk为虚拟地址a分配PTE失败</span><br>      <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    <span class="hljs-keyword">if</span>(*pte &amp; PTE_V)<br>      <span class="hljs-comment">// 该PTE已经被别的va映射，有效位有效</span><br>      panic(<span class="hljs-string">&quot;remap&quot;</span>);<br>    <span class="hljs-comment">// 将物理地址pa的PPN提取出来，加上标志位信息perm和有效位</span><br>    <span class="hljs-comment">// 然后将该条目放到PTE中</span><br>    *pte = PA2PTE(pa) | perm | PTE_V;<br>    <span class="hljs-keyword">if</span>(a == last)<br>      <span class="hljs-comment">// 分到了足够页数就返回</span><br>      <span class="hljs-keyword">break</span>;<br>    a += PGSIZE;<br>    pa += PGSIZE;<br>    <span class="hljs-comment">// 已经分配了一页，虚拟地址的起始位置和物理地址起始位置都加一页</span><br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>walk(): 为输入的va找到其对应的<strong>最后一级页表的PTE</strong></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Return the address of the PTE in page table pagetable</span><br><span class="hljs-comment">// that corresponds to virtual address va.  If alloc!=0,</span><br><span class="hljs-comment">// create any required page-table pages.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// The risc-v Sv39 scheme has three levels of page-table</span><br><span class="hljs-comment">// pages. A page-table page contains 512 64-bit PTEs.</span><br><span class="hljs-comment">// A 64-bit virtual address is split into five fields:</span><br><span class="hljs-comment">//   39..63 -- must be zero.</span><br><span class="hljs-comment">//   30..38 -- 9 bits of level-2 index.</span><br><span class="hljs-comment">//   21..29 -- 9 bits of level-1 index.</span><br><span class="hljs-comment">//   12..20 -- 9 bits of level-0 index.</span><br><span class="hljs-comment">//    0..11 -- 12 bits of byte offset within the page.</span><br><span class="hljs-function"><span class="hljs-keyword">pte_t</span> *</span><br><span class="hljs-function"><span class="hljs-title">walk</span><span class="hljs-params">(<span class="hljs-keyword">pagetable_t</span> pagetable, uint64 va, <span class="hljs-keyword">int</span> alloc)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// walk函数为给定va找到其对应的PTE</span><br>  <span class="hljs-comment">// returns the address of the PTE in the lowest layer in the tree</span><br>  <span class="hljs-keyword">if</span>(va &gt;= MAXVA)<br>    panic(<span class="hljs-string">&quot;walk&quot;</span>);<br><br>  <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> level = <span class="hljs-number">2</span>; level &gt; <span class="hljs-number">0</span>; level--) &#123;<br>    <span class="hljs-keyword">pte_t</span> *pte = &amp;pagetable[PX(level, va)];<br>    <span class="hljs-comment">// 根据当前level，对va进行移位和掩码操作，得到当前level页表中的对应PTE条目</span><br>    <span class="hljs-comment">// level=2时，向右移出12+2*9=30位，经掩码后得到9位level=2页表的PTE编号</span><br>    <span class="hljs-comment">// level=1时，向右移出12+9=21位，经掩码后得到9位level=1页表的PTE编号</span><br>    <span class="hljs-keyword">if</span>(*pte &amp; PTE_V) &#123;<br>      <span class="hljs-comment">// 判断有效位</span><br>      pagetable = (<span class="hljs-keyword">pagetable_t</span>)PTE2PA(*pte);<br>      <span class="hljs-comment">// 提取物理地址，对应一个页的首地址</span><br>      <span class="hljs-comment">// 将最右10位标志位移出，补充12位全0的偏移位，原44位PPN保留，得到指向下一层页表的物理地址</span><br>      <span class="hljs-comment">// level=2时，pagetable指向level=1的页表</span><br>      <span class="hljs-comment">// level=1时，pagetable指向level=0的页表</span><br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      <span class="hljs-comment">// 对应PTE不存在，且alloc被置位，则为该PTE指向的下一层页表分配一页</span><br>      <span class="hljs-keyword">if</span>(!alloc || (pagetable = (<span class="hljs-keyword">pde_t</span>*)kalloc()) == <span class="hljs-number">0</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>      <span class="hljs-comment">// 一切清0，新分配的下一级页表的所有PTE也都是无效的</span><br>      <span class="hljs-built_in">memset</span>(pagetable, <span class="hljs-number">0</span>, PGSIZE);<br>      <span class="hljs-comment">// 更新PTE，将56位物理地址右移12位去掉偏移位，移进10位标志位，同时将PTE_V置1</span><br>      *pte = PA2PTE(pagetable) | PTE_V;<br>    &#125;<br>  &#125;<br>  <span class="hljs-comment">// 跳出while后，此时pagetable指向level=0的页表</span><br>  <span class="hljs-keyword">return</span> &amp;pagetable[PX(<span class="hljs-number">0</span>, va)];<br>  <span class="hljs-comment">// level=0，向右移出12位，经掩码后得到9位level=0页表的PTE编号</span><br>  <span class="hljs-comment">// 返回va对应的level=0页表中的对应PTE</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p><code>kvminit()</code>调用完成后，内核页表被初始化完毕，接着<code>main()</code>就调用<code>kvminithart()</code>装载内核页表</p>
+<ul>
+<li>kvminithart(): 装载内核页表</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Switch h/w page table register to the kernel&#x27;s page table,</span><br><span class="hljs-comment">// and enable paging.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">kvminithart</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// install the kernel page table</span><br>  <span class="hljs-comment">// writes the physical address of the root page-table page into the register satp</span><br>  <span class="hljs-comment">// After this the CPU will translate addresses using the kernel page table</span><br>  w_satp(MAKE_SATP(kernel_pagetable));<br>  <span class="hljs-comment">// flushes the current CPU’s TLB</span><br>  <span class="hljs-comment">// 此外，在trampoline中，switches to a user page table before returning to user space，也会刷新TLB</span><br>  sfence_vma();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>还是在内核空间下，<code>main()</code>马上就调用<strong>procinit</strong>，为每个用户进程分配一个内核栈，该内核栈将被映射到内核虚拟地址空间的高地址部分，位于<code>trampoline</code>下方,更新了所有内核栈的PTE之后，最后调用<code>kvminithart()</code>更新一次<code>satp</code>寄存器，分页硬件就能使用新的内核页表</p>
+<ul>
+<li>procinit(): 分配用户内核栈, 更新内核页表</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// initialize the proc table at boot time.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">procinit</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span>;</span><br>  initlock(&amp;pid_lock, <span class="hljs-string">&quot;nextpid&quot;</span>);<br><br>  <span class="hljs-comment">// 开始时p=proc，即p的地址是proc数组的最开始位置</span><br>  <span class="hljs-comment">// 每次遍历p就指向下一个进程结构</span><br>  <span class="hljs-keyword">for</span>(p = proc; p &lt; &amp;proc[NPROC]; p++) &#123;<br>      initlock(&amp;p-&gt;lock, <span class="hljs-string">&quot;proc&quot;</span>);<br>      <span class="hljs-comment">// Allocate a page for a kernel stack, for each process</span><br>      <span class="hljs-comment">// Map it high in memory at the va generated by KSTACK, followed by an invalid guard page.</span><br>      <span class="hljs-keyword">char</span> *pa = kalloc();<br>      <span class="hljs-keyword">if</span>(pa == <span class="hljs-number">0</span>)<br>        panic(<span class="hljs-string">&quot;kalloc&quot;</span>);<br>      <span class="hljs-comment">// 指针相减就是地址相减，获取当前进程p和proc数组最开始位置的偏移量</span><br>      <span class="hljs-comment">// 比如第一次，从p-proc=0开始，KSTACK生成虚拟地址: TRAMPOLINE - 2*PGSIZE</span><br>      <span class="hljs-comment">// 因此TRAMPOLINE的下面第一页是guard page，第二页是kstack，也就是va指向的位置</span><br>      <span class="hljs-comment">// 后面也以此类推，被跳过而未被处理的guard page，PTE_V是无效的</span><br>      uint64 va = KSTACK((<span class="hljs-keyword">int</span>) (p - proc));<br>      <span class="hljs-comment">// adds the mapping PTEs to the kernel page table</span><br>      <span class="hljs-comment">// 内核栈可读可写，但在用户态不可访问，也不能直接执行</span><br>      kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);<br>      p-&gt;kstack = va;<br>  &#125;<br>  <span class="hljs-comment">// 将更新后的内核页表重新写入到satp中</span><br>  kvminithart();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-4-Physical-Memory-Allocation"><a href="#3-4-Physical-Memory-Allocation" class="headerlink" title="3.4 Physical Memory Allocation"></a><strong>3.4 Physical Memory Allocation</strong></h2><p>内核在运行时会分配和释放很多物理内存，xv6将一部分的物理内存，从<code>kernel data</code>结束开始，到<code>PHYSTOP</code>为止，这一部分称为<code>free memory</code>，用于运行时的内存分配</p>
+<p>每次分配和回收都<strong>以页为单位</strong>，一页大小4KB，通过一个<strong>空闲物理帧链表free-list</strong>，将空闲的物理帧串起来保存</p>
+<p>页表、用户内存、内核栈、管道缓冲区等操作系统组件需要内存时，内核就从<code>free list</code>上摘下一页或者多页分配给它们</p>
+<p>在回收已经分配出去的内存时，这些被回收的物理帧，内核将它们一页页地重新挂到<code>free list</code>上。</p>
+<h2 id="3-5-Code-Physical-Memory-Allocator"><a href="#3-5-Code-Physical-Memory-Allocator" class="headerlink" title="3.5 Code: Physical Memory Allocator"></a><strong>3.5 Code: Physical Memory Allocator</strong></h2><p>现在我们来看看内核的<strong>内存分配器</strong>，该模块位于<code>kernel/kalloc.c</code>中。分配器使用的数据结构很简单，如下所示，就是一个<code>struct kmem</code>，有一把保护<code>free-list</code>的自旋锁，每一页物理帧都通过<code>struct run</code>串在一起，<code>struct run</code>被保存在<strong>每个空闲物理页内部</strong></p>
+<ul>
+<li>链表节点</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">run</span> &#123;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">run</span> *<span class="hljs-title">next</span>;</span><br>&#125;;<br><br><span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">spinlock</span> <span class="hljs-title">lock</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">run</span> *<span class="hljs-title">freelist</span>;</span><br>&#125; kmem;<br></code></pre></td></tr></table></figure>
+
+<p>在<code>main()</code>中调用**kinit()**来完成内存分配器的初始化</p>
+<ul>
+<li>kinit()</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">extern</span> <span class="hljs-keyword">char</span> end[]; <span class="hljs-comment">// first address after kernel.</span><br>                   <span class="hljs-comment">// defined by kernel.ld.</span><br><br><span class="hljs-comment">//initialize the allocator</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">kinit</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// initializes the free list to hold every page between the end of the kernel and PHYSTOP</span><br>  <span class="hljs-comment">// xv6 assumes that the machine has 128MB of RAM</span><br>  initlock(&amp;kmem.lock, <span class="hljs-string">&quot;kmem&quot;</span>);<br>  <span class="hljs-comment">// kernel data之后到PHYSTOP之前都可以用于分配</span><br>  <span class="hljs-comment">// add memory to the free list via per-page calls to kfree</span><br>  freerange(end, (<span class="hljs-keyword">void</span>*)PHYSTOP);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>freerange(): 回收物理内存</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">freerange</span><span class="hljs-params">(<span class="hljs-keyword">void</span> *pa_start, <span class="hljs-keyword">void</span> *pa_end)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">char</span> *p;<br>  p = (<span class="hljs-keyword">char</span>*)PGROUNDUP((uint64)pa_start);<br>  <span class="hljs-comment">//kfree是头插法</span><br>  <span class="hljs-keyword">for</span>(; p + PGSIZE &lt;= (<span class="hljs-keyword">char</span>*)pa_end; p += PGSIZE)<br>    kfree(p);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>kfree(): 回收一页物理帧</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Free the page of physical memory pointed at by v,</span><br><span class="hljs-comment">// which normally should have been returned by a</span><br><span class="hljs-comment">// call to kalloc().  (The exception is when</span><br><span class="hljs-comment">// initializing the allocator; see kinit above.)</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">kfree</span><span class="hljs-params">(<span class="hljs-keyword">void</span> *pa)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">run</span> *<span class="hljs-title">r</span>;</span><br><br>  <span class="hljs-keyword">if</span>(((uint64)pa % PGSIZE) != <span class="hljs-number">0</span> || (<span class="hljs-keyword">char</span>*)pa &lt; end || (uint64)pa &gt;= PHYSTOP)<br>    panic(<span class="hljs-string">&quot;kfree&quot;</span>);<br><br>  <span class="hljs-comment">// Fill with junk to catch dangling refs.</span><br>  <span class="hljs-built_in">memset</span>(pa, <span class="hljs-number">1</span>, PGSIZE);<br><br>  <span class="hljs-comment">// casts pa to a pointer to struct run, which records the old start of the free list in r-&gt;next,</span><br>  <span class="hljs-comment">// and sets the free list equal to r</span><br>  r = (struct run*)pa;<br><br>  acquire(&amp;kmem.lock);<br>  r-&gt;next = kmem.freelist;<br>  kmem.freelist = r;<br>  release(&amp;kmem.lock);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>kalloc(): 分配一个物理页</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Allocate one 4096-byte page of physical memory.</span><br><span class="hljs-comment">// Returns a pointer that the kernel can use.</span><br><span class="hljs-comment">// Returns 0 if the memory cannot be allocated.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> *</span><br><span class="hljs-function"><span class="hljs-title">kalloc</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// removes and returns the first element in the free list.</span><br>  <span class="hljs-comment">// When a process asks xv6 for more user memory, xv6 first uses kalloc to allocate physical pages.</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">run</span> *<span class="hljs-title">r</span>;</span><br><br>  acquire(&amp;kmem.lock);<br>  r = kmem.freelist;<br>  <span class="hljs-keyword">if</span>(r)<br>    kmem.freelist = r-&gt;next;<br>  release(&amp;kmem.lock);<br><br>  <span class="hljs-keyword">if</span>(r)<br>    <span class="hljs-built_in">memset</span>((<span class="hljs-keyword">char</span>*)r, <span class="hljs-number">5</span>, PGSIZE); <span class="hljs-comment">// fill with junk</span><br>  <span class="hljs-keyword">return</span> (<span class="hljs-keyword">void</span>*)r;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-6-Process-Address-Space"><a href="#3-6-Process-Address-Space" class="headerlink" title="3.6 Process Address Space"></a><strong>3.6 Process Address Space</strong></h2><p>前面我们已经讨论过内核的虚拟地址空间，现在我们来看<strong>用户进程的虚拟地址空间</strong>，每个用户进程都有自己的页表，因此也有不同的虚拟地址空间。</p>
+<p>用户进程的虚拟地址空间同样从0开始，一直到MAXVA（2^38-1），这其中有多达256GB的空间。一个用户进程如果在运行时需要额外内存，就向内核内存分配器发出请求，让kalloc分配一些物理页，然后内核会更新用户进程的页表，设置新的PTE（此前提到的5个标志位都被设置）。进程中间那些未使用的虚拟地址，只需要在页表中将相关的PTE标记为无效即可</p>
+<ul>
+<li>为什么使用页表</li>
+</ul>
+<ol>
+<li>用户进程现在都有自己的页表，在进程之间提供了<strong>隔离性</strong></li>
+<li>用户的虚拟地址空间是<strong>连续</strong>的，而对应的物理帧分布可以是<strong>不连续</strong>的</li>
+<li>通过页表，内核可以将<code>trampoline</code>页映射到用户虚拟地址空间的顶端，所有进程都可以看到这一页。</li>
+</ol>
+<p>用户进程虚拟地址空间的布局如下图所示</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3.png"></p>
+<ul>
+<li><p>stack</p>
+<p>为了防止用户栈溢出，在栈的下面也放置了一页保护页。栈溢出时会访问到该保护页，从而出现缺页错误异常，用户进程因此陷入内核并等待处理，内核可能会终止掉该进程。而现在的操作系统在这种情况下，一般都会自动地为用户栈分配更多的空间</p>
+<p>值得注意的地方有两点：</p>
+<ol>
+<li>内核虚拟地址空间中那些内核栈之间的保护页有所不同。这里的保护页是<strong>有实际的物理帧</strong>对应的，即内核确实为用户进程分配这一页（标志位为RWV，没有U）</li>
+<li>在内核空间下，内核栈之间的保护页PTE_V无效，并没有实际分配物理页</li>
+</ol>
+</li>
+<li><p>text， data段</p>
+<p>xv6为了简单起见，将它们放在了同一页内，实际上现在的操作系统都会将它们放在不同的页内，这一点也可以通过在编译时指定-N选项来强制实现</p>
+</li>
+</ul>
+<p><strong>Stack</strong></p>
+<p>Stack的大体结构如上图所示，下面给出其具体结构</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4.png"></p>
+<p>上图是一个典型的<strong>运行时(Calling)栈</strong>, xv6中，一个<code>stack</code>只有一个page大小, 当进程进行嵌套调用(如函数A调用函数B)时， 每个被调用的函数都会产生一个<strong>栈帧(Stack Frame)</strong>, 每一个栈帧由四个部分组成</p>
+<ul>
+<li>返回地址(fp)</li>
+<li>上一个栈帧的fp寄存器的值(fp - 8)</li>
+<li>保存的寄存器(Caller)</li>
+<li>局部变量</li>
+</ul>
+<p>对于每一个栈帧来说，寄存器<code>fp/s0</code>指向其栈帧的首部, 即栈帧的最大地址，寄存器<code>sp</code>指向栈帧的尾部, 即栈帧的最小地址</p>
+<p>通常情况下，当申请一个新的栈帧时，会将sp - 16(至少-8， 因为可能没有上一个栈帧)</p>
+<h2 id="3-7-Code-Sbrk"><a href="#3-7-Code-Sbrk" class="headerlink" title="3.7 Code: Sbrk"></a><strong>3.7 Code: Sbrk</strong></h2><p><strong>Sbrk</strong>是一个系统调用，用户进程调用它以增加或减少自己拥有的物理内存（proc-&gt;sz）</p>
+<ul>
+<li>sys_sbrk()</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function">uint64</span><br><span class="hljs-function"><span class="hljs-title">sys_sbrk</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> addr;<br>  <span class="hljs-keyword">int</span> n;<br><br>  <span class="hljs-keyword">if</span>(argint(<span class="hljs-number">0</span>, &amp;n) &lt; <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>  addr = myproc()-&gt;sz;<br>  <span class="hljs-keyword">if</span>(growproc(n) &lt; <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>  <span class="hljs-keyword">return</span> addr;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>growproc(): 更改物理内存大小</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Grow or shrink user memory by n bytes.</span><br><span class="hljs-comment">// Return 0 on success, -1 on failure.</span><br><span class="hljs-comment">// Sbrk is implemented by the function growproc</span><br><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">growproc</span><span class="hljs-params">(<span class="hljs-keyword">int</span> n)</span></span><br><span class="hljs-function"></span>&#123;<br>  uint sz;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br><br>  sz = p-&gt;sz;<br>  <span class="hljs-comment">// 是从sz接着分配内存给增长需要的</span><br>  <span class="hljs-comment">// 也就是紧接着user text、user data、guard page和user stack之后</span><br>  <span class="hljs-comment">// 从那个虚拟地址继续开始分配</span><br>  <span class="hljs-keyword">if</span>(n &gt; <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-keyword">if</span>((sz = uvmalloc(p-&gt;pagetable, sz, sz + n)) == <span class="hljs-number">0</span>) &#123;<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(n &lt; <span class="hljs-number">0</span>)&#123;<br>    sz = uvmdealloc(p-&gt;pagetable, sz, sz + n);<br>  &#125;<br>  p-&gt;sz = sz;<br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>uvmalloc()</li>
+</ul>
+<p><strong>uvmalloc</strong>通过调用kalloc来分配物理内存，并调用mappages来更新页表，并设置PTE的5个标志位都置位。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Allocate PTEs and physical memory to grow process from oldsz to</span><br><span class="hljs-comment">// newsz, which need not be page aligned.  Returns new size or 0 on error.</span><br><span class="hljs-function">uint64</span><br><span class="hljs-function"><span class="hljs-title">uvmalloc</span><span class="hljs-params">(<span class="hljs-keyword">pagetable_t</span> pagetable, uint64 oldsz, uint64 newsz)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">char</span> *mem;<br>  uint64 a;<br><br>  <span class="hljs-keyword">if</span>(newsz &lt; oldsz)<br>    <span class="hljs-keyword">return</span> oldsz;<br><br>  oldsz = PGROUNDUP(oldsz);<br>  <span class="hljs-keyword">for</span>(a = oldsz; a &lt; newsz; a += PGSIZE)&#123;<br>    <span class="hljs-comment">// allocates physical memory with kalloc, and adds PTEs to the user page table with mappages</span><br>    mem = kalloc();<br>    <span class="hljs-keyword">if</span>(mem == <span class="hljs-number">0</span>)&#123;<br>      uvmdealloc(pagetable, a, oldsz);<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-built_in">memset</span>(mem, <span class="hljs-number">0</span>, PGSIZE);<br>    <span class="hljs-keyword">if</span>(mappages(pagetable, a, PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) != <span class="hljs-number">0</span>)&#123;<br>      kfree(mem);<br>      uvmdealloc(pagetable, a, oldsz);<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>  &#125;<br>  <span class="hljs-keyword">return</span> newsz;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>uvmdealloc()</li>
+</ul>
+<p><strong>uvmdealloc</strong>调用uvmunmap来回收已分配的物理内存</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Deallocate user pages to bring the process size from oldsz to</span><br><span class="hljs-comment">// newsz.  oldsz and newsz need not be page-aligned, nor does newsz</span><br><span class="hljs-comment">// need to be less than oldsz.  oldsz can be larger than the actual</span><br><span class="hljs-comment">// process size.  Returns the new process size.</span><br><span class="hljs-function">uint64</span><br><span class="hljs-function"><span class="hljs-title">uvmdealloc</span><span class="hljs-params">(<span class="hljs-keyword">pagetable_t</span> pagetable, uint64 oldsz, uint64 newsz)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span>(newsz &gt;= oldsz)<br>    <span class="hljs-keyword">return</span> oldsz;<br><br>  <span class="hljs-keyword">if</span>(PGROUNDUP(newsz) &lt; PGROUNDUP(oldsz))&#123;<br>    <span class="hljs-keyword">int</span> npages = (PGROUNDUP(oldsz) - PGROUNDUP(newsz)) / PGSIZE;<br>    <span class="hljs-comment">// calls uvmunmap, </span><br>    <span class="hljs-comment">// which uses walk to find PTEs and kfree to free the physical memory they refer to.</span><br>    uvmunmap(pagetable, PGROUNDUP(newsz), npages, <span class="hljs-number">1</span>);<br>  &#125;<br><br>  <span class="hljs-keyword">return</span> newsz;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>uvmunmap()</p>
+<p><strong>uvmunmap</strong>使用<code>walk()</code>找到相应的PTE，并且调用kfree回收相应的物理帧</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Remove npages of mappings starting from va. va must be</span><br><span class="hljs-comment">// page-aligned. The mappings must exist.</span><br><span class="hljs-comment">// Optionally free the physical memory.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">uvmunmap</span><span class="hljs-params">(<span class="hljs-keyword">pagetable_t</span> pagetable, uint64 va, uint64 npages, <span class="hljs-keyword">int</span> do_free)</span></span><br><span class="hljs-function"></span>&#123;<br>  uint64 a;<br>  <span class="hljs-keyword">pte_t</span> *pte;<br><br>  <span class="hljs-keyword">if</span>((va % PGSIZE) != <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;uvmunmap: not aligned&quot;</span>);<br><br>  <span class="hljs-keyword">for</span>(a = va; a &lt; va + npages*PGSIZE; a += PGSIZE)&#123;<br>    <span class="hljs-keyword">if</span>((pte = walk(pagetable, a, <span class="hljs-number">0</span>)) == <span class="hljs-number">0</span>)<br>      panic(<span class="hljs-string">&quot;uvmunmap: walk&quot;</span>);<br>    <span class="hljs-keyword">if</span>((*pte &amp; PTE_V) == <span class="hljs-number">0</span>)<br>      <span class="hljs-comment">// examination of the user page table</span><br>      <span class="hljs-comment">// xv6 uses a process’s page table as the only record</span><br>      <span class="hljs-comment">// of which physical memory pages are allocated to that process</span><br>      panic(<span class="hljs-string">&quot;uvmunmap: not mapped&quot;</span>);<br>    <span class="hljs-keyword">if</span>(PTE_FLAGS(*pte) == PTE_V)<br>      panic(<span class="hljs-string">&quot;uvmunmap: not a leaf&quot;</span>);<br>    <span class="hljs-keyword">if</span>(do_free)&#123;<br>      uint64 pa = PTE2PA(*pte);<br>      kfree((<span class="hljs-keyword">void</span>*)pa);<br>    &#125;<br>    *pte = <span class="hljs-number">0</span>;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-8-Code-Exec"><a href="#3-8-Code-Exec" class="headerlink" title="3.8 Code: Exec"></a><strong>3.8 Code: Exec</strong></h2><p>现在我们来看最后一段代码，系统调用<strong>exec</strong>的实现（kernel/exec.c）</p>
+<p>系统调用<code>exec</code>将存储在文件系统上的，新的用户程序装载进内存里，然后执行它</p>
+<blockquote>
+<p>int exec(char *path, char **argv)</p>
+</blockquote>
+<ul>
+<li>读取文件的<code>ELF Header</code></li>
+</ul>
+<p><code>exec</code>通过路径名打开文件，然后读取该文件的<strong>ELF Header</strong>（kernel/elf.h）, xv6的所有应用程序以通用的<strong>ELF格式</strong>来描述，一个ELF二进制文件大概这样组成：一个<code>ELF Header</code>，后面紧跟一系列的<code>Program Section Headers</code></p>
+<p>每个<code>Program Section Header</code>都对应一段需要加载到内存中的程序，xv6的应用程序只有一个Program Section Header，而在其它操作系统上可能有好几个。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// File header</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">elfhdr</span> &#123;</span><br>  uint magic;  <span class="hljs-comment">// must equal ELF_MAGIC</span><br>  uchar elf[<span class="hljs-number">12</span>];<br>  ushort type;<br>  ushort machine;<br>  uint version;<br>  uint64 entry;<br>  uint64 phoff;<br>  uint64 shoff;<br>  uint flags;<br>  ushort ehsize;<br>  ushort phentsize;<br>  ushort phnum;<br>  ushort shentsize;<br>  ushort shnum;<br>  ushort shstrndx;<br>&#125;;<br><br><span class="hljs-comment">// Program section header</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proghdr</span> &#123;</span><br>  uint32 type;<br>  uint32 flags;<br>  uint64 off;<br>  uint64 vaddr;<br>  uint64 paddr;<br>  uint64 filesz;<br>  uint64 memsz;<br>  uint64 align;<br>&#125;;<br><br><span class="hljs-comment">// Format of an ELF executable file</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> ELF_MAGIC 0x464C457FU  <span class="hljs-comment">// &quot;\x7FELF&quot; in little endian</span></span><br><br><span class="hljs-comment">// Values for Proghdr type</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> ELF_PROG_LOAD           1</span><br><br><span class="hljs-comment">// Flag bits for Proghdr flags</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> ELF_PROG_FLAG_EXEC      1</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> ELF_PROG_FLAG_WRITE     2</span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">define</span> ELF_PROG_FLAG_READ      4</span><br></code></pre></td></tr></table></figure>
+
+<p><code>exec</code>读取了文件系统上的文件之后，第一件事就是先检查该文件是否包含ELF二进制文件。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Check ELF header</span><br><span class="hljs-comment">// exec的第一步是检查文件是否包ELF二进制文件。</span><br><span class="hljs-comment">// ELF二进制文件是以4个“magic number”开头的，即0x7F，“E”，“L”，“F”，即宏定义ELF_MAGIC。</span><br><span class="hljs-comment">// 如果ELF头中包含正确的magic number，exec就认为该ELF二进制文件的结构是正确的。</span><br><span class="hljs-keyword">if</span>(readi(ip, <span class="hljs-number">0</span>, (uint64)&amp;elf, <span class="hljs-number">0</span>, <span class="hljs-keyword">sizeof</span>(elf)) != <span class="hljs-keyword">sizeof</span>(elf))<br>  <span class="hljs-keyword">goto</span> bad;<br><span class="hljs-keyword">if</span>(elf.magic != ELF_MAGIC)<br>  <span class="hljs-keyword">goto</span> bad;<br></code></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li><p>创建用户页表</p>
+<p><code>exec</code>为用户进程调用<code>proc_pagetable()</code>，通过<code>uvmcreate()</code>创建一个空的用户页表，接着只在该页表上添加了<code>trampoline</code>和<code>trapframe</code>的映射，其它的虚拟地址空间都暂时为空</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//exec通过proc_pagetable分配了一个没有用户部分映射的页表</span><br><span class="hljs-keyword">if</span>((pagetable = proc_pagetable(p)) == <span class="hljs-number">0</span>)<br>  <span class="hljs-keyword">goto</span> bad;<br><br><br><span class="hljs-comment">// Create a user page table for a given process,</span><br><span class="hljs-comment">// with no user memory, but with trampoline pages.</span><br><span class="hljs-function"><span class="hljs-keyword">pagetable_t</span></span><br><span class="hljs-function"><span class="hljs-title">proc_pagetable</span><span class="hljs-params">(struct proc *p)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">pagetable_t</span> pagetable;<br><br>  <span class="hljs-comment">// An empty page table.</span><br>  pagetable = uvmcreate();<br>  <span class="hljs-keyword">if</span>(pagetable == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br><br>  <span class="hljs-comment">// map the trampoline code (for system call return)</span><br>  <span class="hljs-comment">// at the highest user virtual address.</span><br>  <span class="hljs-comment">// only the supervisor uses it, on the way</span><br>  <span class="hljs-comment">// to/from user space, so not PTE_U.</span><br>  <span class="hljs-keyword">if</span>(mappages(pagetable, TRAMPOLINE, PGSIZE,<br>              (uint64)trampoline, PTE_R | PTE_X) &lt; <span class="hljs-number">0</span>)&#123;<br>    uvmfree(pagetable, <span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  &#125;<br><br>  <span class="hljs-comment">// map the trapframe just below TRAMPOLINE, for trampoline.S.</span><br>  <span class="hljs-keyword">if</span>(mappages(pagetable, TRAPFRAME, PGSIZE,<br>              (uint64)(p-&gt;trapframe), PTE_R | PTE_W) &lt; <span class="hljs-number">0</span>)&#123;<br>    uvmunmap(pagetable, TRAMPOLINE, <span class="hljs-number">1</span>, <span class="hljs-number">0</span>);<br>    uvmfree(pagetable, <span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  &#125;<br><br>  <span class="hljs-keyword">return</span> pagetable;<br>&#125;<br><br><span class="hljs-comment">// create an empty user page table.</span><br><span class="hljs-comment">// returns 0 if out of memory.</span><br><span class="hljs-function"><span class="hljs-keyword">pagetable_t</span></span><br><span class="hljs-function"><span class="hljs-title">uvmcreate</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">pagetable_t</span> pagetable;<br>  pagetable = (<span class="hljs-keyword">pagetable_t</span>) kalloc();<br>  <span class="hljs-keyword">if</span>(pagetable == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  <span class="hljs-built_in">memset</span>(pagetable, <span class="hljs-number">0</span>, PGSIZE);<br>  <span class="hljs-keyword">return</span> pagetable;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li><p>将程序由文件(磁盘)装载到内存</p>
+<p><code>exec()</code>对于每个程序段，先是调用<code>uvmalloc()</code>分配足够的物理帧，更新了用户页表。然后调用<code>loadseg()</code>加载程序段到这些物理帧(DRAM)中</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Load program into memory</span><br><span class="hljs-keyword">for</span>(i=<span class="hljs-number">0</span>, off=elf.phoff; i&lt;elf.phnum; i++, off+=<span class="hljs-keyword">sizeof</span>(ph))&#123;<br>  <span class="hljs-keyword">if</span>(readi(ip, <span class="hljs-number">0</span>, (uint64)&amp;ph, off, <span class="hljs-keyword">sizeof</span>(ph)) != <span class="hljs-keyword">sizeof</span>(ph))<br>    <span class="hljs-keyword">goto</span> bad;<br>  <span class="hljs-keyword">if</span>(ph.type != ELF_PROG_LOAD)<br>    <span class="hljs-keyword">continue</span>;<br>  <span class="hljs-keyword">if</span>(ph.memsz &lt; ph.filesz)<br>    <span class="hljs-keyword">goto</span> bad;<br>  <span class="hljs-keyword">if</span>(ph.vaddr + ph.memsz &lt; ph.vaddr)<br>    <span class="hljs-keyword">goto</span> bad;<br>  uint64 sz1;<br>  <span class="hljs-comment">// 再通过uvmalloc为每个ELF段分配内存</span><br>  <span class="hljs-keyword">if</span>((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz)) == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">goto</span> bad;<br>  sz = sz1;<br>  <span class="hljs-keyword">if</span>(ph.vaddr % PGSIZE != <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">goto</span> bad;<br>  <span class="hljs-comment">// 然后通过loadseg把段的内容载入物理内存中</span><br>  <span class="hljs-comment">// loadseg通过walkaddr找到写入ELF段的内存的物理地址；通过readi来将段的内容从文件中读出</span><br>  <span class="hljs-keyword">if</span>(loadseg(pagetable, ph.vaddr, ip, ph.off, ph.filesz) &lt; <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">goto</span> bad;<br>&#125;<br><br><br><span class="hljs-comment">// Load a program segment into pagetable at virtual address va.</span><br><span class="hljs-comment">// va must be page-aligned</span><br><span class="hljs-comment">// and the pages from va to va+sz must already be mapped.</span><br><span class="hljs-comment">// Returns 0 on success, -1 on failure.</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">loadseg</span><span class="hljs-params">(<span class="hljs-keyword">pagetable_t</span> pagetable, uint64 va, struct inode *ip, uint offset, uint sz)</span></span><br><span class="hljs-function"></span>&#123;<br>  uint i, n;<br>  uint64 pa;<br><br>  <span class="hljs-keyword">if</span>((va % PGSIZE) != <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;loadseg: va must be page aligned&quot;</span>);<br><br>  <span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; sz; i += PGSIZE)&#123;<br>    pa = walkaddr(pagetable, va + i);<br>    <span class="hljs-keyword">if</span>(pa == <span class="hljs-number">0</span>)<br>      panic(<span class="hljs-string">&quot;loadseg: address should exist&quot;</span>);<br>    <span class="hljs-keyword">if</span>(sz - i &lt; PGSIZE)<br>      n = sz - i;<br>    <span class="hljs-keyword">else</span><br>      n = PGSIZE;<br>    <span class="hljs-comment">// 将文件内容写入物理内存DRAM中</span><br>    <span class="hljs-keyword">if</span>(readi(ip, <span class="hljs-number">0</span>, (uint64)pa, offset+i, n) != n)<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>  &#125;<br>  <br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br><br><br><span class="hljs-comment">// Look up a virtual address, return the physical address,</span><br><span class="hljs-comment">// or 0 if not mapped.</span><br><span class="hljs-comment">// Can only be used to look up user pages.</span><br><span class="hljs-function">uint64</span><br><span class="hljs-function"><span class="hljs-title">walkaddr</span><span class="hljs-params">(<span class="hljs-keyword">pagetable_t</span> pagetable, uint64 va)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">pte_t</span> *pte;<br>  uint64 pa;<br><br>  <span class="hljs-keyword">if</span>(va &gt;= MAXVA)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br><br>  pte = walk(pagetable, va, <span class="hljs-number">0</span>);<br>  <span class="hljs-keyword">if</span>(pte == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  <span class="hljs-keyword">if</span>((*pte &amp; PTE_V) == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  <span class="hljs-keyword">if</span>((*pte &amp; PTE_U) == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  pa = PTE2PA(*pte);<br>  <span class="hljs-keyword">return</span> pa;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li><p>初始化用户栈</p>
+<p><code>exec()</code>首先分配两页物理帧:</p>
+<ul>
+<li><p> 第一页用作保护页，通过调用<code>uvmclear()</code>将<code>PTE_U</code>设为无效，这样在用户空间下不能访问它</p>
+</li>
+<li><p> 第二页留给用户栈，argc, argv 已经其他需要的寄存器推入用户栈内</p>
+</li>
+</ul>
+<p>最后，<code>exec()</code>就清除进程的旧内存映像，即释放旧页表所占用的物理内存，并使用新的页表, <code>exec()</code>顺利完成并返回，该进程将执行一个新的用户程序</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 到这里，用户空间的text和data都已经加载完毕了</span><br><span class="hljs-comment">// Allocate two pages at the next page boundary.</span><br><span class="hljs-comment">// 紧接着data的位置向上继续分配两个页，第一页用作guard page，第二页用作user stack</span><br><span class="hljs-comment">// ustack中的前三项就是伪造的返回PC值，argc和argv指针</span><br>sz = PGROUNDUP(sz);<br>uint64 sz1;<br><span class="hljs-keyword">if</span>((sz1 = uvmalloc(pagetable, sz, sz + <span class="hljs-number">2</span>*PGSIZE)) == <span class="hljs-number">0</span>)<br>  <span class="hljs-keyword">goto</span> bad;<br>sz = sz1;<br><span class="hljs-comment">// uvmclear将PTE_U设为无效，因此这一页用作保护页</span><br>uvmclear(pagetable, sz<span class="hljs-number">-2</span>*PGSIZE); <br>sp = sz;<br>stackbase = sp - PGSIZE;<br><br><span class="hljs-comment">// Push argument strings, prepare rest of stack in ustack.</span><br><span class="hljs-keyword">for</span>(argc = <span class="hljs-number">0</span>; argv[argc]; argc++) &#123;<br>  <span class="hljs-keyword">if</span>(argc &gt;= MAXARG)<br>    <span class="hljs-keyword">goto</span> bad;<br>  sp -= <span class="hljs-built_in">strlen</span>(argv[argc]) + <span class="hljs-number">1</span>;<br>  sp -= sp % <span class="hljs-number">16</span>; <span class="hljs-comment">// riscv sp must be 16-byte aligned</span><br>  <span class="hljs-keyword">if</span>(sp &lt; stackbase)<br>    <span class="hljs-keyword">goto</span> bad;<br>  <span class="hljs-keyword">if</span>(copyout(pagetable, sp, argv[argc], <span class="hljs-built_in">strlen</span>(argv[argc]) + <span class="hljs-number">1</span>) &lt; <span class="hljs-number">0</span>)<br>    <span class="hljs-comment">// 保护页还让exec能够处理那些过于庞大的参数；当参数过于庞大时，</span><br>    <span class="hljs-comment">// exec 用于将参数拷贝到栈上的函数copyout会发现目标页无法访问，并且返回-1</span><br>    <span class="hljs-keyword">goto</span> bad;<br>  ustack[argc] = sp;<br>&#125;<br>ustack[argc] = <span class="hljs-number">0</span>;<br><br><span class="hljs-comment">// push the array of argv[] pointers.</span><br>sp -= (argc+<span class="hljs-number">1</span>) * <span class="hljs-keyword">sizeof</span>(uint64);<br>sp -= sp % <span class="hljs-number">16</span>;<br><span class="hljs-keyword">if</span>(sp &lt; stackbase)<br>  <span class="hljs-keyword">goto</span> bad;<br><span class="hljs-keyword">if</span>(copyout(pagetable, sp, (<span class="hljs-keyword">char</span> *)ustack, (argc+<span class="hljs-number">1</span>)*<span class="hljs-keyword">sizeof</span>(uint64)) &lt; <span class="hljs-number">0</span>)<br>  <span class="hljs-keyword">goto</span> bad;<br><br><span class="hljs-comment">// arguments to user main(argc, argv)</span><br><span class="hljs-comment">// argc is returned via the system call return</span><br><span class="hljs-comment">// value, which goes in a0.</span><br><span class="hljs-comment">// 现在的sp指向argv[]数组，argc通过a0寄存器i 返回</span><br>p-&gt;trapframe-&gt;a1 = sp;<br><br><span class="hljs-comment">// Save program name for debugging.</span><br><span class="hljs-keyword">for</span>(last=s=path; *s; s++)<br>  <span class="hljs-keyword">if</span>(*s == <span class="hljs-string">&#x27;/&#x27;</span>)<br>    last = s+<span class="hljs-number">1</span>;<br>safestrcpy(p-&gt;name, last, <span class="hljs-keyword">sizeof</span>(p-&gt;name));<br><br><span class="hljs-comment">// Commit to the user image.</span><br>oldpagetable = p-&gt;pagetable;<br>p-&gt;pagetable = pagetable;<br>p-&gt;sz = sz;<br><span class="hljs-comment">// 注意，在用户进程被创建的时候，这里就将返回到main的pc值放到寄存器epc里面</span><br>p-&gt;trapframe-&gt;epc = elf.entry;  <span class="hljs-comment">// initial program counter = main</span><br>p-&gt;trapframe-&gt;sp = sp; <span class="hljs-comment">// initial stack pointer</span><br>proc_freepagetable(oldpagetable, oldsz);<br><br><span class="hljs-comment">// the C calling convention on RISC-V places return values in a0</span><br><span class="hljs-keyword">return</span> argc; <span class="hljs-comment">// this ends up in a0, the first argument to main(argc, argv)</span><br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<ul>
+<li>参考: <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/351646541">https://zhuanlan.zhihu.com/p/351646541</a></li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/xv6/">xv6</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-%E6%8E%A7%E5%88%B6%E5%8F%B0%E4%B8%AD%E6%96%AD/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[xv6]:控制台中断</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-trap/">
+                        <span class="hidden-mobile">[xv6]:trap</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

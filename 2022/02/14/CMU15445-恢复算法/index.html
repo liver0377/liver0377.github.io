@@ -1,0 +1,698 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="ARIES利用语义的恢复和隔离算法(Algorithms for Recovery and Isolation Exploiting Semantics ,ARIES)，最早在90年代初由IBM提出，是一种基于WAL的故障恢复机制，ARIES的核心思想可以总结为三点：  Write-Ahead Logging(WAL)  在数据输出到磁盘之前，所有的更新日志必须首先输出到磁盘 必须使用Steal">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU15445]:恢复算法">
+<meta property="og:url" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="ARIES利用语义的恢复和隔离算法(Algorithms for Recovery and Isolation Exploiting Semantics ,ARIES)，最早在90年代初由IBM提出，是一种基于WAL的故障恢复机制，ARIES的核心思想可以总结为三点：  Write-Ahead Logging(WAL)  在数据输出到磁盘之前，所有的更新日志必须首先输出到磁盘 必须使用Steal">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/1.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/2.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/3.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/4.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/5.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/6.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/7.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/8.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/9.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/10.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/11.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/12.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/13.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/14.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/15.png">
+<meta property="og:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/16.png">
+<meta property="article:published_time" content="2022-02-14T02:36:35.000Z">
+<meta property="article:modified_time" content="2022-02-15T01:47:29.588Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/02/14/CMU15445-%E6%81%A2%E5%A4%8D%E7%AE%97%E6%B3%95/1.png">
+  
+  <title>[CMU15445]:恢复算法 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[CMU15445]:恢复算法">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-02-14 10:36" pubdate>
+        2022年2月14日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.4k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      11 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[CMU15445]:恢复算法</h1>
+            
+            <div class="markdown-body">
+              <h3 id="ARIES"><a href="#ARIES" class="headerlink" title="ARIES"></a>ARIES</h3><p><strong>利用语义的恢复和隔离算法(Algorithms for Recovery and Isolation Exploiting Semantics ,ARIES)<strong>，最早在90年代初由IBM提出，是一种基于</strong>WAL</strong>的故障恢复机制，ARIES的核心思想可以总结为三点：</p>
+<ul>
+<li><p>Write-Ahead Logging(WAL)</p>
+<ul>
+<li>在数据输出到磁盘之前，所有的更新日志必须首先输出到磁盘</li>
+<li>必须使用Steal + No-Force的buffer Pool Policy</li>
+</ul>
+</li>
+<li><p>Repeating History During Redo</p>
+<p>当从崩溃中恢复时，使用redo操作将数据库完全恢复成崩溃之前的样子</p>
+</li>
+<li><p>Logging Changes During Undo</p>
+<p>在undo使同样要把undo操作本身记录到日志当中，以避免undo操作时再次崩溃进而发生重复undo的情况</p>
+</li>
+</ul>
+<h3 id="WAL-Records"><a href="#WAL-Records" class="headerlink" title="WAL Records"></a>WAL Records</h3><p>将缓存在内存中的日志记录称为<strong>WAL Records</strong>, 与此同时，使用**日志序列号(Log Sequence Number, LSN)**来标识每个日志记录，除此之外还有一些特殊的LSN, 下面是其中的一部分</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>位置</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>flushedLSN</td>
+<td>内存中的某个位置</td>
+<td>磁盘日志区域当中所记录的最后一条LSN</td>
+</tr>
+<tr>
+<td>pageLSN</td>
+<td>buffer pool的每个page</td>
+<td>在该page上所做的最后一次更新操作对应的LSN</td>
+</tr>
+<tr>
+<td>recLSN</td>
+<td>buffer pool的每个page</td>
+<td>在该page上所做的首次更新操作对应的LSN</td>
+</tr>
+<tr>
+<td>lastLSN</td>
+<td>每个事务中</td>
+<td>事务所写的最后一条日志记录的LSN</td>
+</tr>
+<tr>
+<td>masterRecord</td>
+<td>磁盘</td>
+<td>最后一次checkPoint对应的LSN</td>
+</tr>
+</tbody></table>
+<ul>
+<li><p>LSN</p>
+<p>LSN本质上是<strong>日志文件 + 文件偏移量</strong>所组合成的一个编号，是单调递增的</p>
+</li>
+<li><p>flushedLSN</p>
+<p>基于WAL机制，当page <code>x</code>想要被刷新到磁盘时，那么就必须得确保：</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p>当日志记录从内存刷新到磁盘时，flushedLSN就会被更新为最新的LSN</p>
+</li>
+<li><p>pageLSN</p>
+<p>当一个page被更新时，该页的pageLSN就得被更新为该更新操作对应的LSN</p>
+</li>
+</ul>
+<p>基本的日志布局大概如图所示</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<h3 id="Normal-Execution"><a href="#Normal-Execution" class="headerlink" title="Normal Execution"></a>Normal Execution</h3><p>首先讨论以下在普通执行过程中ARIES是怎么运作的，为了保持简单，首先给出一些前提条件</p>
+<ul>
+<li><p>所有日志记录都能放进一个 page 中</p>
+</li>
+<li><p>写一个 page 到磁盘能保持原子性</p>
+</li>
+<li><p>没有 MVCC，使用严格的 2PL</p>
+</li>
+<li><p>使用 WAL 记录操作日志，buffer pool policy 为 Steal + No-Force</p>
+</li>
+</ul>
+<h4 id="Transaction-Commit"><a href="#Transaction-Commit" class="headerlink" title="Transaction Commit"></a>Transaction Commit</h4><p>正常提交过程如下：</p>
+<ol>
+<li>更新page, 记录日志到内存的WAL区域，同时更新page的pageLSN</li>
+<li>事务提交，记录<COMMIT>日志到WAL区域，将所有<COMMIT>之前的日志记录刷新到磁盘</li>
+<li>事务结束，记录<TXN-END>日志到WAL区域，此时不需要立即刷盘</li>
+</ol>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<h4 id="Transaction-Abort"><a href="#Transaction-Abort" class="headerlink" title="Transaction Abort"></a>Transaction Abort</h4><p>在事务回滚过程中，需要引入一个新的LSN变量<code>prevLSN</code>，每个日志记录都会包含该字段，该字段保存着该日志记录的<strong>同一个事务</strong>的前一条日志记录，事务的首条日志记录的该字段设置为<code>nil</code></p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>事务发生回滚的流程如下：</p>
+<ol>
+<li><p>更新page, 记录日志到内存的WAL区域，同时更新page的pageLSN</p>
+</li>
+<li><p>事务回滚，记录<ABORT>日志记录到内存的WAL区域</p>
+</li>
+<li><p>沿着<code>preLSN</code>构成的链表，从WAL的终止位置开始，向前进行回滚(undo)操作</p>
+<p>在回滚过程中，同样得需要记录回滚操作本身的日志，这些日志被称为<strong>补偿日志记录(Compensation Log Record, CLR)</strong></p>
+<p>这些日志记录只会在redo操作中使用到，因此也被称为<code>redo-only</code>日志记录</p>
+<p>在CLR中还有一个额外的字段，被称为<code>UndoNextLSN</code>字段，该字段记录了事务被回滚时，下一个需要被撤销的日志记录的LSN</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+</li>
+<li><p>直到prevLSN为<code>nil</code>为止，回滚结束，在WAL上记录<TXN-END>日志记录</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+</li>
+</ol>
+<h3 id="Checkpointing"><a href="#Checkpointing" class="headerlink" title="Checkpointing"></a>Checkpointing</h3><p>接下来介绍几种不同的<code>checkpoint</code>机制</p>
+<h4 id="Blocking-Checkpoints"><a href="#Blocking-Checkpoints" class="headerlink" title="Blocking Checkpoints"></a>Blocking Checkpoints</h4><p>之前所讨论过的checkpoint就是这种方法，该方法具体会分为几个步骤</p>
+<ul>
+<li>阻止新事务产生</li>
+<li>等待当前的活跃事务做完他们正在执行的更新操作</li>
+<li>将脏页刷新回磁盘</li>
+</ul>
+<p>该方法会在第二个步骤中产生较长的间断，在该间断时间内数据库是不会有任何更新的，这是不能接受的</p>
+<h4 id="Slightly-Better-Blocking-Checkpoints"><a href="#Slightly-Better-Blocking-Checkpoints" class="headerlink" title="Slightly Better Blocking Checkpoints"></a>Slightly Better Blocking Checkpoints</h4><p>可以使用一些优化策略来对上面的checkpoint机制进行改进，改进后的方法如下</p>
+<ul>
+<li>阻止新事物产生</li>
+<li>暂停所有处于活跃状态的事务</li>
+</ul>
+<p>这样做就不会产生间断，但是需要系统额外的维护一些信息，具体就是两个table</p>
+<p><strong>活跃事务表(Active Transaction Table, ATT)</strong></p>
+<p>当DBMS执行checkpoint时，会将此事系统中所有处于活跃的事务都记录在该表中，具体包含以下字段</p>
+<ul>
+<li><p>事务ID(txnId)</p>
+</li>
+<li><p>事务状态(Status)</p>
+<p>可取的状态如下:</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+</li>
+<li><p>lastLSN:事务最后执行的更新操作对应的LSN</p>
+</li>
+</ul>
+<p>在checkpoint执行完之后，每当事务提交或中止，就会将事务从该表中移除</p>
+<p><strong>脏页表(dirty page table, DPT)</strong></p>
+<p>该表的作用是跟踪buffer pool中那些正处于dirty状态的page,具体包含以下字段</p>
+<ul>
+<li>dirty page id</li>
+<li>recLSN: 导致page变为dirty的第一次更新操作对应的LSN</li>
+</ul>
+<p>下面是一个该机制下checkpoint的例子</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+<h4 id="Fuzzy-CheckPoint"><a href="#Fuzzy-CheckPoint" class="headerlink" title="Fuzzy CheckPoint"></a>Fuzzy CheckPoint</h4><p>Fuzzy CheckPoint是ARIES协议中使用的checkPoint机制，该机制允许任何事务在checkPoint线程在进行dirty page刷盘时同时进行自己的更新操作，其将checkPoint表示成了一个区间</p>
+<p><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<ul>
+<li>&lt;CHECKPOINT-BEGIN&gt;: 表示系统开始刷盘</li>
+<li>&lt;CHECKPOINT-END&gt;：表示checkPoint刷盘结束，此时会将&lt;CHECKPOINT-BEGIN&gt;对应的LSN刷新到磁盘的<code>masterRecord</code>当中</li>
+</ul>
+<p>注意，在&lt;CHECK-BEGIN&gt;与&lt;CHECK-END&gt;之间的任何新开始的事务都不会被添加到ATT,而DPT则正常</p>
+<h3 id="Recovery-Phases"><a href="#Recovery-Phases" class="headerlink" title="Recovery Phases"></a>Recovery Phases</h3><p>ARIES的恢复算法分为三步：</p>
+<ul>
+<li>分析阶段(analysis)：从 WAL 中读取最近一次 checkpoint，找到 buffer pool 中相应的脏页以及故障时的活跃事务</li>
+<li>重做阶段(redo)：从正确的日志点开始重做所有操作，包括将要中止的事务</li>
+<li>撤销阶段(undo)：将故障前未提交的事务的操作撤销</li>
+</ul>
+<p>下面是整个的流程框图</p>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+<h4 id="Analysis-Phase"><a href="#Analysis-Phase" class="headerlink" title="Analysis Phase"></a>Analysis Phase</h4><ul>
+<li>从最近的&lt;CHECKPOINT-BEGIN&gt;开始(从masterRecord中读取)，向下遍历WAL<ul>
+<li>如果发现&lt;TXN-END&gt;, 将该事务从ATT中移除</li>
+<li>否则将其添加进ATT(如果之前ATT中不存在的话)<ul>
+<li>如果记录的类型为&lt;COMMIT&gt;, 那么将ATT中事务状态设置为<code>commit</code></li>
+<li>如果记录类型为其它，那么将ATT中事务状态设置为<code>undo</code></li>
+</ul>
+</li>
+<li>特别的，如果发现记录类型为&lt;UPDATE&gt;, 并且DPT中没有该page, 那么将该page添加进DPT, 然后将其recLSN = LSN</li>
+</ul>
+</li>
+</ul>
+<p><img src="11.png" srcset="/img/loading.gif" lazyload alt="11"></p>
+<p><img src="12.png" srcset="/img/loading.gif" lazyload alt="12"></p>
+<p>注意这里是分析阶段而不是checkpoint，可以将T96加入ATT</p>
+<p><img src="13.png" srcset="/img/loading.gif" lazyload alt="13"></p>
+<p>当分析阶段结束时</p>
+<ul>
+<li>ATT 告诉 DBMS 在发生故障时，哪些事务是活跃的</li>
+<li>DPT 告诉 DBMS 在发生故障时，哪些脏数据页可能尚未写入磁盘</li>
+</ul>
+<h4 id="Redo-Phase"><a href="#Redo-Phase" class="headerlink" title="Redo Phase"></a>Redo Phase</h4><p>该阶段的目的是将数据库恢复成crash之前的状态，所以需要进行重复历史(包括CLRS)，ppt中可能会进行冗余redo的情况，即数据已经被刷新回磁盘但是再次刷新，教材中给出了避免冗余的方法</p>
+<p>从 DPT 中找到最小的 recLSN，从那里开始重做更新记录和 CLR</p>
+<p> <img src="14.png" srcset="/img/loading.gif" lazyload alt="14"></p>
+<p>redo的具体操作包括：</p>
+<ul>
+<li>将数据项设置为新值</li>
+<li>将page的<code>pageLSN</code>设置为LSN</li>
+</ul>
+<p>在<code>Redo Phase</code>的最后，为ATT表中的每个状态为<code>commiting</code>的事务追加上<COMMI>日志记录，然后将它们从ATT表中移除</p>
+<h4 id="Undo-Phase"><a href="#Undo-Phase" class="headerlink" title="Undo Phase"></a>Undo Phase</h4><p>该阶段的目的在于回滚那些在crash时仍然处于活跃状态的事务，即ATT中那些状态为<code>U</code>的事务</p>
+<p>利用lastLSN,倒序进行undo操作，每次进行undo操作，同样需要进行CLR的记录</p>
+<p><img src="15.png" srcset="/img/loading.gif" lazyload alt="15"></p>
+<p><img src="16.png" srcset="/img/loading.gif" lazyload alt="16"></p>
+<p><strong>一些问题</strong></p>
+<ul>
+<li><p>如果 DBMS 在故障恢复的 Analysis Phase 崩溃怎么办？</p>
+<p>再执行一次故障恢复算法就好</p>
+</li>
+<li><p>如果 DBMS 在故障恢复的 Redo Phase 崩溃怎么办？</p>
+<p>再执行一次故障恢复算法就好</p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[计算机网络_自顶向下]:计算机与因特网</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/02/13/CMU15445-%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E7%B3%BB%E7%BB%9F/">
+                        <span class="hidden-mobile">[CMU15445]:日志恢复系统</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

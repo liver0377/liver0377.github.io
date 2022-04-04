@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="类似于pthread中的条件变量，xv6中也实现了与pthread_cond_wait()和pthread_cond_broadcast()类似的操作 在xv6中的对应api为sleep()以及wakeup()  sleep() 123456789101112131415161718192021222324252627282930oidsleep(void *chan, struct spinlo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[xv6]:sleep-and-wakeup">
+<meta property="og:url" content="http://example.com/2022/03/29/xv6-sleep-and-wakeup/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="类似于pthread中的条件变量，xv6中也实现了与pthread_cond_wait()和pthread_cond_broadcast()类似的操作 在xv6中的对应api为sleep()以及wakeup()  sleep() 123456789101112131415161718192021222324252627282930oidsleep(void *chan, struct spinlo">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-03-29T03:11:56.000Z">
+<meta property="article:modified_time" content="2022-03-29T03:12:15.995Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="xv6">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>[xv6]:sleep-and-wakeup - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[xv6]:sleep-and-wakeup">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-29 11:11" pubdate>
+        2022年3月29日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2.3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      7 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[xv6]:sleep-and-wakeup</h1>
+            
+            <div class="markdown-body">
+              <p>类似于<code>pthread</code>中的条件变量，xv6中也实现了与<code>pthread_cond_wait()</code>和<code>pthread_cond_broadcast()</code>类似的操作</p>
+<p>在xv6中的对应api为<code>sleep()</code>以及<code>wakeup()</code></p>
+<ul>
+<li><p>sleep()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function">oid</span><br><span class="hljs-function"><span class="hljs-title">sleep</span><span class="hljs-params">(<span class="hljs-keyword">void</span> *chan, struct spinlock *lk)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br>  <br>  <span class="hljs-comment">// 这里有两把锁, 一把是进程锁，一把是给定的lk</span><br>  <span class="hljs-comment">// 当进程调用该函数时，其需要获取进程锁p-&gt;lock, 因为接下来需要修改进程的state</span><br>  <span class="hljs-comment">// 同时进程还需要释放lk, 因为这是sleep函数所要求的</span><br>  <span class="hljs-comment">// 注意这里lk与p-&gt;lock是同一把锁的问题, 如果是同一把锁，那么acquire()操作就会造成死锁</span><br>  <span class="hljs-keyword">if</span>(lk != &amp;p-&gt;lock)&#123;  <span class="hljs-comment">//DOC: sleeplock0</span><br>    acquire(&amp;p-&gt;lock);  <span class="hljs-comment">//DOC: sleeplock1</span><br>    release(lk);<br>  &#125;<br><br>  <span class="hljs-comment">// Go to sleep.</span><br>  p-&gt;chan = chan;<br>  p-&gt;state = SLEEPING;<br><br>  <span class="hljs-comment">// 此时进程还持有着p-&gt;lock</span><br>  sched();  <span class="hljs-comment">// p-&gt;lock被scheduler释放 </span><br>  <span class="hljs-comment">// 此时进程已经从调度返回, 已经在scheduler()中重新获得了锁</span><br>  <span class="hljs-comment">// Tidy up.</span><br>  p-&gt;chan = <span class="hljs-number">0</span>;<br><br>  <span class="hljs-comment">// Reacquire original lock.</span><br>  <span class="hljs-keyword">if</span>(lk != &amp;p-&gt;lock)&#123;<br>    release(&amp;p-&gt;lock);<br>    acquire(lk);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>wakeup()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 唤醒所有睡在chan上的进程</span><br><span class="hljs-comment">// 这里的实际操作其实就是将进程的状态改为(RUNNABLE)可调度</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">wakeup</span><span class="hljs-params">(<span class="hljs-keyword">void</span> *chan)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// 在调用wakeup时，会持有sleep()中指定的锁lk</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span>;</span><br>  <span class="hljs-keyword">for</span>(p = proc; p &lt; &amp;proc[NPROC]; p++) &#123;<br>    acquire(&amp;p-&gt;lock);<br>    <span class="hljs-comment">// wakeup什么时候进入该行?</span><br>    <span class="hljs-comment">// 有两种情况: </span><br>    <span class="hljs-comment">// 1. sleep()中的lk与p-&gt;lock不是同一把锁, 那么在sleep()中的sched()进入scheduler()</span><br>    <span class="hljs-comment">// 并且释放p-&gt;lock之后，wakeup()可以进入该行，此时p-&gt;state == SLEEPING, 没有丢失唤醒</span><br>    <span class="hljs-comment">// 2. sleep()中的lk与p-&gt;lock是同一把锁, 这种情况和上面一样，也是在schedule()释放p-&gt;lock之后</span><br>    <span class="hljs-keyword">if</span>(p-&gt;state == SLEEPING &amp;&amp; p-&gt;chan == chan) &#123;<br>      p-&gt;state = RUNNABLE;<br>    &#125;<br>    release(&amp;p-&gt;lock);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="丢失唤醒"><a href="#丢失唤醒" class="headerlink" title="丢失唤醒"></a>丢失唤醒</h4><p>下面是一个会产生丢失唤醒的例子</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c">s-&gt;count = <span class="hljs-number">0</span>;<br><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">V</span><span class="hljs-params">(struct semaphore *s)</span></span><br><span class="hljs-function"></span>&#123;<br>  acquire(&amp;s-&gt;lock);<br>  s-&gt;count += <span class="hljs-number">1</span>;<br>  wakeup(s);<br>  release(&amp;s-&gt;lock);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">P</span><span class="hljs-params">(struct semaphore *s)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">while</span> (s-&gt;count == <span class="hljs-number">0</span>)<br>    sleep(s);<br>  acquire(&amp;s-&gt;lock);<br>  s-&gt;count -= <span class="hljs-number">1</span>;<br>  release(&amp;s-&gt;lock);<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>假设当进程<code>p1</code>调用<code>P</code>, 进入第11行，发现<code>s-&gt;count == 0</code>, 准备进入第12行</li>
+<li>此时发生计时器中断，进程<code>p2</code>调用<code>V</code>, <code>s-&gt;count</code>变为1, 然后进入第5行，调用<code>wakeup()</code>, 尽管此时并没有进程睡在信号量<code>s</code>之上</li>
+<li>计时器再次中断，进程<code>p1</code>重新开始执行，进入第12行，陷入<code>sleep()</code>, 而此时<code>s-&gt;count</code>却是1而不是0， 这就叫<strong>丢失唤醒</strong></li>
+<li>当发生丢失唤醒之后，除非再次有进程调用<code>V</code>, 否则进程<code>p1</code>将一直陷入睡眠</li>
+</ul>
+<p>xv6的实现中不会发生丢失唤醒的问题, 因为其在进行<code>state</code>的设置之前先获取了<code>p-&gt;lock</code>, 这样如果其它进程想要调用<code>wakeup</code>唤醒<code>state</code>还未设置为<code>SLEEPING</code>的进程时就会陷入阻塞</p>
+<h4 id="虚假唤醒"><a href="#虚假唤醒" class="headerlink" title="虚假唤醒"></a>虚假唤醒</h4><p>当多个进程睡在同一个条件之下，就有可能发生虚假唤醒的问题，xv6的实现也可能发生这种情况</p>
+<ul>
+<li><p>例子</p>
+<ul>
+<li><p>假设当前有进程<code>p1</code>, <code>p2</code>, 他们都调用了<code>sleep(g-&gt;chan, g-&gt;lock)</code>, 即睡在同一个条件，同一把锁之上</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">while</span> (read(fd) == <span class="hljs-number">0</span>) <br>    sleep(&amp;g-&gt;chan, &amp;g-&gt;lock);<br>release(g-&gt;lock);<br></code></pre></td></tr></table></figure></li>
+<li><p>此时进程<code>p3</code>对文件写入,调用<code>wakeup()</code>, 进程<code>p1</code>, <code>p2</code>都被唤醒，此时它们会对<code>g-&gt;lock</code>进行竞争，假设<code>p1</code>先抢到了<code>g-&gt;lock</code></p>
+</li>
+<li><p>其使用<code>read()</code>将文件<code>fd</code>中的内容全部读取完毕,  然后进入第三行, 释放锁</p>
+</li>
+<li><p>计时器发生中断，调度到进程<code>p2</code>,进程<code>p2</code>抢到锁，执行<code>read()</code>, 却发现此时文件是空的, 它被唤醒了却什么都做不了, 这就叫<strong>虚假唤醒</strong></p>
+</li>
+</ul>
+<p>虚假唤醒最有效的解决方案就是将<code>sleep()</code>置于循环当中，当发生虚假唤醒时，使被唤醒的进程再度<code>sleep(0</code>)</p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/xv6/">xv6</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-wait-exit-kill/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[xv6]:wait-exit-kill</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-%E8%B0%83%E5%BA%A6/">
+                        <span class="hidden-mobile">[xv6]:调度</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

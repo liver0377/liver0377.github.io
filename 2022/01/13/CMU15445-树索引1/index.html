@@ -1,0 +1,595 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="在数据库中，通过索引来达到快速检索数据的目的，之前的哈希表就是一种索引的数据结构，哈希表在单值查询时十分快速，最好能够到O(1)的时间复杂度，但是确不支持范围查询，在工业中，最常被使用的还是接下来将要介绍的B+树索引结构 B+树原理关于B+树的各种操作网上给出的很多，并且十分繁琐，可以参考下面的链接 https:&#x2F;&#x2F;www.cnblogs.com&#x2F;nullzx&#x2F;p&#x2F;8729425.html B树(">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU15445]:树索引1">
+<meta property="og:url" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="在数据库中，通过索引来达到快速检索数据的目的，之前的哈希表就是一种索引的数据结构，哈希表在单值查询时十分快速，最好能够到O(1)的时间复杂度，但是确不支持范围查询，在工业中，最常被使用的还是接下来将要介绍的B+树索引结构 B+树原理关于B+树的各种操作网上给出的很多，并且十分繁琐，可以参考下面的链接 https:&#x2F;&#x2F;www.cnblogs.com&#x2F;nullzx&#x2F;p&#x2F;8729425.html B树(">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/1.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/2.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/3.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/4.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/5.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/6.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/7.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/8.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/9.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/10.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/11.png">
+<meta property="og:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/12.png">
+<meta property="article:published_time" content="2022-01-13T11:31:51.000Z">
+<meta property="article:modified_time" content="2022-01-21T12:32:17.518Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/1.png">
+  
+  <title>[CMU15445]:树索引1 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[CMU15445]:树索引1">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-13 19:31" pubdate>
+        2022年1月13日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      5 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[CMU15445]:树索引1</h1>
+            
+            <div class="markdown-body">
+              <p>在数据库中，通过索引来达到快速检索数据的目的，之前的哈希表就是一种索引的数据结构，哈希表在单值查询时十分快速，最好能够到O(1)的时间复杂度，但是确不支持范围查询，在工业中，最常被使用的还是接下来将要介绍的B+树索引结构</p>
+<h4 id="B-树原理"><a href="#B-树原理" class="headerlink" title="B+树原理"></a>B+树原理</h4><p>关于B+树的各种操作网上给出的很多，并且十分繁琐，可以参考下面的链接</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/nullzx/p/8729425.html">https://www.cnblogs.com/nullzx/p/8729425.html</a></p>
+<p><strong>B树(B-树)与B+树的区别</strong></p>
+<p>在B树中，每个节点都保存了key 和 value, 而在B+树中，仅仅在叶子节点中才保存, 叶子节点中只包含value与指向子树的指针</p>
+<p>一棵B+树看起来就像这样</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p>其中叶子节点存的value，可以是page id,也可以存储真实的tuple, Oracle采用了前一种做法，MySQL采用了后一种做法</p>
+<h4 id="Selection-Condition"><a href="#Selection-Condition" class="headerlink" title="Selection Condition"></a>Selection Condition</h4><ul>
+<li><p>搜索码</p>
+<p>在文件中查找记录的属性或者属性集合被称为<strong>搜索码(Search Key)</strong></p>
+</li>
+</ul>
+<p>B+树相对于哈希表来说的另一个优点在于<strong>可以使用搜索码中的部分属性</strong></p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>在上图中，搜索码为{a, b, c},那么采用B+就可以采用部分搜索码就能完成搜索，而对于哈希表来说，必须需要完整的搜索码才能够产生一个正确的哈希值</p>
+<p>假设搜索码有两个，执行查询<code>select key=A</code>, 那么只需要沿着叶子节点，找到第一个属性为A的所有节点即可</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<h4 id="聚簇索引"><a href="#聚簇索引" class="headerlink" title="聚簇索引"></a>聚簇索引</h4><p>聚簇索引，即culsted Index,是属于顺序存储中的一种特殊索引，<strong>其搜索码的逻辑顺序存储在磁盘中的真实数据的顺序相对应</strong></p>
+<p>通常情况下，搜索码的逻辑顺序就是主键的顺序，实际上，如果未设置主键，有些数据库就会生成默认的主键，并按照该主键进行排序，</p>
+<p>如MySql</p>
+<p>聚簇索引对于范围查询来说很有利，因为相同前缀的数据会聚集在一起，可以减少I/O的次数</p>
+<h4 id="重复搜索码"><a href="#重复搜索码" class="headerlink" title="重复搜索码"></a>重复搜索码</h4><p>可以通过修改B+树的结构用以支持重复搜索码，常见的实现方案有两种</p>
+<ul>
+<li>一个搜索码在叶子节点中只有一个，为每个搜索码维护一个list,如果有重复搜索码的value被插入，那么接在list之后</li>
+<li>在叶子节点中支持重复的搜索码，重复的搜索码可以放在不同色叶子结点中</li>
+</ul>
+<h4 id="B-树的设计"><a href="#B-树的设计" class="headerlink" title="B+树的设计"></a>B+树的设计</h4><ul>
+<li><p>节点大小</p>
+<p>如果索引空间足够小，那么他就可以被存放于内存当中，如果太大，就只能放于磁盘当中，依赖于存储的介质，B+树的节点大小页有所不同</p>
+</li>
+</ul>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<ul>
+<li><p>Merge时机</p>
+<p>B+树为了保持平衡，需要不断进行节点之间的merge,但是这样做往往需要空间开销，可以采取<strong>延迟Merge</strong>的方式，</p>
+<p>如果每次进行插入或者删除操作时都对索引进行更新，这样浪费大量的时间，因为对树进行更新就意味着对树进行加锁</p>
+</li>
+</ul>
+<h4 id="可变长度的key"><a href="#可变长度的key" class="headerlink" title="可变长度的key"></a>可变长度的key</h4><p>serarch key中可能包含了varchar之类的属性，因此key的长度可能是不固定的，对于可变长度的key，有以下几种解决方案</p>
+<ul>
+<li><p>在key中存储指向属性的指针</p>
+<p>这样做可以节省空间，实际上在早期内存不足的时候才使用这种做法，因为tuple存储在磁盘中,所以根据指针访问属性即意味着磁盘I/O, 太慢了，现在没人使用</p>
+</li>
+<li><p>直接存储变长key</p>
+<p>这种方法一般不会使用，因为处理可变长度key的开销太大了</p>
+</li>
+<li><p>填充</p>
+<p>选取最大的key,将其他key填充至和其长度一样长</p>
+</li>
+<li><p>key映射</p>
+<p>在内存当中存储key-value的pair构成的字典结构,而在node当中存储对应的key在字典当中的下标</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<p>还可以在node中存储key的前缀，用于加快字典查找</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+</li>
+</ul>
+<h4 id="节点内部访问"><a href="#节点内部访问" class="headerlink" title="节点内部访问"></a>节点内部访问</h4><p>节点内部保存着很多关键码，在一个节点内部查找出我们所需要的key也有几种方法</p>
+<ul>
+<li><p>线性</p>
+<p>线性查找的时间复杂度为O(n)</p>
+</li>
+<li><p>二分</p>
+<p>该方法的时间复杂度为O(lg(n))，是一种比较高效且简单的方法</p>
+</li>
+<li><p>interpolation</p>
+<p>该方法的思想是利用Node中存储的元数据来推测出我们需要查找的key在node中的大概位置</p>
+</li>
+</ul>
+<h4 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h4><ul>
+<li><p>前缀压缩</p>
+<p>该技术的思想是在每个内部节点可以不用存储整个key, 如果key是字符串类型的话，可以取出这些字符串的公共部分，只要存储的内容能够将其区分即可</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+</li>
+<li><p>去除重复</p>
+<p>在key可以重复的情况下，可以让一个key紧跟多个value</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+</li>
+<li><p>批量加载</p>
+<p>有时，在构建B+树之前，我们就已知了所有的key，那么就不需要每插入一个数据就更新一次B+树索引，可以直接提前构建好B+树索引，这样可以减少更新所带来的的维护<br><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+</li>
+</ul>
+<h4 id="B-树操作伪代码"><a href="#B-树操作伪代码" class="headerlink" title="B+树操作伪代码"></a>B+树操作伪代码</h4><p>下面是《数据库系统概念》中关于B+树的各种操作的伪代码</p>
+<ul>
+<li>点查询</li>
+</ul>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+<ul>
+<li><p>插入</p>
+<p><img src="11.png" srcset="/img/loading.gif" lazyload alt="11"></p>
+</li>
+<li><p>删除</p>
+<p><img src="12.png" srcset="/img/loading.gif" lazyload alt="12"></p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/17/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%952/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[CMU15445]:树索引2</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/">
+                        <span class="hidden-mobile">[CMU15445]:哈希表</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

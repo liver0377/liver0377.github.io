@@ -1,0 +1,585 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="术语介绍  PDU: 消息对象，因特网的每一层都有自己的消息对象，传输层的消息对象为报文段，链路层的消息对象为帧  MTU: 最大传输单元，用于描述链路层帧有效载荷的最大长度，该值通常为1500字节 路径MTU: 当两台主机跨越多个网络进行通信时，每条链路可能有不同的MTU, 在所有网络路径上，最小的MTU被称为路径MTU     有关链路层的知识点很繁杂，并且过于底层，因此只做简单介绍 1.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[TCP&#x2F;IP详解]:链路层">
+<meta property="og:url" content="http://example.com/2022/03/15/TCP-IP%E8%AF%A6%E8%A7%A3-%E9%93%BE%E8%B7%AF%E5%B1%82/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="术语介绍  PDU: 消息对象，因特网的每一层都有自己的消息对象，传输层的消息对象为报文段，链路层的消息对象为帧  MTU: 最大传输单元，用于描述链路层帧有效载荷的最大长度，该值通常为1500字节 路径MTU: 当两台主机跨越多个网络进行通信时，每条链路可能有不同的MTU, 在所有网络路径上，最小的MTU被称为路径MTU     有关链路层的知识点很繁杂，并且过于底层，因此只做简单介绍 1.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/15/TCP-IP%E8%AF%A6%E8%A7%A3-%E9%93%BE%E8%B7%AF%E5%B1%82/1.png">
+<meta property="og:image" content="http://example.com/2022/03/15/TCP-IP%E8%AF%A6%E8%A7%A3-%E9%93%BE%E8%B7%AF%E5%B1%82/2.png">
+<meta property="og:image" content="http://example.com/2022/03/15/TCP-IP%E8%AF%A6%E8%A7%A3-%E9%93%BE%E8%B7%AF%E5%B1%82/3.png">
+<meta property="og:image" content="http://example.com/2022/03/15/TCP-IP%E8%AF%A6%E8%A7%A3-%E9%93%BE%E8%B7%AF%E5%B1%82/4.png">
+<meta property="article:published_time" content="2022-03-15T07:00:59.000Z">
+<meta property="article:modified_time" content="2022-03-17T09:08:10.785Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/15/TCP-IP%E8%AF%A6%E8%A7%A3-%E9%93%BE%E8%B7%AF%E5%B1%82/1.png">
+  
+  <title>[TCP/IP详解]:链路层 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[TCP/IP详解]:链路层">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-15 15:00" pubdate>
+        2022年3月15日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      5 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[TCP/IP详解]:链路层</h1>
+            
+            <div class="markdown-body">
+              <ul>
+<li><p>术语介绍</p>
+<ul>
+<li><p>PDU: 消息对象，因特网的每一层都有自己的消息对象，传输层的消息对象为报文段，链路层的消息对象为<strong>帧</strong></p>
+</li>
+<li><p>MTU: 最大传输单元，用于描述链路层帧有效载荷的最大长度，该值通常为1500字节</p>
+<p>路径MTU: 当两台主机跨越多个网络进行通信时，每条链路可能有不同的MTU, 在所有网络路径上，最小的MTU被称为路径MTU</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>有关链路层的知识点很繁杂，并且过于底层，因此只做简单介绍</p>
+<h3 id="1-MAC协议"><a href="#1-MAC协议" class="headerlink" title="1. MAC协议"></a>1. MAC协议</h3><p><strong>CSMA/CD</strong></p>
+<p>最开始的以太网的网络结构如下所示</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<ul>
+<li>多个网络站点被连接到同一个共享的电缆段之上，在任何给定的时间，网络中只能有一个帧进行传输</li>
+</ul>
+<p><strong>带冲突检测的载波侦听多路访问(CSMA/CD)</strong></p>
+<p>这是一种在每个以太网接口上使用的分布式算法，用于协调每个站点发送数据</p>
+<p>算法描述:</p>
+<ul>
+<li>站点首先检测目前网络上正在发送的信号，并在网络空闲时发送自己的帧，即<strong>载波侦听</strong></li>
+<li>如果其它站碰巧同时发送，那么重叠的电信号将会被是做一次<strong>碰撞</strong>，此时，每个站将会等待一段随机时间，然后重新发送</li>
+<li>最终，每个站要么得到机会发送，要么在一定此时的重新发送失败后超时</li>
+</ul>
+<p><strong>MAC协议</strong></p>
+<p>**介质访问控制协议(MAC)**其实是CSMA/CD这种协议的正式名称，可以理解为它的超集</p>
+<p>MAC协议包含竞争协议(如CSMA/CD)和协调协议两种</p>
+<ul>
+<li><p>现状</p>
+<p>如今，共享电缆已经被双绞线所替代，如CSMA/CD之类的竞争协议不再流行，现在的网络结果基于交换机，站点之间的线路通常不共享</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+</li>
+</ul>
+<h3 id="2-以太网帧格式"><a href="#2-以太网帧格式" class="headerlink" title="2. 以太网帧格式"></a>2. 以太网帧格式</h3><ul>
+<li><p>图例</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>一些比较重要的字段:</p>
+<ul>
+<li><p>前导</p>
+<p>用于时钟同步</p>
+</li>
+<li><p>SFD</p>
+<p>帧起始分隔符，表示帧的开始，为固定值0xAB</p>
+</li>
+<li><p>DST/SRC</p>
+<p>MAC地址</p>
+</li>
+<li><p>有效载荷</p>
+<p>该字段用于存放上层PDU, 由于有效载荷有着最小字节要求，如果字节数不够，后面会使用0进行填充</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-网桥与交换机"><a href="#3-网桥与交换机" class="headerlink" title="3. 网桥与交换机"></a>3. 网桥与交换机</h3><ul>
+<li>网桥: 网桥用于连接多个物理的链路层网络，交换机即是高性能的网桥</li>
+</ul>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>上面的图例中，每个交换机都有<strong>端口</strong>，用一个编号表示，每个交换机，每个站点，都有自己的MAC地址</p>
+<p>下面分析一下链路层帧在经过网桥(链路层帧)之后会发生什么：</p>
+<ol>
+<li><p>每个交换机内部都会有一张表，每个条目是一个{站点MAC地址，端口编号}对，当第一次打开一个交换机时，该表为空</p>
+</li>
+<li><p>当一个链路层帧到达交换机，且该帧的目的地址与交换机的MAC地址不相符时，交换机会尝试在表中进行寻找</p>
+</li>
+<li><p>如果没有找到对应的条目，它会向其它所有端口发送该链路层帧， 即该帧会被复制很多份，有点类似于广播</p>
+<p>同时，交换机在自己的表中做好记录(忽略细节)</p>
+<p>如果找到了，则会将链路层帧经过条目指定的端口发出</p>
+</li>
+</ol>
+<p>由于站可能出现移动，网卡更换，MAC地址改变的情况，所以网桥不能假设其表中记录的地址一定是正确的，因此，网桥会为每个条目启动一个<strong>定时器</strong>，如果超过一定时间仍没有收到新的去往相同MAC地址的帧，就会清除该条目</p>
+<h3 id="4-环回"><a href="#4-环回" class="headerlink" title="4. 环回"></a>4. 环回</h3><p>有时，客户可能希望使用Internet协议来与本地上的服务器进行通信，大多数系统实现了这一功能，它们使用一个虚拟的<strong>环回网络接口</strong>来实现，其使用软件实现，并没有与之对应的网卡</p>
+<ul>
+<li><p>Linux环境中的环回</p>
+<p>Linux为环回接口分配的IPV4地址为127.0.0.1, IPV6地址则是(::1), 为它分配的名称叫<code>localhost</code>, 简写为<code>lo</code></p>
+</li>
+<li><p>注意点</p>
+<ul>
+<li>发送到环回接口的IP数据报不会出现在任何网络中</li>
+<li>发送到环回接口的IP数据报会经过传输层以及网络层的传输，当数据报离开网络层时重新将其送回本地的网络层</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-其它协议"><a href="#5-其它协议" class="headerlink" title="5. 其它协议"></a>5. 其它协议</h3><ul>
+<li><p>STP</p>
+<p>由于网络中存在很多交换机，这些交换机可能会使得帧在它们之间不断循环，即形成回路，链路层使用**生成树协议(STP)**来解决该问题</p>
+</li>
+<li><p>PPP</p>
+<p>PPP表示<strong>点到点协议</strong>，本质上其实是一个协议集合，它用于在两个节点之间创建直接连接，进而传递IP数据报</p>
+<p>除此之外，该协议还提供连接认证，传输加密以及压缩等服务</p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/16/TCP-IP%E8%AF%A6%E8%A7%A3-%E5%9C%B0%E5%9D%80%E8%A7%A3%E6%9E%90%E5%8D%8F%E8%AE%AE/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[TCP/IP详解]:地址解析协议</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/14/TCP-IP%E8%AF%A6%E8%A7%A3-Internet%E5%9C%B0%E5%9D%80%E7%BB%93%E6%9E%84/">
+                        <span class="hidden-mobile">[TCP/IP详解]:Internet地址结构</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

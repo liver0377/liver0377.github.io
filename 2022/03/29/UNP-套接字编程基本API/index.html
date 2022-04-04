@@ -1,0 +1,763 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="套接字函数事件表    1. socket()socket()用于创建新的套接字  socket() 1234#include&lt;sys&#x2F;socket.h&gt;int socket(int family, int type, int protocol);                                    &#x2F;&#x2F; 返回：成功返回套接字描述符，失败-1   family fa">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[UNP]:套接字编程基本API">
+<meta property="og:url" content="http://example.com/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="套接字函数事件表    1. socket()socket()用于创建新的套接字  socket() 1234#include&lt;sys&#x2F;socket.h&gt;int socket(int family, int type, int protocol);                                    &#x2F;&#x2F; 返回：成功返回套接字描述符，失败-1   family fa">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/1.png">
+<meta property="og:image" content="http://example.com/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/2.png">
+<meta property="og:image" content="http://example.com/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/3.png">
+<meta property="og:image" content="http://example.com/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/4.png">
+<meta property="og:image" content="http://example.com/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/5.png">
+<meta property="article:published_time" content="2022-03-29T13:27:25.000Z">
+<meta property="article:modified_time" content="2022-03-30T09:45:16.631Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="unp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/1.png">
+  
+  <title>[UNP]:套接字编程基本API - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[UNP]:套接字编程基本API">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-29 21:27" pubdate>
+        2022年3月29日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[UNP]:套接字编程基本API</h1>
+            
+            <div class="markdown-body">
+              <ul>
+<li><p>套接字函数事件表</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+</li>
+</ul>
+<h3 id="1-socket"><a href="#1-socket" class="headerlink" title="1. socket()"></a>1. socket()</h3><p><code>socket()</code>用于创建新的套接字</p>
+<ul>
+<li><p>socket()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span><span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">socket</span><span class="hljs-params">(<span class="hljs-keyword">int</span> family, <span class="hljs-keyword">int</span> type, <span class="hljs-keyword">int</span> protocol)</span></span>;<br>                                    <span class="hljs-comment">// 返回：成功返回套接字描述符，失败-1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>family</p>
+<p>family为地址族，可选值如下</p>
+<table>
+<thead>
+<tr>
+<th>family</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AF_INET</td>
+<td>IPv4协议</td>
+</tr>
+<tr>
+<td>AF_INT6</td>
+<td>IPv6协议</td>
+</tr>
+<tr>
+<td>AF_LOCAL</td>
+<td>Unix域协议</td>
+</tr>
+<tr>
+<td>AF_ROUTE</td>
+<td>路由套接字</td>
+</tr>
+<tr>
+<td>AF_KEY</td>
+<td>秘钥套接字</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>type</p>
+<p>指明套接字的类型，可选值如下</p>
+<table>
+<thead>
+<tr>
+<th>type</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SOCK_STREAM</td>
+<td>字节流套接字</td>
+</tr>
+<tr>
+<td>SOCK_DGRAM</td>
+<td>数据报套接字</td>
+</tr>
+<tr>
+<td>SOCK_SEQPACKET</td>
+<td>有序分组套接字</td>
+</tr>
+<tr>
+<td>SOCK_RAM</td>
+<td>原始套接字</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>protocol</p>
+<p><code>protocol</code>参数可以设置为0，以表示<code>family</code>, <code>type</code>经过组合产生产生的默认值, <code>family</code>与<code>type</code>组合产生的<code>protocol</code>默认值如下</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<blockquote>
+<p>“是”表明这样搭配也是有效的，但是没有合适的缩略语</p>
+</blockquote>
+<p>也可以手动设置</p>
+<table>
+<thead>
+<tr>
+<th>protocol</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IPPROTO_TCP</td>
+<td>TCP传输协议</td>
+</tr>
+<tr>
+<td>IPPROTO_UDP</td>
+<td>UDP传输协议</td>
+</tr>
+<tr>
+<td>IPPROTO_SCTP</td>
+<td>SCTP传输协议</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-connect"><a href="#2-connect" class="headerlink" title="2. connect()"></a>2. connect()</h3><p><code>connect()</code>函数用于建立与服务器的连接</p>
+<ul>
+<li><p>connect()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">connect</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">const</span> struct sockaddr *servaddr,<span class="hljs-keyword">socklen_t</span> addrlen)</span></span>;<br>                                                    <span class="hljs-comment">// 返回：成功 0，失败 -1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>sockfd</p>
+<p>本地套接字描述符</p>
+</li>
+<li><p>servaddr</p>
+<p>服务器套接字结构</p>
+</li>
+<li><p>addrlen</p>
+<p>调节子结构大小</p>
+</li>
+</ul>
+</li>
+<li><p>注意点</p>
+<ul>
+<li>调用connect函数触发三路握手，仅在连接建立成功或出错时才返回，出错返回有以下情况：<ol>
+<li>TCP客户端没有收到SYN分节的<strong>响应</strong>，返回 <strong>ETIMEDOUT</strong> 错误(在多次尝试失败后)；</li>
+<li>TCP客户端收到的 SYN 响应是 RST，立即返回 <strong>ETIMEDOUT</strong> 错误(<strong>硬错误</strong>，表明服务器主机在指定的端口上没有进程等待连接)</li>
+<li>TCP客户端发出的 SYN 在中间的路由上引发 “destination unreachable” ICMP错误(<strong>软错误</strong>)，客户机会将 ICMP 错误信息保存在本地，继续尝试重发，若一段时间之后人体没有收到响应，那么就把保存的错误信息作为<strong>EHOSTTUNREACH</strong>或者<strong>ENETUNREACH</strong> 错误返回给进程</li>
+<li>产生 RST 错误分节的条件:<ol>
+<li>SYN 到达目的，但指定的端口没有进程</li>
+<li>TCP 取消一个已有连接</li>
+<li>TCP 接收到一个不存在的连接的分节</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><strong>若 connect 失败，则该套接字不能用，必须 close，再重新调用 socket 创建新的套接字</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="3-bind"><a href="#3-bind" class="headerlink" title="3. bind()"></a>3. bind()</h3><p><code>bind()</code>将一个本地协议地址({IP地址, 端口号})与一个通过<code>socket()</code>产生的套接字绑定</p>
+<ul>
+<li><p>bind()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">bind</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd,<span class="hljs-keyword">const</span> struct sockaddr *myaddr, <span class="hljs-keyword">socklen_t</span> addrlen)</span></span>;<br>                                                <span class="hljs-comment">// 返回：成功0 失败 -1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>sockfd</p>
+<p>本地套接字</p>
+</li>
+<li><p>myaddr</p>
+<p>本地套接字结构</p>
+</li>
+<li><p>addrlen</p>
+<p>套接字结构大小</p>
+</li>
+</ul>
+</li>
+<li><p>注意点</p>
+<ul>
+<li><p>端口号</p>
+<p><code>bind()</code>基本上只由服务器调用，服务器在启动时需要绑定他们众所周知的端口，如果没有调用<code>bind()</code>的话，当调用<code>connect()</code>(客户机)或<code>listen()</code>(服务器)时，系统就会为套接字分配一个临时的端口号</p>
+<p>对于客户端来说，分配临时端口号没有什么问题，所以客户端基本不调用<code>bind()</code>, 而服务器是通过众所周知的端口号被认识的，必须调用<code>bind()</code></p>
+</li>
+<li><p>IP地址</p>
+<ul>
+<li>对于服务器而言，使用<code>bind()</code>将套接字与指定IP绑定之后，意味着该套接字只接受目的地址为该IP地址的分节</li>
+<li>当发送分节的时候，内核会根据分节到达服务器的路径来自动选择IP地址</li>
+<li>如果TCP服务器没有使用<code>bind()</code>将套接字与指定IP绑定，那么服务器就会将客户发送的SYN的目的地址作为服务器的源IP地址</li>
+</ul>
+</li>
+<li><p>默认套接字</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>如果指定端口号为0, 那么<code>bind()</code>时选择的仍然是一个临时端口号，如果IP地址为通配地址<strong>INADDR_ANT</strong>, 那么同样有内核对IP地址进行选择</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-listen"><a href="#4-listen" class="headerlink" title="4. listen()"></a>4. listen()</h3><p><code>listen()</code>函数用于监听指定套接字</p>
+<p><strong>主动套接字与被动套接字</strong></p>
+<ul>
+<li>当socket创建一个套接字的时候，它被假定为一个<strong>主动套接字</strong>，即系统认为它即将调用<code>connect()</code>与其它主机建立连接</li>
+<li><code>listen()</code>函数会将其转变为<strong>被动套接字</strong>，指示内核应该接受指向该套接字的连接请求</li>
+</ul>
+<ul>
+<li><p>listen()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">listen</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, <span class="hljs-keyword">int</span> backlog)</span></span>;<br>            <span class="hljs-comment">// 返回：成功 0 失败 -1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>sockfd</p>
+<p>指定套接字</p>
+</li>
+<li><p>backlog</p>
+<p>内核应该为相应套接字排队的最大连接个数</p>
+</li>
+</ul>
+</li>
+<li><p>backlog参数解释</p>
+<p>内核为任意一个监听套接字维护两个队列</p>
+<ul>
+<li><p>未完成连接队列</p>
+<p>当套接字接受到一个SYN, 并且发出[SYN +ACK] 报文之后，内核就会将该连接加入未完成连接队列，此时套接字位于<strong>SYN_RCVD</strong>状态</p>
+</li>
+<li><p>已完成连接队列</p>
+<p>对于每个已经完成了TCP三路握手的连接，内核会将他们加入以完成连接队列，此时套接字处于<strong>ESTABLISHED</strong>状态</p>
+</li>
+</ul>
+<p><strong>图例</strong></p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>如上图所示，**<code>backlog</code>参数就是用来限定这两个队列套接字的总和**</p>
+</li>
+</ul>
+<blockquote>
+<p>实际上，上述解释也不一定对，因为各家实现是不同的</p>
+</blockquote>
+<h3 id="5-accept"><a href="#5-accept" class="headerlink" title="5. accept()"></a>5. accept()</h3><p><code>accept()</code>调用会从已完成连接队头返回下一个已完成连接，如果已完成队列为空，那么进程会被置为睡眠状态(或阻塞)</p>
+<ul>
+<li><p>accpet()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">accept</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, struct sockaddr *cliaddr, <span class="hljs-keyword">socklen_t</span> *addrlen)</span></span>;<br>                                       <span class="hljs-comment">// 返回：成功 返回已连接套接字， 出错 -1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>sockfd</p>
+<p>监听套接字，<code>accept()</code>会从该套接字对应的已完成队列中获取连接</p>
+</li>
+<li><p>childaddr</p>
+<p>返回已连接的客户的协议地址</p>
+</li>
+<li><p>addrlen</p>
+<p>是一个值-结果类型参数，传入时代表childaddr的大小，传出时代表写入的字节大小</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>监听套接字与已连接套接字</strong></p>
+<ul>
+<li>当使用<code>listen()</code>监听一个套接字之后，该套接字就被称为<strong>监听套接字</strong>(被动套接字),  一个监听套接字在服务器声明周期内一直存在</li>
+<li><code>accept()</code>返回的是一个新的套接字，被称为<strong>已连接套接字</strong>，当服务器完成与某个客户的连接之后，相应的已连接套接字就被关闭</li>
+</ul>
+<p><strong>accept()的返回时机</strong></p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<ul>
+<li>当连接建立完成，即服务器接收到最后一个ACK时，accept()从睡眠(阻塞)中返回</li>
+</ul>
+<h3 id="6-close"><a href="#6-close" class="headerlink" title="6. close()"></a>6. close()</h3><p><code>close()</code>用于关闭一个套接字, 就和关闭一个普通文件一样</p>
+<ul>
+<li><p>close()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">close</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd)</span></span>;<br>            <span class="hljs-comment">// 返回： 成功 0，失败 -1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>sockfd</p>
+<p>指定套接字</p>
+</li>
+</ul>
+</li>
+<li><p>注意点</p>
+<ul>
+<li>调用close <strong>套接字描述符引用计数减 1</strong>，若减 1 后引用计数为 0 ，发送 FIN 开启 TCP 连接终止过程</li>
+<li>立即结束 TCP 连接，使用 shutdown 函数</li>
+<li>并发服务器编程时，<strong>父进程必须关闭已连接描述符</strong>，否则导致套接字描述符总是大于 1， <strong>连接不会被真正终</strong>止，并可能<strong>耗尽可用描述符</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="7-getsockname-getpeername"><a href="#7-getsockname-getpeername" class="headerlink" title="7. getsockname(), getpeername()"></a>7. getsockname(), getpeername()</h3><p><code>getsockname()</code> 返回与该套接字关联的<strong>本地协议地址</strong><br><code>getpeername()</code> 返回与该套接字关联的<strong>外地协议地址</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">getsockname</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, struct sockaddr *localaddr, <span class="hljs-keyword">socklen_t</span> *addrlen)</span></span>;<br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">getpeername</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd, struct sockaddr *peeraddr, <span class="hljs-keyword">socklen_t</span> *addrlen)</span></span>;<br>                                                    <span class="hljs-comment">// 返回：成功 0，失败 -1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>sockfd</p>
+<p>给定套接字，已连接套接字或者监听套接字都可以</p>
+</li>
+<li><p>addr</p>
+<p>返回结果</p>
+</li>
+<li><p>addrlen</p>
+<p>值-结果类型参数，传入指明addr大小，传出指明写入大小</p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/unp/">unp</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/30/UNP-TCP%E5%AE%A2%E6%88%B7%E6%9C%8D%E5%8A%A1%E5%99%A8-%E8%BF%AD%E4%BB%A3%E5%BC%8F/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[UNP]:TCP客户服务器_迭代式</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/29/UNP-%E5%AD%97%E8%8A%82-%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2%E5%87%BD%E6%95%B0/">
+                        <span class="hidden-mobile">[UNP]:字节-地址转换函数</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

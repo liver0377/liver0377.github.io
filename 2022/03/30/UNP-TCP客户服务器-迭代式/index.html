@@ -1,0 +1,618 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="编写一个完整的 TCP 客户端&#x2F;服务器程序：  客户从标准输入读入一行文本，并写给服务器 服务器从网络输入读入这行文本，并回射给客户 客户从网络输入读入这行回射文本，并显示在标准输出上  1. 函数准备1. TCP 回射服务器程序原型： 12345678910111213141516#include “unp.h”void str_echo(int sockfd)&amp;#123;    ssize_t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[UNP]:TCP客户服务器_迭代式">
+<meta property="og:url" content="http://example.com/2022/03/30/UNP-TCP%E5%AE%A2%E6%88%B7%E6%9C%8D%E5%8A%A1%E5%99%A8-%E8%BF%AD%E4%BB%A3%E5%BC%8F/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="编写一个完整的 TCP 客户端&#x2F;服务器程序：  客户从标准输入读入一行文本，并写给服务器 服务器从网络输入读入这行文本，并回射给客户 客户从网络输入读入这行回射文本，并显示在标准输出上  1. 函数准备1. TCP 回射服务器程序原型： 12345678910111213141516#include “unp.h”void str_echo(int sockfd)&amp;#123;    ssize_t">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-03-30T02:59:53.000Z">
+<meta property="article:modified_time" content="2022-04-01T06:14:05.241Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="unp">
+<meta name="twitter:card" content="summary_large_image">
+  
+  <title>[UNP]:TCP客户服务器_迭代式 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[UNP]:TCP客户服务器_迭代式">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-30 10:59" pubdate>
+        2022年3月30日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.3k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      14 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[UNP]:TCP客户服务器_迭代式</h1>
+            
+            <div class="markdown-body">
+              <p>编写一个完整的 TCP 客户端/服务器程序：</p>
+<ol>
+<li>客户从标准输入读入一行文本，并写给服务器</li>
+<li>服务器从网络输入读入这行文本，并回射给客户</li>
+<li>客户从网络输入读入这行回射文本，并显示在标准输出上</li>
+</ol>
+<h3 id="1-函数准备"><a href="#1-函数准备" class="headerlink" title="1. 函数准备"></a>1. 函数准备</h3><h4 id="1-TCP-回射服务器程序"><a href="#1-TCP-回射服务器程序" class="headerlink" title="1. TCP 回射服务器程序"></a>1. TCP 回射服务器程序</h4><p>原型：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> “unp.h”</span><br><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">str_echo</span><span class="hljs-params">(<span class="hljs-keyword">int</span> sockfd)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">ssize_t</span> n;<br>    <span class="hljs-keyword">char</span>    buf[MAXLINE];<br>    <br>again:<br>    <span class="hljs-keyword">while</span>((n = read(sockfd, buf, MAXLINE)) &gt; <span class="hljs-number">0</span>)<br>        Writen(sockfd, buf, n);<br>    <br>    <span class="hljs-keyword">if</span>(n &lt; <span class="hljs-number">0</span> &amp;&amp; errno == EINTR) <span class="hljs-comment">// 被中断后继续执行</span><br>        <span class="hljs-keyword">goto</span> again;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(n &lt; <span class="hljs-number">0</span>)<br>        err_sys(<span class="hljs-string">&quot;str_echo: read error&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<h4 id="2-TCP-回射客户端程序"><a href="#2-TCP-回射客户端程序" class="headerlink" title="2. TCP 回射客户端程序"></a>2. TCP 回射客户端程序</h4><p>原型：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;unp.h&quot;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">str_cli</span><span class="hljs-params">(FILE *fp, <span class="hljs-keyword">int</span> sockfd)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">char</span>    sendline[MAXLINE], recvline[MAXLINE];<br>    <br>    <span class="hljs-keyword">while</span>(Fgets(sendline, NAXLINE, fp) != <span class="hljs-literal">NULL</span>)<br>    &#123;<br>        Writen(sockfd, sendline, <span class="hljs-built_in">strlen</span>(sendline));<br>        <br>        <span class="hljs-keyword">if</span>(Readline(sockfd, recvline, MALINE) == <span class="hljs-number">0</span>)<br>            err_quit(<span class="hljs-string">&quot;str_cli: server terminated prematurely&quot;</span>);<br>        Fputs(recvline, <span class="hljs-built_in">stdout</span>);<br>        <br>    &#125;<br>    <br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<h3 id="2-代码实现"><a href="#2-代码实现" class="headerlink" title="2. 代码实现"></a>2. 代码实现</h3><h4 id="1-TCP客户端"><a href="#1-TCP客户端" class="headerlink" title="1. TCP客户端"></a>1. <strong>TCP客户端</strong></h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;unp.h&quot;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> **argv)</span></span><br><span class="hljs-function"></span>&#123;<br>        <span class="hljs-keyword">int</span> sockfd;<br>        <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">servaddr</span>;</span><br>        <br>        <span class="hljs-keyword">if</span>(argc != <span class="hljs-number">2</span>)<br>            err_quit(<span class="hljs-string">&quot;usage: tcpcli &lt;IPaddress&gt;&quot;</span>);<br>        <br>        sockfd = Socket(AF_INET, SOCK_STREAM, <span class="hljs-number">0</span>);<br>        <br>        bzero(&amp;servaddr, <span class="hljs-keyword">sizeof</span>(servaddr));<br>        servaddr.sin_family = AF_INET;<br>        servaddr.sin_port = htons(SERV_PORT);<br>        Inet_pton(AF_INET, argv[<span class="hljs-number">1</span>], &amp;servaddr.sin_addr);<br>        <br>        Connect(sockfd, (SA *) &amp;servaddr, <span class="hljs-keyword">sizeof</span>(servaddr));<br>        <br>        str_cli(<span class="hljs-built_in">stdin</span>, sockfd); <span class="hljs-comment">/*do it all*/</span><br>        <br>        <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);    <br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<h4 id="2-TCP服务端"><a href="#2-TCP服务端" class="headerlink" title="2. TCP服务端"></a>2. <strong>TCP服务端</strong></h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;unp.h&quot;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> **argv)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">int</span> listenfd, connfd;<br>    <span class="hljs-keyword">pid_t</span> childpid;<br>    <span class="hljs-keyword">socklen_t</span> clilen;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">cliaddr</span>, <span class="hljs-title">servaddr</span>;</span><br>    <br>    <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">sig_chld</span><span class="hljs-params">(<span class="hljs-keyword">int</span>)</span></span>;<br>    <br>    listenfd = Socket(AF_INET, SOCK_STREAN, <span class="hljs-number">0</span>);<br>    <br>    bzero(&amp;servaddr, <span class="hljs-keyword">sizeof</span>(servaddr));<br>    servaddr.sin_family = AF_INET;<br>    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);<br>    servaddr.sin_port = htons(SERV_PORT);<br>    <br>    Bind(listenfd, (SA *)&amp;servaddr, <span class="hljs-keyword">sizeof</span>(servaddr));<br>    <br>    Listen(listenfd, LISTENQ);<br>    <br>    Signal(SIGCHLD, sig_chld);  <span class="hljs-comment">/*必须调用 waitpid() 回收僵尸进程*/</span><br>    <br>    <span class="hljs-keyword">for</span>( ; ; )<br>    &#123;<br>        chilen = <span class="hljs-keyword">sizeof</span>(chiaddr);<br>        <span class="hljs-keyword">if</span>((connfd = accept(listenfd, (SA *) &amp;cliaddr, &amp;clilen)) &lt; <span class="hljs-number">0</span>)<br>        &#123;<br>            <span class="hljs-keyword">if</span>(errno == EINTR)  <span class="hljs-comment">// 被中断重新调用</span><br>                <span class="hljs-keyword">continue</span>;<br>            <span class="hljs-keyword">else</span><br>                err_sys(<span class="hljs-string">&quot;accept error&quot;</span>);<br>        &#125;<br>        <span class="hljs-keyword">if</span>((childpid = Fork()) == <span class="hljs-number">0</span>)<span class="hljs-comment">/* 子进程*/</span><br>        &#123;<br>            Close(lisenfd); <span class="hljs-comment">/*关闭监听套接字*/</span> <span class="hljs-comment">// 关闭后面没用的套接字</span><br>            str_echo(connfd);<br>            <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);<br>        &#125;<br>        Close(connfd);  <span class="hljs-comment">/*必须关闭 不然一直占用描述符*/</span><br>    &#125;<br>    <br>&#125;<br><br><span class="hljs-comment">/**********************************************************************************/</span><br><span class="hljs-comment">// 回收子进程 避免产生僵尸进程</span><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">sig_chld</span><span class="hljs-params">(<span class="hljs-keyword">int</span> signo)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">pid_t</span> pid;<br>    <span class="hljs-keyword">int</span> stat;<br>    <br>    <span class="hljs-keyword">while</span>( (pid = waitpid(<span class="hljs-number">-1</span>, &amp;stat, WNOHANG)) &gt; <span class="hljs-number">0</span>) <span class="hljs-comment">// WNOHANG 不阻塞</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;child %d terminated\n&quot;</span>, pid);<br>        <br>    <span class="hljs-keyword">return</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-问题分析"><a href="#3-问题分析" class="headerlink" title="3. 问题分析"></a>3. <strong>问题分析</strong></h3><p><strong>僵尸进程与处理</strong></p>
+<ol>
+<li><p>产生：</p>
+<ul>
+<li>子进程终止时发送给父进程一个 <strong>SIGCHLD</strong> 信号，若父进程没有捕获改信号处理，则子进程变为僵尸进程。</li>
+</ul>
+</li>
+<li><p>POSIX 信号处理知识：</p>
+<ol>
+<li><p>父进程通过调用 <code>sigaction()</code> 函数捕获信号，捕获到信号有三种处理方式：</p>
+<ul>
+<li><p>提供一个函数，只要特定信号发生，就调用该函数。<strong>SIGKILL</strong> 和 <strong>SIGSTOP</strong> 不能被捕获</p>
+<p>信号处理函数原型：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">handler</span><span class="hljs-params">(<span class="hljs-keyword">int</span> signo)</span></span>;<span class="hljs-comment">// 无返回值， 形参为 信号</span><br></code></pre></td></tr></table></figure></li>
+<li><p>把信号的处置设置为 <strong>SIG_NGN</strong> 忽略信号。<strong>SIGKILL</strong> 和 <strong>SIGSTOP</strong> 不能忽略</p>
+</li>
+<li><p>把信号处置设置为 <strong>SIG_DEF</strong> 启动默认处置</p>
+</li>
+</ul>
+</li>
+<li><p>POSIX 信号处理总结</p>
+<ul>
+<li>一旦安装了信号处理函数，便一直有效</li>
+<li><strong>在一个信号处理函数运行期间，正被递交的函数是阻塞的</strong></li>
+<li>如果一个信号在被阻塞期间产生了一次或多次，那么该信号被解除阻塞后只递交一次，<strong>Unix 信号默认是不排队的</strong></li>
+</ul>
+</li>
+</ol>
+</li>
+<li><p><strong>使用 waitpid() 函数代替 wait() 函数</strong>，因为 <code>Unix </code>信号是不排队的，当同时出现多个子进程的 <strong>SIGCHLD</strong> 信号时，<code>wait()</code> 可能不能全部处理所有信号</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;unp.h&quot;</span></span><br><br><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">sig_child</span><span class="hljs-params">(<span class="hljs-keyword">int</span> signo)</span> </span>&#123;<br>	<span class="hljs-keyword">pid_t</span> pid;<br>    <span class="hljs-keyword">int</span>   stat;<br>    <br>    <span class="hljs-keyword">while</span> ((pid = waitpid(<span class="hljs-number">-1</span>, &amp;stat, WHOHANG)) &gt; <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;child %d terminated\n&quot;</span>, pid);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p><code>accept()</code> 中必须处理中断</p>
+<ul>
+<li>当 <strong>SIGCHLD</strong> 信号递交时，父进程阻塞于 <code>accept()</code> 系统调用，内核会使 <code>accept()</code> 返回一个 <strong>EINTR</strong> 错误( 被中断的系统调用 )，<strong>所以必须在程序 accept() 中处理该错误</strong>，重新启动 <code>accept() </code>系统调用</li>
+<li>对于 <code>accept()</code> 以及诸如<code>read()</code>、<code>write()</code>、<code>select()</code> 和<code>open()</code> 之类的函数来说，<strong>重启</strong>被中断的系统调用时合适的，<strong>但是 connect() 除外</strong>，重启 <code>connect()</code> 将返回错误，因为原来的套接字已经无效</li>
+</ul>
+</li>
+</ol>
+<ul>
+<li>总结</li>
+</ul>
+<p>网络编程时可能会遇到的三种情况：</p>
+<ol>
+<li><strong>当 fork 子进程时，必须捕获 SIGCHLD 信号</strong>；</li>
+<li><strong>当捕获信号时，必须处理被中断的系统调用</strong>；</li>
+<li><strong>SIGCHLD 的信号处理函数必须正确编写，应使用 waitpid 函数以免留下僵尸进程</strong></li>
+</ol>
+<p><strong>服务器进程终止</strong></p>
+<ol>
+<li><p>服务器进程终止，发送<code>FIN</code> 给客户端</p>
+</li>
+<li><p><strong>客户端阻塞在 <code>fget()</code> 上不能立即响应该 FIN</strong></p>
+<blockquote>
+<p>这就是引入 <code>select()</code> 和 <code>poll()</code> 的原因之一，客户端不能单纯阻塞在某个特定套接字描述符上，而应该阻塞在任意输入套接字描述</p>
+</blockquote>
+</li>
+<li><p>等待用户输入文本后， <code>str_cli()</code> 函数调用 <code>writen()</code> 把数据发送给服务器</p>
+</li>
+<li><p>服务器接收到数据，响应 <code>RST</code></p>
+</li>
+<li><p><strong>客户端此时阻塞在 <code>readline()</code> 上，看不到这个 RST</strong>，并且由于第 1 步中的 <code>FIN</code> ，<code>readline()</code> 立即返回 0 ，所以 <code>str_cli()</code> 第 9 行，打印 <strong>“str_cli：server terminated prematurely”</strong></p>
+</li>
+<li><p>客户端终止，关闭所有打开的描述符</p>
+</li>
+</ol>
+<p><strong>SIGPIPE 信号</strong></p>
+<ol>
+<li>产生：<br>如上第 5 步，客户端内核收到 <code>RST</code> ，而客户端进程并未及时处理，假如此时进程继续向对端服务器发送数据时(调用 <code>write()</code> ), 函数客户端内核将向该进程发送 <code>SIGPIPE</code> 信号</li>
+<li>处理<br><code>SIGPIPE</code> 信号默认行为是终止进程，因此进程必须捕获它以免不情愿的被终止</li>
+<li>无论进程有没有捕获<code>SIGPIPE</code>信号，<code>write()</code>返回 <code>EPIPE</code> 错误<ol>
+<li>写一个接收了 <code>FIN</code> 的套接字正确(<code> CLOSE_WAIT</code> 状态)；</li>
+<li>写一个接收了 <code>RST</code> 的套接字 <code>EPIPE</code> 错误</li>
+</ol>
+</li>
+</ol>
+<p><strong>服务器主机崩溃</strong></p>
+<ol>
+<li>过程<ol>
+<li>服务器崩溃时，客户端不会收到任何通知</li>
+<li>客户端调用 <code>wtrten()</code> 时，客户端 <code>TCP</code> 持续重传数据，试图从服务器接收 <code>ACK</code></li>
+<li>重传过程结束还是没收到服务器 <code>ACK</code> ，此时客户端阻塞在<code>readline()</code>上，返回错误 <strong>ETIMEDOUT</strong></li>
+</ol>
+</li>
+<li>处理<ol>
+<li>对 <code>readline()</code> 调用设置超时，提前得知服务器崩溃信息，不必等待重传机制完成</li>
+<li>设置 <strong>SO_KEEPALIVE</strong> 心跳保活选项</li>
+</ol>
+</li>
+</ol>
+<p><strong>服务器主机崩溃后重启</strong></p>
+<ol>
+<li>服务器崩溃重启后丢失之前的所有 <code>TCP </code>连接，因此服务器收到客户端的消息直接返回 <code>RST</code></li>
+<li>客户端收到<code> RST</code> 返回 <strong>ECONNRESET</strong> 错误</li>
+</ol>
+<p><strong>服务器主机关机</strong></p>
+<ol>
+<li><code>Unix</code> 系统关机时，<code>init</code>进程给所有进程发送 <strong>SIGTERM</strong> 信号</li>
+<li>内核等待(5-20 秒)，留给程序小段时间来清除和终止，然后给所有仍在运行的进程发送 <strong>SIGKILL</strong> 杀死进程</li>
+<li>若进程不捕获 <strong>SIGTERM</strong> ，服务器进程由 <strong>SIGKILL</strong> 终止，随后发生的步骤如上: &lt;服务器进程终止&gt;</li>
+</ol>
+<ul>
+<li><p>总结</p>
+<p><strong>必须在客户端程序中使用 select 或 poll 函数，使服务器进程终止一经发生，立刻检测到</strong></p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/unp/">unp</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/30/UNP-IO%E5%A4%8D%E7%94%A8-select-poll/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[UNP]:IO复用_select_poll</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/29/UNP-%E5%A5%97%E6%8E%A5%E5%AD%97%E7%BC%96%E7%A8%8B%E5%9F%BA%E6%9C%ACAPI/">
+                        <span class="hidden-mobile">[UNP]:套接字编程基本API</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

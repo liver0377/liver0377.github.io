@@ -1,0 +1,689 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="1.路由选择算法路由选择算法可以根据算法是集中式还是分散式来划分  集中式路由选择算法 使用该算法时，需要已知所有节点的之间的连通性以及所有链路的开销，比如链路状态(Link State,LS)算法  分散式路由选择算法 没有链路拥有所有链路开销的完整信息，路由器以迭代，分布式的方法计算出最低开销路径，比如距离向量(Distance Vector,DV算法   1.链路状态路由选择算法(LS算法)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[计算机自顶向下方法]:路由选择协议">
+<meta property="og:url" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="1.路由选择算法路由选择算法可以根据算法是集中式还是分散式来划分  集中式路由选择算法 使用该算法时，需要已知所有节点的之间的连通性以及所有链路的开销，比如链路状态(Link State,LS)算法  分散式路由选择算法 没有链路拥有所有链路开销的完整信息，路由器以迭代，分布式的方法计算出最低开销路径，比如距离向量(Distance Vector,DV算法   1.链路状态路由选择算法(LS算法)">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/1.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/2.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/3.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/4.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/5.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/6.png">
+<meta property="og:image" content="https://private.codecogs.com/gif.latex?D_x=%20%5BD_x(y):%20y%20%5Cin%20N%20%5D">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/7.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/8.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/9.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/10.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/11.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/12.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/13.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/14.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/15.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/16.png">
+<meta property="og:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/17.png">
+<meta property="article:published_time" content="2022-03-31T01:40:18.000Z">
+<meta property="article:modified_time" content="2022-04-01T06:10:52.822Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/31/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E6%96%B9%E6%B3%95-%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE/1.png">
+  
+  <title>[计算机自顶向下方法]:路由选择协议 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[计算机自顶向下方法]:路由选择协议">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-31 09:40" pubdate>
+        2022年3月31日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      5.2k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      16 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[计算机自顶向下方法]:路由选择协议</h1>
+            
+            <div class="markdown-body">
+              <h3 id="1-路由选择算法"><a href="#1-路由选择算法" class="headerlink" title="1.路由选择算法"></a>1.路由选择算法</h3><p>路由选择算法可以根据算法是集中式还是分散式来划分</p>
+<ul>
+<li><p>集中式路由选择算法</p>
+<p>使用该算法时，需要已知所有节点的之间的连通性以及所有链路的开销，比如<strong>链路状态(Link State,LS)算法</strong></p>
+</li>
+<li><p>分散式路由选择算法</p>
+<p>没有链路拥有所有链路开销的完整信息，路由器以迭代，分布式的方法计算出最低开销路径，比如<strong>距离向量(Distance Vector,DV算法</strong></p>
+</li>
+</ul>
+<h4 id="1-链路状态路由选择算法-LS算法"><a href="#1-链路状态路由选择算法-LS算法" class="headerlink" title="1.链路状态路由选择算法(LS算法)"></a>1.链路状态路由选择算法(LS算法)</h4><p>以Dijkstra算法为链路状态算法的代表</p>
+<p><strong>Dijkstra算法</strong></p>
+<p>Dijkstra是一个典型的的贪心算法，通过保留目前为止所找到的每个顶点的最短路径来工作, 属于数据结构中的经典算法</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p>伪代码如下:</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p><strong>振荡问题</strong></p>
+<p>由于各路由器可能同时进行LS算法，导致最短路径的计算结果不断振荡</p>
+<p>例:</p>
+<ul>
+<li><p>节点D产生一个发往A的大小为1的流量，节点B也产生发往节点A的一个大小为1的流量,节点C产生一个大小为e的流量，流量的终点也是A,此时根据LS算法，各流量的方向如图</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+</li>
+<li><p>LS算法再次运行，此时由于各路径上</p>
+</li>
+<li><p>的负载(开销)产生了变化，计算出不同的路径</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+</li>
+<li><p>再一次进行LS算法</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+</li>
+<li><p>再一次</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+</li>
+</ul>
+<p>这就是LS算法会产生的振荡过程，目前较好的解决方法是<strong>确保并非所有的路由器都同时进行LS算法</strong></p>
+<h4 id="2-距离向量路由选择算法-DV算法"><a href="#2-距离向量路由选择算法-DV算法" class="headerlink" title="2.距离向量路由选择算法(DV算法)"></a>2.距离向量路由选择算法(DV算法)</h4><p>以Bellman-Ford算法为代表</p>
+<p><strong>Bellman-Ford算法</strong></p>
+<ul>
+<li><p>Bellman-Ford方程</p>
+<p>记$d_x(y)$​​是从节点x到节点y的最低开销路径的开销,$c(x,v)$代表x, v之间的开销，$v \in {x的所有邻居}$​​</p>
+<p>==$d_x(y) = min_v {c(x,v)+d_v(y)}$==​</p>
+</li>
+<li><p>基本思想</p>
+<p>记$N$为所有顶点的集合</p>
+<p>每个节点从$D_x(y)$开始，对在$N$中的所有节点y, <strong>估计</strong>从x到y的最低开销路径的开销</p>
+<p>注:DV算法采用的是拟合的思想，所以说是估计</p>
+</li>
+<li><p>具体过程</p>
+<p>设计一个结点x的距离向量，为：<img src="https://private.codecogs.com/gif.latex?D_x=%20%5BD_x(y):%20y%20%5Cin%20N%20%5D" srcset="/img/loading.gif" lazyload alt="7">。该向量是从x到N中所有其他结点y的费用估计的向量。使用DV算法，对每个结点维护以下路由选择信息：</p>
+<ol>
+<li>对每个邻居结点<code>v</code>，从<code>x</code>到相邻邻居v的费用为<code>c(x, v)</code></li>
+<li>结点x的距离向量<code>Dx</code>，包含了<code>x</code>到<code>N</code>中所有目的地<code>y</code>的费用估计值</li>
+<li>每个邻居的距离向量<code>Dv</code><br>接下来每个结点不时地向它的每个邻居发送它自身的距离向量副本</li>
+</ol>
+</li>
+<li><p>当结点<code>x</code>从其它每一个邻居<code>v</code>接收到一个新距离向量的时候，它将保存<code>v</code>的距离向量，然后使用方程来更新自身的距离向量</p>
+</li>
+</ul>
+<ul>
+<li>如果自身的距离向量确实得到更新，更新完毕后，接下来将对每个邻居发送它的距离向量副本</li>
+</ul>
+<ul>
+<li>最后当整个网络无更新报文发送，进入到静止状态时，收敛到最小路径</li>
+</ul>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+<p><strong>无穷计数问题</strong></p>
+<p>例如，存在这样一个网络：</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+<ul>
+<li>某一时刻，Y检测到它到X的链路费用由4减少为1，于是它更新了自己的距离向量，并通知了Z</li>
+<li>Z在收到Y的更新报文后，也更新了自己的距离向量（由5减为2），并向邻居们发送更新报文</li>
+<li>而后，Y又收到了Z的更新报文，但它发现并没有改变自己的最低费用，于是保持不变</li>
+<li>这样，仅仅经过了两次迭代网络就达到了静止。好消息通过网络得到了迅速传播</li>
+</ul>
+<p>但是，当链路费用增加（甚至断开）时，就不会这么简单了</p>
+<p>我们看下面这个例子：</p>
+<p><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<ul>
+<li>Y检测到它到X的路径费用由4增加到了60, 此时节点Z的距离向量为：d(X) = 5, d(Y) = 1, d(Z) = 0</li>
+<li>由于Y保存了Z的距离向量副本，Y的距离向量更新为：d(x) = 5 + 1 = 6, d(Y) = 0, d(z) = 1，这个逻辑显然是错误的，因为Z到X的距离为5的前提是要经过Y，但Y更新后的路径又要经过Z，这就形成了一个<strong>选路环路（routing-loop）问题</strong></li>
+<li>因为Y的距离向量更新了（虽然是错误的），但它还是向Z发送了更新报文</li>
+<li>Z收到更新报文后，比较了下邻居们到X的距离，发现经过Y的路径距离为1 + 6 = 7，小于直接到X的距离，于是Z也更新的自己的距离向量为: d(x) = 7, d(y) = 1, d(z) = 0, 到<code>x</code>的距离的值相对于之前只上升了1, 然后又将更新后的距离向量发给Y</li>
+<li>Y收到后又更新向量为8，然后再发给Z。。。</li>
+<li>这样循环往复，更新报文在Y和Z之间传来传去，直到第44次迭代后，Z算出它经由Y的路径费用大于50为止。此时，Z最终确定到X的最短路径费用是直接到达X的费用50，而Y也得到了最短路径是经Z到X的费用51。</li>
+</ul>
+<p>可以看出，虽然最后还是得到了正确的信息（最后的50和51是正确的！），但坏消息的传播与好消息相比实在是慢太多了！而且，如果X和Y之间的费用为10000，Z和X的费用是9999时，就会出现<strong>无穷计数（count-to-infinity）问题</strong></p>
+<h5 id="3-LS与DV算法的比较"><a href="#3-LS与DV算法的比较" class="headerlink" title="3.LS与DV算法的比较"></a>3.LS与DV算法的比较</h5><ul>
+<li>DV 算法中，每个节点只需要维护自身的距离向量，且只需要与自己相连的链路的状态；而 LS 算法中每个节点都需要知道所有链路的状态；</li>
+<li>DV 算法中每个节点只需要把自己的信息传给相邻节点；而 LS 算法中每个节点都需要在网络中广播自己的信息，以实现网络中每个节点都保存有整个网络完整的拓扑信息；</li>
+<li>DV 算法可以是异步的，也即不要求节点之前同步，当邻居节点信息有变时完全可以再执行以此迭代，即可更新信息；而 LS 则要求全局信息已知，也就要求所有节点的信息都是正确的；</li>
+</ul>
+<h3 id="2-AS"><a href="#2-AS" class="headerlink" title="2. AS"></a>2. AS</h3><p><strong>什么是AS</strong></p>
+<ul>
+<li>AS，**(Autonomous System,自治系统)<strong>,是指统一使用内部路由协议(OSPF, RIP)的</strong>一组网络**</li>
+<li>一个自治系统由全球唯一的AS号(ASN)进行标识,由ICANN区域注册所分配</li>
+</ul>
+<h3 id="3-AS内部路由选择"><a href="#3-AS内部路由选择" class="headerlink" title="3. AS内部路由选择"></a>3. AS内部路由选择</h3><p>AS内部的路由选择协议这里介绍两种</p>
+<h4 id="1-RIP"><a href="#1-RIP" class="headerlink" title="1. RIP"></a>1. RIP</h4><p>RIP 协议是分布式的<strong>基于 DV 算法</strong>的路由选择协议，下面我们分析一下 RIP 协议在 DV 算法的基础上提出怎样的封装</p>
+<ul>
+<li><p>距离</p>
+<p> RIP 协议中的距离得到了定义，从一路由器到直接连接的网络的距离定义为 1，到非直接连接的网络距离定义为所经过的路由器数量加 1。由于这个定义，RIP 协议的“距离”也称之为“<strong>跳数</strong>”。</p>
+</li>
+</ul>
+<p><strong>最大度量</strong></p>
+<p>对于<strong>无穷计数问题</strong>，RIP 协议提供了解法——<strong>定义最大度量</strong></p>
+<p>RIP 协议允许一条路径最多只能包含 15 个服务器，若距离等于或大于 16 时将直接不可达。出现无穷计数时，路由器之间相互传播错误的信息会使最短距离增长到 16，这就到达了最大度量，就可以规避故障链路了。<br>但是这也引发了新的问题，要是 2 个路由器之间的距离本身就超过 16 呢？这没有办法，也会被认为是不可达的，<strong>因此 RIP 协议无法适用于较大的互联网</strong></p>
+<p><strong>周期性广播</strong></p>
+<p>路由器之间将<strong>按照固定的时间间隔</strong>交换路由信息，同时当网络拓扑发生变化时也会及时通告拓扑变化之后的路由信息</p>
+<p><strong>报文头</strong></p>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+<h4 id="2-OSPF"><a href="#2-OSPF" class="headerlink" title="2. OSPF"></a>2. OSPF</h4><p><strong>开放最短路径优先(OSPF)</strong> 协议被广泛用于因特网 AS 内部路由选择，开放指的是路由选择协议规范是公众可用的，而并非属于某一厂家OSPF 协议是一种<strong>链路状态协议</strong>，它使用洪泛链路状态信息和 Dijkstra 算法实现，下面看一些 OSPF 协议的具体实现方式：</p>
+<p><strong>链路状态数据库</strong></p>
+<p>运载 OSPF 协议的所有路由器最终会建立一个<strong>链路状态数据库</strong>，这个数据库包含 3 张表来协同工作：</p>
+<ol>
+<li>邻居表：邻居表之间通过问候报文联系，确认相邻拓扑是否正常；</li>
+<li>链路状态表：通过交换邻居表，形成完整的网络拓扑图，该表在 AS 内的所有路由器是一致的；</li>
+<li>计算路由表：运载 Dijkstra 算法，获得最佳路径。</li>
+</ol>
+<p>接下来我们来看一下路由器和邻居之间，是怎么通过这 3 张表进行工作的。<br><img src="11.png" srcset="/img/loading.gif" lazyload alt="11"></p>
+<p><strong>泛洪法</strong></p>
+<p>由于需要让所有的路由器得到自己的路由信息，因此需要向 AS 内的所有相邻路由器发送信息。实现这个功能的是<strong>洪泛法</strong>，路由器通过所有输出端口向相邻路由器发送信息，而每一个相邻路由器再把信息发送给相邻的路由器，最终 AS 内的所有路由器都会得到这个路由信息。<br>同时 OSPF 协议的洪泛法是可靠的，因为对于任何路由器，收到其他路由器发来的分组之后需要发送 <strong>ACK</strong>，这就可以保证路由信息的传递正确。<br><img src="12.png" srcset="/img/loading.gif" lazyload alt="12"></p>
+<p><strong>触发式更新</strong></p>
+<p>路由表的更新并非是周期性的，而是当<strong>链路状态发生变化</strong>时，路由器才向所有的路由器使用洪泛法发送信息。由于这种方式，使得链路状态表更新很快，使得最低开销路径的收敛速度加快，同时也可以保证 AS 内的所有路由器的链路状态表一致</p>
+<p><strong>报文段</strong></p>
+<p><img src="13.png" srcset="/img/loading.gif" lazyload alt="13"></p>
+<ol>
+<li>Hello：发现、维持邻居路由器的可达性；</li>
+<li>数据库描述：向邻居给出自己的链路状态数据库中，所有链路状态项目的摘要信息；</li>
+<li>链路状态请求：向邻居请求发送某些链路状态的详细信息；</li>
+<li>链路状态更新：使用洪泛法对全网更新链路状态；</li>
+<li>ACK：对更新分组的确认。</li>
+</ol>
+<p><strong>运输层协议</strong></p>
+<p>OSPF 报文由 IP 协议承载，而不是使用 UDP 协议，此时的 IP 数据报的协议字段为 89。OSPF 报文的篇幅很小，这就可以加快数据报的传输速度</p>
+<h3 id="4-AS间路由选择"><a href="#4-AS间路由选择" class="headerlink" title="4. AS间路由选择"></a>4. AS间路由选择</h3><p><strong>BGP 的作用</strong></p>
+<p>BGP的主要目标是为处于不同AS中的路由器之间进行路由信息通信提供保障<br>对于一个 AS 和 AS 内的某一个路由器，在路由器中有一个转发表，用于选择和确定分组在路由器的输出链路。对于分组需要发送到 AS 之外时，BGP 提供的并不是特定的目的地址，而是提供了一个通过 CIDR 得到的<strong>网络前缀</strong>，这个网络前缀能够标志一个子网或一个子网的集合</p>
+<p>概括起来，BGP 的作用是：<strong>容许子网向路由器其余部分通告它的存在</strong></p>
+<p><strong>BGP 的任务</strong></p>
+<p>BGP 对于每一台路由器来说，需要完成 2 个任务：</p>
+<ol>
+<li>从临近的 AS 获得前缀可达性信息：BGP 允许每个子网向因特网的其他部分告知自己的存在，同时 BGP 确保在因特网中所有的 AS 都知道该子网；</li>
+<li>确定到达子网的最佳路由：路由器将在本地允许 BGP 路由选择过程，此时 BGP 协议需要基于网络前缀的可达性信息，向路由器提供最佳路由</li>
+</ol>
+<p><strong>BGP 路由信息</strong></p>
+<ul>
+<li><p>AS间通信</p>
+<p>首先考虑简单的情况，将整个 AS 看做一个整体，假设现在需要向所有路由器通告 3d 的可达性信息。首先 AS3 向 AS2 发送 BGP 报文，告知 3d 为与 AS3 中，接着 AS2 向 AS1 发送 BGP 报文告知 AS1 可以通过 AS2 访问 3d。通过这种我们熟悉的交互方式，就可以使所有 AS 知晓 3d 的存在并得到路径</p>
+<p><img src="14.png" srcset="/img/loading.gif" lazyload alt="14"></p>
+</li>
+<li><p>实现</p>
+<ul>
+<li><p>IBGP与EBGP</p>
+<p><strong>内部路由器与网关路由器</strong></p>
+<p>对于每个 AS，每台路由器只有 2 种情况，即<strong>内部路由器</strong>或<strong>网关路由器</strong>，其中内部路由器仅链接在 AS 中的主机和路由器, 网关路由器位于 AS 边缘，通过链路连接其他的 AS 的网关路由器</p>
+<p>在 BGP 中，每对路由器都是使用 179 端口的 TCP 连接交换路由信息，每条连接及其通过连接的报文被称之为 <strong>BGP 连接</strong>。由于 BGP 连接可能是 AS 内的，也可能存在于 AS 间，因此我们把跨越 2 个 AS 的 BGP 连接称之为**外部 BGP(eBGP)<strong>，相同 AS 中的两台路由器间的 BGP 连接称之为</strong>内部 BGP(iBGP)**连接</p>
+<p>如图就给出了网关路由器、eBGP 和 iBGP 的示意，注意 iBGP 连接并不一定要与物理链路对应。<br><img src="15.png" srcset="/img/loading.gif" lazyload alt="15"></p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>BGP 属性</strong></p>
+<p>BGP 连接通告前缀时，前缀及其属性被称之为路由，前缀中包含一些称之为“属性”的信息。我们着重关注 2 个重要的属性：</p>
+<ol>
+<li><strong>AS-PATH</strong>：包含前缀通告所经过的 AS 序列，例如在上文中的 “AS2 AS3”。同时这个属性还可以用于检测和防止通告环路，尤其是路由器在该属性中发现包含了自己所在的 AS，这种通告会被直接拒绝；</li>
+<li><strong>NEXT-HOP</strong>：即下一跳，这个属性表示的是 AS-PATH 起始路由器接口的 IP 地址。</li>
+</ol>
+<p>有了这 2 个属性，对于一条 BGP 路由就包含了 3 个重要的组件：AS-PATH、NEXT-HOP 和目的前缀</p>
+<p><strong>热土豆路由选择</strong></p>
+<p>BGP 路由选择的原理是<strong>热土豆路由选择</strong>，即从所有路由中选择到开始该路由的 NEXT-HOP 路由器具有的最小开销作为学习的信息。通过热土豆路由选择添加 AS 外前缀的步骤如图所示，当 路由表学习可达性信息时，<strong>BGP 协议和 AS 内路由选择协议(OSPF 协议)需要协同工作</strong>。<br><img src="16.png" srcset="/img/loading.gif" lazyload alt="16"><br>热土豆路由选择的思想是：<strong>将分组发给最近的网关路由器，用尽可能最低开销将分组送出其所在 AS</strong></p>
+<p>之所以称之为热土豆，就是当分组被类比为“热土豆”时，由于烫手，所以我们要尽可能快地把“热土豆”扔给下一个人。因此热土豆路由选择是一种自私的算法，它只考虑到减小自己 AS 内传输分组的开销，但是忽略了 AS 外端到端的其他开销<br><img src="17.png" srcset="/img/loading.gif" lazyload alt="17"></p>
+<p><strong>路由选择算法</strong></p>
+<p>BGP 路由选择的原理是热土豆路由选择，下面就看一下 BGP 实际使用的路由选择算法。首先如果只有一条路由，则 BGP 只能选择这条路由进行传输。当存在多条路由时，按照下面的消除规则，直到剩下一条路由：</p>
+<ol>
+<li>比较<strong>本地偏好</strong>：路由会拥有一个本地偏好属性，该属性的值是一种策略性决定，它取决于 AS 的网络管理员。本地偏好信息可能从该路由器设置，或者相同 AS 中的其他路由器学习到，拥有较高本地偏好的路由会被选择；</li>
+<li>选择最短 <strong>AS-PATH</strong>：值得一提的是若 BGP 只使用这个规则来选择路由的话， BGP 会使用 DV 算法来决定路径，此时度量路径的是 AS 的跳数；</li>
+<li>使用<strong>热土豆路由选择</strong>：选择具有最靠近 NEXT-HOP 路由器的路由；</li>
+<li>如果仍然剩下多条路由，参考 BGP 标识符选择。</li>
+</ol>
+<p>通过这种算法，BGP 的路由选择可以考虑到尽可能低的开销，而不是自私的路由选择</p>
+<ul>
+<li>参考: <a target="_blank" rel="noopener" href="https://www.cnblogs.com/linfangnan/p/13031627.html">https://www.cnblogs.com/linfangnan/p/13031627.html</a></li>
+<li>参考: <a target="_blank" rel="noopener" href="https://www.cnblogs.com/linfangnan/p/13036026.html">https://www.cnblogs.com/linfangnan/p/13036026.html</a></li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/04/01/UNP-%E5%9F%BA%E6%9C%ACUDP%E5%A5%97%E6%8E%A5%E5%AD%97/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[UNP]:基本UDP套接字</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/30/UNP-TCP%E5%AE%A2%E6%88%B7%E6%9C%8D%E5%8A%A1%E5%99%A8-IO%E5%A4%8D%E7%94%A8/">
+                        <span class="hidden-mobile">[UNP]:TCP客户服务器_IO复用</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

@@ -1,0 +1,617 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="在数据库中，散列这种数据结构在构建索引时被广泛使用，虽然散列没有B+树使用的广泛，但是仍然很值得学习  桶(bucket) bucket表示可以存储一条或多条tuple的存储单元，可以在内存中也可以在磁盘中，对于内存中的哈希表来说，bucket可以是tuple的链表，对于磁盘中的哈希表来说，bucket可以是磁盘块的链表  桶的溢出(overflow) 由于一个bucket只能容纳一定数量的记录，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU15445]:哈希表">
+<meta property="og:url" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="在数据库中，散列这种数据结构在构建索引时被广泛使用，虽然散列没有B+树使用的广泛，但是仍然很值得学习  桶(bucket) bucket表示可以存储一条或多条tuple的存储单元，可以在内存中也可以在磁盘中，对于内存中的哈希表来说，bucket可以是tuple的链表，对于磁盘中的哈希表来说，bucket可以是磁盘块的链表  桶的溢出(overflow) 由于一个bucket只能容纳一定数量的记录，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/1.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/2.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/3.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/4.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/5.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/6.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/7.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/8.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/9.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/10.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/11.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/12.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/13.png">
+<meta property="og:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/14.png">
+<meta property="article:published_time" content="2022-01-12T09:20:07.000Z">
+<meta property="article:modified_time" content="2022-01-14T09:14:45.017Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/01/12/CMU15445-%E5%93%88%E5%B8%8C%E8%A1%A8/1.png">
+  
+  <title>[CMU15445]:哈希表 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[CMU15445]:哈希表">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-12 17:20" pubdate>
+        2022年1月12日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      8 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[CMU15445]:哈希表</h1>
+            
+            <div class="markdown-body">
+              <p>在数据库中，散列这种数据结构在构建索引时被广泛使用，虽然散列没有B+树使用的广泛，但是仍然很值得学习</p>
+<ul>
+<li><p>桶(bucket)</p>
+<p>bucket表示可以存储一条或多条tuple的存储单元，可以在内存中也可以在磁盘中，对于内存中的哈希表来说，bucket可以是tuple的链表，对于磁盘中的哈希表来说，bucket可以是磁盘块的链表</p>
+</li>
+<li><p>桶的溢出(overflow)</p>
+<p>由于一个bucket只能容纳一定数量的记录，因此，当不断有key被映射到同一个bucket，bucket就会发生溢出</p>
+</li>
+</ul>
+<h4 id="哈希函数"><a href="#哈希函数" class="headerlink" title="哈希函数"></a>哈希函数</h4><p>哈希函数是哈希表的核心部分，哈希函数建立了key到bucket之间的映射，如果选择了一个好的哈希函数，效率的提升将是飞跃的</p>
+<p>通常哈希函数用<code>h()</code>来表示，一个优秀的哈希函数会满足以下两个特征</p>
+<ul>
+<li><p>分布均匀</p>
+<p>理想情况下，每个bucket中都保存相同数量的tuple</p>
+</li>
+<li><p>分布随机</p>
+<p>哈希函数的值应该是接近随机的，不应该发生某些bucket上有大量tuple,而其他bucket上tuple非常少甚至没有</p>
+</li>
+</ul>
+<p>当前性能比较高的的哈希函数如下(crc除外)</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p>他们的性能比较如下图</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>注:当今比较有名的哈希函数还包含<code>sha-256, md5</code>等，但他们注重与安全性，效率很低，不适合在数据库中使用</p>
+<h4 id="Hashing-Scheme"><a href="#Hashing-Scheme" class="headerlink" title="Hashing Scheme"></a>Hashing Scheme</h4><p>Hashing Scheme主要分为两种，静态哈希(Static Hashing), 动态哈希(Dynamic Hashing)</p>
+<p><strong>静态哈希</strong></p>
+<p>在创建基于静态哈希的散列索引的时候，有一个前提条件，即<strong>能够大体估计出总的record数目</strong></p>
+<p>哈希表的长度应该是固定的，一旦确定下来之后就不能够变更，事实上，随着数据库中记录的不断增加，静态哈希的效率将会逐渐降</p>
+<p>低，因为当记录的数量远大于桶的时候，就不得不在溢出桶上进行查找，而这种查找是线性的</p>
+<p>此时一种可行的解决方案是<strong>增长桶的数量</strong>，常常是增大一倍，但这往往意味着数据库的暂时中断，会带来性能上的瓶颈</p>
+<p>根据是否使用溢出链表可以将散列的寻址方式分为<strong>开寻址</strong>与<strong>闭寻址</strong></p>
+<p>下面介绍几种开寻址中的寻址方法</p>
+<ul>
+<li><p>线性探查法(Linear Probe Hashing)</p>
+<p>线性探查法的基本思路就是当遇到哈希冲突，即不同key被映射到同一个bucket的时候，采用向bucket周围探查的方法寻找新的bucket</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>在上图中，当插入D时发现该bucket已经有值了，所以向下探查，找到一个空的slot，并将数据存在该slot中</p>
+<p><strong>该方法是最简单，最快速，也是被使用的最多的方法</strong>，该方法在查找或者插入元素时都表现的比较好，但是在删除元素时会比较棘手，来看看下面的例子</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>当删除C之后，如果我们想要找到D，由于D第一次映射的位置被C所占据，其当前位置是经过探查得到的，所以，当删除C之后，当查找D时，D就会被直接映射到一个空的slot，即查找失败，可以采用<strong>tomb 标志位</strong>来标志该情况</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<p>当读取到tomb标志位之后，就意味着应该要继续探查</p>
+<p>还有一种方法是将与删除元素有联系的元素向上移动，但是比较麻烦，就不多介绍了</p>
+<ul>
+<li><p>重复key</p>
+<p>如果key是primary key,那么其对应的value一定唯一，如果key不是primary key的话，就可能发生一个key对应多条记录的情况，此时有两种解决方案</p>
+<ol>
+<li><p>使用value list来存储重复key所对应的value</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+</li>
+<li><p>在hash table中，存储key|value，这样虽然比较浪费空间，但是影响不大，业界比较常用</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Robin Hood Hashing(罗宾汉探查法)</li>
+</ul>
+<p>  该方法旨在减少产生冲突后探查到的位置与原始位置之间的距离，在该探查法中，为每一个hash table中的条目维护一个<code>distance</code>,表示它与原始映射位置的距离，距离越高，表明其越<code>poor,</code>在探查过程中，如果发现某个entry的distance更少，即更<code>rich</code>,那么就会顶替它的位置</p>
+<p>  <img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+<p>  上图中,E经过两次探查之后，发现D比其更加贫穷，因此顶替它的位置</p>
+<p>  <img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<ul>
+<li>Cuckoo Hashing</li>
+</ul>
+<p>  该方法使用两张哈希表，大大缩短了查找的时间</p>
+<p>  两张哈希表使用相同的哈希函数，通过不同的hasheeds来形成不同的哈希值，下面简单的描述一下该方法的查找流程</p>
+<ol>
+<li><p>当插入一个记录时，该key会在两张表中形成两个映射的位置，此时选择一个空闲的slot</p>
+<p>如果两个slot均为空闲，那么随机选一个，结束</p>
+</li>
+<li><p>如果两个slot均不为空闲，那么随机选择一个将其当前位置替代，进入步骤3</p>
+</li>
+<li><p>将替换出来的记录的key作为新的key,在另一张表中进行映射，进入步骤1</p>
+</li>
+</ol>
+<p>  该方法的优势在于缩短了查找的流程，实际上最多只需要两次查找即可，但在极少情况下会陷入自循环，此时需要进行重新哈希</p>
+<p>  或者建立更大的hash table</p>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+<p><strong>动态哈希</strong></p>
+<p>动态哈希的一大优势在于可以持续进行hash table的扩充，而不需要进行额外的中断</p>
+<p>下面将会介绍几种动态哈希的例子</p>
+<ul>
+<li><p>Chained Hashing</p>
+<p>该方法最简单，只需要在每一个hash table的slot中维护一个bucket链表即可，每当遇见哈希冲突，就将新的record接在对应位置的链表后面</p>
+</li>
+<li><p>可扩充散列(Extendible Hashing)</p>
+<p>哈希函数产生的哈希值可以转换为二进制整数，记其位数为b, b的一个典型的值为32</p>
+<p>该方法中，维护着一个<code>bucket address table</code>,通过使用哈希值的前i为来建立key 与 bucket之间的映射关系</p>
+<p><img src="11.png" srcset="/img/loading.gif" lazyload alt="11"></p>
+<p>上图中，hash table(bucket address table)左上角的数字为<code>global count</code>, bucket上面的数字为<code>local count</code></p>
+<p>其中间有一套复杂的规则</p>
+<ul>
+<li>查找与插入</li>
+</ul>
+<p><img src="12.png" srcset="/img/loading.gif" lazyload alt="12"></p>
+<ul>
+<li><p>删除</p>
+<p><img src="13.png" srcset="/img/loading.gif" lazyload alt="13"></p>
+</li>
+</ul>
+<p>可以看一下这个链接</p>
+<p><a target="_blank" rel="noopener" href="http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/3-index/extensible-hashing.html">http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/3-index/extensible-hashing.html</a></p>
+</li>
+<li><p>linear Hashing</p>
+<p>Linear Hashing维护了一个<code>split pointer</code>,每次bucket产生溢出的时候，不管split pointer所指向的bucket有没有溢出，均将</p>
+<p>其分裂，即在hash table中添加新的slot，使其指向新的hash table, 然后将split pointer向下移动, 同时还要产生一个新的哈希函</p>
+<p>数, 如果哈希的bucket的值比<code>split pointer</code>要小，那么就应用新的哈希函数</p>
+<p><img src="14.png" srcset="/img/loading.gif" lazyload alt="14"></p>
+<p>不过该方法使用的比较少</p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/01/13/CMU15445-%E6%A0%91%E7%B4%A2%E5%BC%951/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[CMU15445]:树索引1</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/07/CMU15445-%E7%BC%93%E5%86%B2%E6%B1%A0/">
+                        <span class="hidden-mobile">[CMU15445]:缓冲池</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

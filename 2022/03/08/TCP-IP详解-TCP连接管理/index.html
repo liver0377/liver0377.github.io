@@ -1,0 +1,681 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="1. TCP连接的建立与终止 简介  一个TCP连接由一个四元组**&lt;源IP, 源端口, 目的IP, 目的端口&gt;**组成，通信的每一端都由一个套接字，即&lt;IP, 端口&gt;对所唯一标识  一个TCP连接分为三个过程:  启动， 数据传输，退出 启动阶段负责建立连接，退出阶段负责断开连接    TCP表头   TCP连接图   三次握手 TCP启动过程需要三次报文段的传递，因此也">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[TCP&#x2F;IP详解]:TCP连接管理">
+<meta property="og:url" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="1. TCP连接的建立与终止 简介  一个TCP连接由一个四元组**&lt;源IP, 源端口, 目的IP, 目的端口&gt;**组成，通信的每一端都由一个套接字，即&lt;IP, 端口&gt;对所唯一标识  一个TCP连接分为三个过程:  启动， 数据传输，退出 启动阶段负责建立连接，退出阶段负责断开连接    TCP表头   TCP连接图   三次握手 TCP启动过程需要三次报文段的传递，因此也">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/1.png">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/2.png">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/3.png">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/4.png">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/5.png">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/6.png">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/7.png">
+<meta property="og:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/8.png">
+<meta property="article:published_time" content="2022-03-08T08:29:56.000Z">
+<meta property="article:modified_time" content="2022-03-17T09:05:39.242Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/08/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/1.png">
+  
+  <title>[TCP/IP详解]:TCP连接管理 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[TCP/IP详解]:TCP连接管理">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-08 16:29" pubdate>
+        2022年3月8日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[TCP/IP详解]:TCP连接管理</h1>
+            
+            <div class="markdown-body">
+              <h4 id="1-TCP连接的建立与终止"><a href="#1-TCP连接的建立与终止" class="headerlink" title="1. TCP连接的建立与终止"></a>1. TCP连接的建立与终止</h4><ul>
+<li><p>简介</p>
+<ul>
+<li><p>一个TCP连接由一个四元组**&lt;源IP, 源端口, 目的IP, 目的端口&gt;**组成，通信的每一端都由一个套接字，即&lt;IP, 端口&gt;对所唯一标识</p>
+</li>
+<li><p>一个TCP连接分为三个过程:  启动， 数据传输，退出</p>
+<p>启动阶段负责建立连接，退出阶段负责断开连接</p>
+</li>
+</ul>
+</li>
+<li><p>TCP表头</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+</li>
+<li><p>TCP连接图</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<ul>
+<li><p>三次握手</p>
+<p>TCP启动过程需要三次报文段的传递，因此也被形象的称为三次握手</p>
+<blockquote>
+<p>下面所说的SYN, ACK,FIN报文指的是TCP报文头部的SYN, ACK,FIN字段被置为1</p>
+</blockquote>
+<ul>
+<li><p>第一次</p>
+<p>客户端发送一个SYN报文段，指明自己想要连接的端口号以及自己的Seq字段，此时的Seq字段值为ISN(c)</p>
+</li>
+<li><p>第二次</p>
+<p>服务器发送[SYN, ACK]报文段作为响应，ACK字段被置为<code>ISN(c) + 1</code>表明自己接下来想要接受的Seq号</p>
+<p>同时指明自己的Seq字段, 称为ISN(s)</p>
+</li>
+<li><p>第三次</p>
+<p>客户端对服务器的SYN报文段做出响应, 返回ACK报文段， ACK字段被置为<code>ISN(s) + 1</code></p>
+</li>
+</ul>
+<p>服务器端收到最后的ACK报文段之后，TCP连接建立成功</p>
+</li>
+<li><p>数据传输</p>
+<p>客户于服务器使用write(), read()等操作进行数据传输</p>
+</li>
+<li><p>四次挥手</p>
+<p>TCP退出过程需要四次报文段的传递，因此也被称为四次挥手</p>
+<ul>
+<li><p>第一次</p>
+<p>主动关闭者(通常是客户端)发送一个[FIN, ACK]报文段指明序列号K,  同时其ACK字段L用来确认最近一次接收到的数据</p>
+</li>
+<li><p>第二次</p>
+<p>被动关闭者(通常是客户端)发送一个ACK报文段表明自己接收到了[FIN, ACK]报文段, Seq字段为L, ACK字段为K + 1</p>
+</li>
+<li><p>第三次</p>
+<p>被动关闭者的身份转变，变为主动关闭者，发送[FIN, ACK]报文段给原来的主动关闭者, Seq与ACK字段都与上一次一样</p>
+</li>
+<li><p>第四次</p>
+<p>原主动关闭者发送ACK报文段表示自己收到了[FIN, ACK]报文段</p>
+</li>
+</ul>
+<p>最后的ACK报文段被接受之后，TCP连接结束</p>
+<blockquote>
+<p>FIN报文常常与套接字的close()操作相关联， 当某一段执行close()操作时，就会发送FIN报文段给另一方</p>
+<p>同时还会在发送数据自己流的末尾加上EOF文件结束符</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>TCP半关闭</p>
+<p>TCP的<strong>半关闭</strong>操作指的是仅关闭数据流的一个传输方向，如仅关闭发送方向的数据，但仍然可以接受数据</p>
+<p>这种操作很少见但也是TCP协议的一部分，通过调用<code>shutdown()</code>函数来代替<code>close()</code>函数就能够做到TCP半关闭操作</p>
+<ul>
+<li><p>TCP半关闭图</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>可以看到，TCP连接的完全关闭可以由客户端与服务器双方的两个半关闭操作来完成， 此时发送FIN报文段并得到接受之后数据仍然是可以单向流通的</p>
+</li>
+</ul>
+<blockquote>
+<ul>
+<li><p>TCP半开连接</p>
+<p>TCP半开连接与TCP半关闭听起来感觉是一回事，但是其实完全不同</p>
+<ul>
+<li><p>概念</p>
+<p>在TCP连接过程中, 如果一方在未告知另一端的情况下通信的一端关闭或终止连接，那么就认为该条TCP连接处于<strong>半开状态</strong></p>
+<p>当通信的一方主机崩溃时，就会发生该情况，此时另一方将不会检测出另一端已经崩溃</p>
+</li>
+<li><p>举例</p>
+<p>在CS模式当中，半开连接分为两种情况</p>
+<ol>
+<li><p>服务器崩溃</p>
+<p>如果服务器崩溃，那么在服务器重启之后，它将会丢失关于之前的TCP连接的所有记忆，此时如果客户端发送一个数据报，服务器端将会返回一个RST报文段作为响应</p>
+</li>
+<li><p>客户端崩溃</p>
+<p>如果客户端崩溃，而服务器端又正在等待来自客户端的数据，那么服务器端可能就会一直保持这个连接</p>
+<p>此时需要<strong>保活机制</strong>来关闭该链接</p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+</li>
+<li><p>同时打开与关闭</p>
+<ul>
+<li><p>同时打开</p>
+<p>在极少见的情况下，会发生两个主机之间同时<strong>在一对套接字</strong>上主动打开TCP连接，这种情况被称为<strong>同时打开</strong></p>
+<p>同时打开时的报文的发送与普通的报文发送略有不同，会多出一个报文</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>当双方都收到ACK报文段之后，数据就可以正常传输了</p>
+</li>
+<li><p>同时关闭</p>
+<p>同时关闭的情况则比较简单，只是TCP报文段的顺序发生了交叉而已</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+</li>
+</ul>
+</li>
+<li><p>ISN</p>
+<p>TCP报文头中的序列号用于解决报文段乱序抵达导致的混乱问题</p>
+<blockquote>
+<p>假设一个连接在关闭之后，网络中的报文段还没有完全消失，此后连接重新启动，网络中旧的报文段可能会被接收端所接收</p>
+</blockquote>
+<ul>
+<li>需求</li>
+</ul>
+<ol>
+<li>为了防止同一个连接先后的不同实例产生上面的问题，需要避免实例之间的序列号产生重叠</li>
+<li>一些恶意用户可以伪造TCP报文段，他们只需要选取合适的序列号，IP地址以及端口号即可</li>
+</ol>
+<ul>
+<li>ISN,  即初始序列号(<strong>I</strong>nitial <strong>S</strong>equence <strong>N</strong>umber, ISN), 通常是一个与时间有关的数字，用于保证同对套接字每一个连接都有不同的初始序列号</li>
+</ul>
+<p>选择一个合适的ISN可以用来解决上面的问题，现代的系统通常采用半随机的方式来创建ISN</p>
+<blockquote>
+<p>Linux 采用一个相对复杂的过程来选择 ISN。它采用基于时钟的方案，并且针对每一个连接为时钟设置随机的偏移量</p>
+<p>随机偏移量是在连接标识（即连接四元组：<code>&lt;ClientIP,ClientPort,ServerIP,ServerPort&gt;</code>）的基础上利用加密散列函数得到的</p>
+<p>散列函数的输入每 5 分钟就会改变 1 次</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="2-TCP的状态转换"><a href="#2-TCP的状态转换" class="headerlink" title="2. TCP的状态转换"></a>2. TCP的状态转换</h4><p>TCP为一个连接建立了11种状态, 并且定义了状态转换之间的规则</p>
+<ul>
+<li><p>TCP状态转换图</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+<blockquote>
+<p>从LISTEN状态到SYS_SENT状态也是合法的，但是Berkely套接字却并没有实现，因此没有画出</p>
+</blockquote>
+<ul>
+<li><p>客户服务器状态转换</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+</li>
+</ul>
+</li>
+</ul>
+<p>下面详细介绍一下<code>TIME_WAIT</code>状态</p>
+<ul>
+<li><p>TIME_WAIT</p>
+<p>TIME_WAIT状态，也被称为<strong>2MSL状态</strong>，因为处于该状态的套接字需要处于这个状态至少2MSL的时间, 在这个时间段内，不能够使用原来的套接字对重新建立连接</p>
+<blockquote>
+<p>有些实现更加严格，规定如果一个端口号被处于TIME_WAIT状态的通信所使用，那么该端口号将在2MSL的时间内无法使用</p>
+<p>可以使用SO_REUSEADDR套接字选项来绕开这一限制</p>
+</blockquote>
+<ul>
+<li><p>MSL</p>
+<p>MSL(Maximun Segment Lifetime, MSL)， 最大段生存期，是任何IP数据报能够在因特网上的存活的最长时间</p>
+<p>Linux上可以修改:<code>/proc/sys/net/ipv4/tcp_fin_timeout</code>文件来修改这个时间，通常是60s</p>
+</li>
+</ul>
+<p><strong>TIME_WAIT状态为什么是2MSL的理由</strong></p>
+<ul>
+<li><p>可靠地实现TCP全双工连接的终止</p>
+<p>假设主动关闭方发送的最后一个ACK丢失了，那么服务器将重新发送FIN,  从主动关闭方发送ACK到其接收到新的FIN的最长时间就是2MSL </p>
+</li>
+<li><p>允许老的分重复分组在网络中消逝</p>
+<p>TCP必须防止来自某个连接的老的重复分组在该连接终止而又重启之后再次到达服务器的情况, 假设发送方在进入TIME_WAIT状态前发送了一条报文段A，然后关闭，接收方接收后响应了一条新的报文段B给发送方，那么在服务器重启时， 2MSL的时间内A,B都会消失</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-连接队列"><a href="#3-连接队列" class="headerlink" title="3. 连接队列"></a>3. 连接队列</h4><p>Linux为任何处于监听状态下的套接字维护两个队列:</p>
+<ul>
+<li><strong>未完成连接队列（incomplete connection queue）</strong>：即处于 SYN_RCVD 状态，可由 <code>/proc/sys/net/ipv4/tcp_max_syn_backlog</code> 进行控制（默认为 1000）</li>
+<li><strong>已完成连接队列（completed connection queue）</strong>：已经完成三次握手，等待应用层的接受，即处于 ESTABLISHED 状态，可通过 <code>/proc/sys/net/core/somaxconn</code> 和 <code>listen()</code> 控制（默认为 128）</li>
+</ul>
+<p>队列条目的变化随着connect()函数的调用以及返回发生变化</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+<p>可以看出，当来自 Client 的 SYN 到达时，TCP 在未完成队列中创建一个新项，然后响应三次握手的第二个报文</p>
+<p>这一项一直保留在未完成连接队列中，直到三次握手成功或者该项超时为止</p>
+<p>如果三次握手正常完成，该项就从未完成连接队列中移到已完成连接队列的队尾</p>
+<p>当进程调用 <code>accept()</code> 时，已完成连接队列中的队头项将返回给进程，如果队列未空，进程继续投入睡眠</p>
+<h4 id="4-SYN泛洪"><a href="#4-SYN泛洪" class="headerlink" title="4. SYN泛洪"></a>4. SYN泛洪</h4><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/377002085">https://zhuanlan.zhihu.com/p/377002085</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/09/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E8%B6%85%E6%97%B6%E4%B8%8E%E9%87%8D%E4%BC%A0/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[TCP/IP详解]:TCP超时与重传</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/07/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E5%88%9D%E6%AD%A5/">
+                        <span class="hidden-mobile">[TCP/IP详解]:TCP初步</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

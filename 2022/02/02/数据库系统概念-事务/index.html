@@ -1,0 +1,596 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="事务 &amp; ACID 事务 事务是一个访问并可能更新数据项的一个程序执行单元，在SQL语句中，由begin transaction和end transaction之间的全部操作组成  ACID 数据库有着四大特性，被称为ACID特性    原子性与持久性 事务状态机   活跃(active) 当一个事务开始执行时，就处于active状态  部分提交(partially commited) 当">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[数据库系统概念]:事务">
+<meta property="og:url" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="事务 &amp; ACID 事务 事务是一个访问并可能更新数据项的一个程序执行单元，在SQL语句中，由begin transaction和end transaction之间的全部操作组成  ACID 数据库有着四大特性，被称为ACID特性    原子性与持久性 事务状态机   活跃(active) 当一个事务开始执行时，就处于active状态  部分提交(partially commited) 当">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/1.png">
+<meta property="og:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/2.png">
+<meta property="og:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/3.png">
+<meta property="og:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/4.png">
+<meta property="og:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/5_.png">
+<meta property="og:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/6_.png">
+<meta property="og:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/5.png">
+<meta property="article:published_time" content="2022-02-02T04:41:18.000Z">
+<meta property="article:modified_time" content="2022-02-09T12:11:57.863Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/02/02/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E7%BB%9F%E6%A6%82%E5%BF%B5-%E4%BA%8B%E5%8A%A1/1.png">
+  
+  <title>[数据库系统概念]:事务 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[数据库系统概念]:事务">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-02-02 12:41" pubdate>
+        2022年2月2日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.5k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      5 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[数据库系统概念]:事务</h1>
+            
+            <div class="markdown-body">
+              <h3 id="事务-amp-ACID"><a href="#事务-amp-ACID" class="headerlink" title="事务 &amp; ACID"></a>事务 &amp; ACID</h3><ul>
+<li><p>事务</p>
+<p>事务是一个访问并可能更新数据项的一个程序执行单元，在SQL语句中，由<code>begin transaction</code>和<code>end transaction</code>之间的全部操作组成</p>
+</li>
+<li><p>ACID</p>
+<p>数据库有着四大特性，被称为<strong>ACID特性</strong></p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+</li>
+</ul>
+<h3 id="原子性与持久性"><a href="#原子性与持久性" class="headerlink" title="原子性与持久性"></a>原子性与持久性</h3><ul>
+<li><p>事务状态机</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<ul>
+<li><p>活跃(active)</p>
+<p>当一个事务开始执行时，就处于active状态</p>
+</li>
+<li><p>部分提交(partially commited)</p>
+<p>当事务中的最后一条语句被执行之后，事务处于部分提交状态</p>
+</li>
+<li><p>失效(failed)</p>
+<p>当事务不能继续正常执行时</p>
+</li>
+<li><p>中止(aborted)</p>
+<p>当事务已经回滚并且数据库已经恢复到它在事务开始前的状态</p>
+</li>
+<li><p>提交(commited)</p>
+<p>事务执行成功</p>
+</li>
+</ul>
+<p>当事务处于中止状态或者提交状态时，也被称为**终止(terminated)**状态</p>
+</li>
+<li><p>回滚</p>
+<p>当一个中止的事务造成的变更已经被撤销，我们就说该事务已<strong>回滚(roalled back)</strong>,通常是通过维护日志来达到这一个目的</p>
+<p>当事务处于中止状态时，有两种方式对其进行处理</p>
+<ul>
+<li><p>重启</p>
+<p>当引起事务中止的原因是由于硬件错误，就可以重启事务，重启的事务被看成一个新事务</p>
+</li>
+<li><p>杀死</p>
+<p>如果事务中止的原因是由于内部的逻辑错误，那么就只能杀死事务了，因为重启之后依旧会导致事务中止</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="事务的隔离性与原子性"><a href="#事务的隔离性与原子性" class="headerlink" title="事务的隔离性与原子性"></a>事务的隔离性与原子性</h3><p>允许多个事务并发地执行会引起许多数据一致性的复杂问题，如果坚持事务是<strong>串行</strong>执行的话将简单的多，但是并发执行可以很大程度上提高<strong>吞吐量</strong>，减少<strong>延迟</strong>，这导致有些数据库放弃了隔离性，允许事务并发执行</p>
+<ul>
+<li><p>调度</p>
+<p>在允许并发执行的系统当中，如果一个事务$T_i$失效了，原子性要求依赖于$T_i$的任何事务$T_j$也要终止</p>
+<p>为了确保这一点，需要控制系统中所允许调度的类型</p>
+<ul>
+<li><p>可/不可恢复调度</p>
+<p>考虑如下调度</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>如果在$T_6$执行完<code>read(B)</code>之后$T_6$终止，由于$T_7$读取了$T_6$所写入的数据，即$T_7$依赖于$T_6$,因此$T_7$也需要被终止，但是$T_7$已经commit,所以他不能够再终止，即这是一个<strong>不可恢复调度</strong></p>
+<p>下面给出<strong>可恢复调度</strong>的定义:</p>
+<p><strong>对于每对事物$T_i$和$T_j$,如果$T_j$读取了由$T_i$之前所写过的数据项，则$T_i$的提交操作应该出现在$T_j$的提交操作之前</strong></p>
+</li>
+<li><p>无级联调度</p>
+<p>有时可能会发生多重依赖的情况</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+<p>在上面的例子当中，$T_8$终止导致$T_9$终止，$T_9$终止导致$T_10$终止，这种由于单个事务失效导致一系列事务回滚的现象被称为<strong>级联回滚</strong>，这在数据库中时不希望发生的，因为要消耗大量的工作</p>
+<p>下面给出<strong>无级联调度</strong></p>
+<p><strong>对于每对事物$T_i$和$T_j$都满足如果$T_j$读取了之前由$T_i$所写的一个数据项，则$T_i$的提交操作必须出现在$T_j$的这一读操作之前</strong></p>
+<p>​                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </p>
+</li>
+</ul>
+</li>
+<li><p>并发执行中可能产生的问题</p>
+<ul>
+<li><p>脏读</p>
+<p><strong>脏读</strong>指一个事务读取了另一个事务<em>未提交</em>的数据</p>
+<p><img src="5_.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+</li>
+<li><p>不可重复读</p>
+<p><strong>不可重复读</strong>指在一个事务内读取表中的某一行数据，多次读取结果不同。 不可重复读和脏读的区别是，脏读是读取前一事务未提交的脏数据，不可重复读是重新读取了前一事务已提交的数据</p>
+<p><img src="6_.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+</li>
+<li><p>幻读</p>
+<p><strong>幻读</strong>指读取到了别的事务插入的数据，导致前后数据量不一致</p>
+</li>
+</ul>
+</li>
+<li><p>隔离级别</p>
+<p>SQL标准定义了四个隔离级别</p>
+<ul>
+<li><p>Read Uncommited(未提交读)</p>
+<p>允许读取未提交数据，可能会引发<code>脏读</code>,<code>不可重复读</code>,<code>幻读</code></p>
+</li>
+<li><p>Read Commited(已提交读)</p>
+<p>只允许读取已经提交的数据，可能会引发<code>不可重复读</code>,<code>幻读</code></p>
+</li>
+<li><p>Repeatable Read(可重复读)</p>
+<p>只允许读取已经提交的数据，并且进一步要求在一个事务两次读取一个数据项期间，其他事务不得更新该数据项，可能会引发<code>幻读</code></p>
+</li>
+<li><p>Serializable(可串行化)</p>
+<p>保证串行化的执行，但是一些数据库可能会使用并行方式执行，不会产生上面的任何一个问题</p>
+</li>
+</ul>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/02/07/CMU15445-%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E7%90%86%E8%AE%BA/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[CMU15445]:并发控制理论</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/30/CMU15445-%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%961/">
+                        <span class="hidden-mobile">[CMU15445]:查询优化1</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

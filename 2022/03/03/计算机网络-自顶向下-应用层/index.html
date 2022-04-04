@@ -1,0 +1,1140 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="应用层一、应用层协议原理1.网络应用程序体系结构 网络体系结构 网络体系结构是不变的，即因特网五层模型或OSI七层模型  应用程序体系结构 应用程序体系结构主要由应用程序研发者决定，主要包括两大类  客户-服务器体系结构 对等体系结构(P2P)    客户-服务器体系结构  服务器:总是不宕机，服务于许多来自于其他客户机的请求 客户:向服务器发送请求的主机  在客户-服务器体系结构中，客户之间互相">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[计算机网络_自顶向下]:应用层">
+<meta property="og:url" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="应用层一、应用层协议原理1.网络应用程序体系结构 网络体系结构 网络体系结构是不变的，即因特网五层模型或OSI七层模型  应用程序体系结构 应用程序体系结构主要由应用程序研发者决定，主要包括两大类  客户-服务器体系结构 对等体系结构(P2P)    客户-服务器体系结构  服务器:总是不宕机，服务于许多来自于其他客户机的请求 客户:向服务器发送请求的主机  在客户-服务器体系结构中，客户之间互相">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/1.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/2.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/3.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/4.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/5.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/6.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/7.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/8.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/9.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/10.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/11.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/12.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/13.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/14.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/15.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/16.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/17.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/18.png">
+<meta property="og:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/19.png">
+<meta property="article:published_time" content="2022-03-03T03:11:15.000Z">
+<meta property="article:modified_time" content="2022-03-03T05:39:41.082Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/03/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E5%BA%94%E7%94%A8%E5%B1%82/1.png">
+  
+  <title>[计算机网络_自顶向下]:应用层 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[计算机网络_自顶向下]:应用层">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-03 11:11" pubdate>
+        2022年3月3日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      9.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      28 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[计算机网络_自顶向下]:应用层</h1>
+            
+            <div class="markdown-body">
+              <h1 id="应用层"><a href="#应用层" class="headerlink" title="应用层"></a>应用层</h1><h3 id="一、应用层协议原理"><a href="#一、应用层协议原理" class="headerlink" title="一、应用层协议原理"></a>一、应用层协议原理</h3><h4 id="1-网络应用程序体系结构"><a href="#1-网络应用程序体系结构" class="headerlink" title="1.网络应用程序体系结构"></a>1.网络应用程序体系结构</h4><ul>
+<li><p>网络体系结构</p>
+<p>网络体系结构是不变的，即因特网五层模型或OSI七层模型</p>
+</li>
+<li><p>应用程序体系结构</p>
+<p>应用程序体系结构主要由应用程序研发者决定，主要包括两大类</p>
+<ul>
+<li><strong>客户-服务器体系结构</strong></li>
+<li><strong>对等体系结构(P2P)</strong></li>
+</ul>
+</li>
+</ul>
+<p><strong>客户-服务器体系结构</strong></p>
+<ul>
+<li>服务器:总是不宕机，服务于许多来自于其他客户机的请求</li>
+<li>客户:向服务器发送请求的主机</li>
+</ul>
+<p>在客户-服务器体系结构中，客户之间互相并不通信</p>
+<p><strong>P2P体系结构</strong></p>
+<ul>
+<li>P2P体系结构几乎不依赖于专有服务器</li>
+<li>应用程序在间断连接的主机之间可以直接通信，这些主机对被称为<strong>对等方</strong></li>
+</ul>
+<h4 id="2-进程通信"><a href="#2-进程通信" class="headerlink" title="2.进程通信"></a>2.进程通信</h4><p>从操作系统的角度，主机间进行通信的的其实是<strong>进程</strong>而不是程序</p>
+<ul>
+<li><p>客户和服务器进程</p>
+<p>在一对进程之间的通话场景中，发起通信的进程被称为 <strong>客户</strong>,在回话开始时等待联系的进程是<strong>服务器</strong></p>
+</li>
+<li><p>进程与计算机网络之间的接口</p>
+<ul>
+<li><p><strong>套接字</strong></p>
+<p>套接字是进程与网络之间发送、接受报文的软件接口，即应用层与传输层之间的接口，也比称之为应用程序与网络之间的应用程序编程接口<strong>（API)</strong></p>
+</li>
+</ul>
+</li>
+<li><p>进程寻址</p>
+<p>发送进程要想发送报文给接受进程，必须得知道接受进程的”所在位置”,这个所在位置通过<strong>IP地址</strong>和<strong>端口号</strong>进行标记</p>
+<ul>
+<li>IP地址:一个32位字符串，用来标记每一条主机</li>
+<li>端口号:端口号是主机上进程的标识符，可以在网络上查到</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-可供应用程序使用的运输服务"><a href="#3-可供应用程序使用的运输服务" class="headerlink" title="3.可供应用程序使用的运输服务"></a>3.可供应用程序使用的运输服务</h4><ul>
+<li><p>可靠数据传输</p>
+<p>能够保证进程到进程的数据将会被无差错的传递</p>
+</li>
+<li><p>最低限度吞吐量</p>
+<p>能够保证报文在传输过程中的吞吐量至少不会少于某个值</p>
+</li>
+<li><p>定时保证</p>
+<p>能够保证报文能够以较小的时延进入接受进程</p>
+</li>
+<li><p>安全性</p>
+<p>能够对传输的数据进行加密</p>
+</li>
+</ul>
+<h4 id="4-因特网提供的运输服务"><a href="#4-因特网提供的运输服务" class="headerlink" title="4.因特网提供的运输服务"></a>4.因特网提供的运输服务</h4><ul>
+<li><p>TCP服务</p>
+<p>TCP协议提供面向连接服务和可靠数据传输服务</p>
+<ul>
+<li><p>面向连接服务</p>
+<p>在<em>数据包</em>开始流动之前，TCP会让客户和服务器之间互相交换运输层控制信息，被称为<strong>握手过程</strong></p>
+<p>握手阶段结束过后，在发送进程与接收进程之间会建立一条<strong>TCP连接</strong>,双方可以在这条连接上进项数据报的传递</p>
+<p>通信结束过后，会拆除该连接</p>
+</li>
+<li><p>可靠数据传输服务</p>
+</li>
+<li><p>安全性</p>
+<p>TCP本身并不提供安全性服务,但它的加强版SSL提供了安全服务,这种加强是在应用层上实现的</p>
+</li>
+</ul>
+<p>TCP还提供<strong>拥塞控制机制</strong>,当发送方与接收方进行网络通信发生网络拥塞时，TCP的拥塞控制机制会抑制发送进程</p>
+</li>
+<li><p>UDP服务</p>
+<ul>
+<li>面向无连接服务</li>
+<li>缺乏可靠性</li>
+</ul>
+<p>UDP虽然可靠性不佳，但是它能自由调整发送速率，速率更快</p>
+</li>
+</ul>
+<h3 id="二、Web和HTTP"><a href="#二、Web和HTTP" class="headerlink" title="二、Web和HTTP"></a>二、Web和HTTP</h3><h4 id="1-HTTP概况"><a href="#1-HTTP概况" class="headerlink" title="1.HTTP概况"></a>1.HTTP概况</h4><p>Web的应用层协议是HTTP(超文本传输协议)</p>
+<p><strong>Web页面的构成</strong></p>
+<ul>
+<li>Web页面本质上是一个文档，是由各种<strong>对象</strong>组成的</li>
+<li>HTML文件，JPEG图形,小程序,视频等都能被称作对象，并且可以通过URL寻址</li>
+<li>一个页面总是包含一个HTML文件以及各种其他对象</li>
+</ul>
+<p><strong>URL的构成</strong></p>
+<p>以<a target="_blank" rel="noopener" href="http://www.someschool.edu/someDepartment%E8%BF%99%E4%B8%AAURL%E4%B8%BA%E4%BE%8B">http://www.someSchool.edu/someDepartment这个URL为例</a></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://www.someschool.edu是主机名/">www.someSchool.edu是主机名</a></li>
+<li>/someDepartment是路径</li>
+</ul>
+<p><strong>在浏览器中点击超链接会发生什么</strong></p>
+<ol>
+<li>浏览器向Web服务器发出请求该页面中请求对象的HTTP报文</li>
+<li>服务器接受到请求并用这些对象的HTTP响应报文进行响应</li>
+</ol>
+<p><strong>HTTP是无状态协议</strong></p>
+<p>服务器向客户发送被请求的文件，但<strong>并不存储任何关于该客户的状态信息</strong></p>
+<p>加入客户在短时间内请求了两个对象，服务器并不会因为第一次发送了对象第二次就不做出反应，而是重新再发送一次对象</p>
+<h4 id="2-非持续连接与持续连接"><a href="#2-非持续连接与持续连接" class="headerlink" title="2.非持续连接与持续连接"></a>2.非持续连接与持续连接</h4><ul>
+<li><p>非持续连接</p>
+<p>客户每发送一个请求，就会单独建立一个TCP连接</p>
+</li>
+<li><p>持续连接</p>
+<p>所有的请求以及响应经过相同的TCP连接发送</p>
+</li>
+</ul>
+<p>对于HTTP而言，既支持非持续连接，也支持持续连接，默认状态下是持续连接</p>
+<p><strong>三次握手</strong></p>
+<p>当建立TCP连接后，在客户和服务器之间会发生三次握手</p>
+<ol>
+<li>客户向服务器发送一个小的TCP报文段</li>
+<li>服务器接受到该报文段后，在用一个小的TCP报文段做出确认和响应</li>
+<li>客户接收到确认的TCP报文段后，向服务器发送HTTP请求</li>
+</ol>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p><strong>非持续连接的缺点</strong></p>
+<ul>
+<li>必须为每一个请求的对象建立一个全新的连接，这为Web服务器带来了负担</li>
+<li>每一个对象的传输都会经历三次握手和自身的传输，相对于持续连接有两倍的往返时延(RTT)</li>
+</ul>
+<h4 id="3-HTTP报文格式"><a href="#3-HTTP报文格式" class="headerlink" title="3.HTTP报文格式"></a>3.HTTP报文格式</h4><ul>
+<li><p>HTTP请求报文</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+</li>
+</ul>
+<ol>
+<li><p><strong>请求行</strong></p>
+<p>报文的第一行被称为请求行，包含三个字段，<strong>方法字段，URL字段和HTTP版本字段</strong></p>
+<ul>
+<li><p>方法字段</p>
+<ul>
+<li><p>GET</p>
+<p>向指定的资源发出“显示”请求,是只读的</p>
+</li>
+<li><p>HEAD</p>
+<p>与GET方法一样，都是向服务器发出指定资源的请求。只不过服务器将不传回资源的文本部分</p>
+<p>它的好处在于，使用这个方法可以在不必传输全部内容的情况下，就可以获取其中“关于该资源的信息”（元信息或称元数据）</p>
+</li>
+<li><p>POST</p>
+<p>向指定资源提交数据，请求服务器进行处理（例如提交表单或者上传文件）。数据被包含在请求体中。这个请求可能会创建新的资源或修改现有资源，或二者皆有</p>
+<p>注：也可使用GET方法,在包含的URL中加入要输入的数据</p>
+<p>如:<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AE,%E5%90%8E%E9%9D%A2%E7%9A%84%60/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AE%60%E5%B0%B1%E6%98%AF%E9%99%84%E5%8A%A0%E5%86%85%E5%AE%B9">https://zh.wikipedia.org/wiki/超文本传输协议,后面的`/超文本传输协议`就是附加内容</a></p>
+</li>
+<li><p>PUT</p>
+<p>向指定资源位置上传其最新内容。</p>
+</li>
+<li><p>DELETE</p>
+<p>请求服务器删除Request-URI所标识的资源。</p>
+</li>
+<li><p>TRACE</p>
+<p>回显服务器收到的请求，主要用于测试或诊断。</p>
+</li>
+<li><p>OPTIONS</p>
+<p>这个方法可使服务器传回该资源所支持的所有HTTP请求方法。用’*’来代替资源名称，向Web服务器发送OPTIONS请求，可以测试服务器功能是否正常运作。</p>
+</li>
+<li><p>CONNECT</p>
+<p>HTTP/1.1协议中预留给能够将连接改为隧道方式的代理服务器。通常用于SSL加密服务器的链接（经由非加密的HTTP代理服务器）。</p>
+</li>
+</ul>
+<p>方法名称是区分大小写的。当某个请求所针对的资源不支持对应的请求方法的时候，服务器应当返回<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81#405">状态码405</a>（Method Not Allowed），当服务器不认识或者不支持对应的请求方法的时候，应当返回<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81#501">状态码501</a>（Not Implemented）。</p>
+<p><strong>HTTP服务器至少应该实现GET和HEAD方法</strong>，其他方法都是可选的</p>
+</li>
+<li><p>HTTP版本</p>
+<p>目前的HTTP版本有 HTTP/0.9  HTTP/1.0  HTTP/1.1  HTTP/2</p>
+</li>
+</ul>
+<p>一个经典的HTTP请求报文如图所示，注意每一行都必须以<code>rn</code>结尾</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>注：可以使用<code>telnet</code>工具来进行手动报文发送过程</p>
+</li>
+</ol>
+<ul>
+<li><p>HTTP响应报文</p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"></p>
+</li>
+</ul>
+<p>所有HTTP响应的第一行都是<strong>状态行</strong>，依次是当前HTTP版本号，3位数字组成的状态代码,以及描述状态的短语，彼此由空格分隔</p>
+<p>状态代码的第一个数字代表当前响应的类型：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81#1xx%E6%B6%88%E6%81%AF">1xx消息</a>——请求已被服务器接收，继续处理</li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81#2xx%E6%88%90%E5%8A%9F">2xx成功</a>——请求已成功被服务器接收、理解、并接受</li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81#3xx%E9%87%8D%E5%AE%9A%E5%90%91">3xx重定向</a>——需要后续操作才能完成这一请求</li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81#4xx%E8%AF%B7%E6%B1%82%E9%94%99%E8%AF%AF">4xx请求错误</a>——请求含有词法错误或者无法被执行</li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/HTTP%E7%8A%B6%E6%80%81%E7%A0%81#5xx%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%94%99%E8%AF%AF">5xx服务器错误</a>——服务器在处理某个正确请求时发生错误</li>
+</ul>
+<p>响应报文例子：</p>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<h4 id="4-cookie"><a href="#4-cookie" class="headerlink" title="4.cookie"></a>4.cookie</h4><p><strong>cookie是什么</strong></p>
+<p>cookie是一种<strong>小型文本文件</strong>”，指某些网站为了辨别用户身份而储存在用户本地终端（Client Side）上的数据</p>
+<p><strong>为什么需要cookie</strong></p>
+<p>HTTP服务器是无状态协议，无法保存用户的数据，但是Web网站通常希望能够识别用户的身份，因此他们使用Cookie来绕开HTTP的这种无状态协议</p>
+<p><strong>Cookie的使用</strong></p>
+<p>Cookie有四个组件</p>
+<ol>
+<li>HTTP响应报文中有一个Cookie首部行</li>
+<li>HTTP请求报文中有一个Cookie首部行</li>
+<li>用户端系统总有一个Cookie组件，并且由浏览器进行管理</li>
+<li>Web站点的后端数据库中存储了记录用户身份的Cookie</li>
+</ol>
+<p>Cookie的使用过程</p>
+<ul>
+<li><p>当用户第一次访问某个Web站点时，该Web站点会在<strong>响应报文</strong>中的首部行中添加一行<code>Set-cookie:xxxx</code>,</p>
+<p>浏览器接收到响应报文，并读取到这一行时，会在它的cookie文件中添加该Web网站的信息，包含<strong>服务器的主机名和该用户的识别码</strong></p>
+</li>
+<li><p>当用户再一次访问该站点时，浏览器会在请求报文中的是首部行加入cookie: xxxx,此时该Web站点会根据该识别码读取记录在它的后端数据库中的用户信息，此时用户就不用再次验证自己的身份</p>
+</li>
+</ul>
+<p>下面是我的chrome浏览器中保存的cookie</p>
+<ul>
+<li>cookie</li>
+</ul>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+<ul>
+<li><p>使用cookie的报文发送过程</p>
+<p><img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+</li>
+</ul>
+<h4 id="5-Web缓存"><a href="#5-Web缓存" class="headerlink" title="5.Web缓存"></a>5.Web缓存</h4><p><strong>什么是Web缓存</strong></p>
+<ul>
+<li>Web缓存是一种临时存储Web文档以减少服务器延迟的一种技术</li>
+<li>Web缓存器，也叫作代理服务器(proxy server)，可以保存最近请求过的对象的副本</li>
+</ul>
+<p><strong>Web的使用过程</strong></p>
+<ul>
+<li>用户在浏览器上点击一个超链接</li>
+<li>浏览器创建一个到Web缓存器的TCP连接，并向Web缓存器的对象发送一个HTTP请求</li>
+<li>Web缓存器进行检查，看本地是否存储了该对象的副本，如果有，则Web缓存器用HTTP响应报文返回该对象</li>
+<li>如果没有，他就打开一个与对象的初始服务器的TCP连接，向该服务器发送HTTP请求报文，服务器接受到请求报文后，向该Web缓存器发送一份响应报文</li>
+<li>Web缓存器接收到对象后，在本地存储空间存储一份副本，并向客户的浏览器发送该副本</li>
+</ul>
+<p>从某种意义来说，Web缓存器既是客户也是服务器，它可以大大减少客户请求的响应时间</p>
+<ul>
+<li><p>图示</p>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+</li>
+</ul>
+<h4 id="6-条件GET方法"><a href="#6-条件GET方法" class="headerlink" title="6.条件GET方法"></a>6.条件GET方法</h4><p><strong>条件GET方法的作用</strong></p>
+<p>由于Web缓存器中的对象可能是陈旧的，即服务器中的Web文档已经被修改，使用条件GET方法可以证实Web缓存器中的对象是最新的</p>
+<p><strong>条件GET请求报文</strong></p>
+<p>一个请求报文满足以下条件时就被称为<strong>条件请求报文</strong></p>
+<ul>
+<li>请求报文使用GET方法</li>
+<li>请求报文中包含一个<code>If-Modified-Since: xxxx</code></li>
+</ul>
+<p><strong>条件请求报文的使用</strong></p>
+<ul>
+<li>当Web缓存器在本地缓存对象的时候，他也在本地缓存了最后的修改时期</li>
+<li>下一次用户再次访问该Web页面的时候，该Web缓存器会向服务器发送条件请求报文</li>
+<li>如果该Web页面在条件请求报文<code>if-Modified-Since:xxxx</code>所表示日期后没有发生修改，则Web服务器只会向Web缓存器发送一个不包含对象的响应报文</li>
+</ul>
+<p><img src="9.png" srcset="/img/loading.gif" lazyload alt="9"></p>
+<h3 id="三、因特网中的电子邮件"><a href="#三、因特网中的电子邮件" class="headerlink" title="三、因特网中的电子邮件"></a>三、因特网中的电子邮件</h3><p><strong>电子邮件的组成部分</strong></p>
+<p>电子邮件通信主要由三大部分组成：</p>
+<ul>
+<li>用户代理</li>
+<li>邮件服务器</li>
+<li>邮件协议</li>
+</ul>
+<p>一、用户代理 (user agents)<br>就像我们常常使用的邮箱客户端，我们能直接接触的部分</p>
+<ul>
+<li>允许用户阅读,回复,转发,保存,编辑邮件消息</li>
+</ul>
+<ul>
+<li>例如:Outlook, foxmail等</li>
+</ul>
+<ul>
+<li>发送, 接收邮件消息到/从服务器</li>
+</ul>
+<ul>
+<li>运行邮件协议</li>
+</ul>
+<p>二、邮件服务器 mail servers    </p>
+<ul>
+<li>邮箱mailbox 存放用户接收的邮件消息</li>
+<li>外出报文队列outgoing message queue</li>
+<li>运行邮件协议</li>
+</ul>
+<p>三、邮件协议</p>
+<ul>
+<li>简单邮件传输协议</li>
+<li>邮件接受协议</li>
+</ul>
+<h4 id="一、SMTP简单邮件传输协议"><a href="#一、SMTP简单邮件传输协议" class="headerlink" title="一、SMTP简单邮件传输协议"></a>一、<strong>SMTP简单邮件传输协议</strong></h4><p>SMTP是因特网电子邮件中主要的应用层协议</p>
+<ul>
+<li><p>客户使用TCP来可靠传输邮件消息到服务器</p>
+</li>
+<li><p>端口号<code>25</code></p>
+</li>
+<li><p>直接传送: 发送服务器到接收服务器</p>
+</li>
+<li><p>传输的3个阶段</p>
+<ul>
+<li>握手 (问候)</li>
+<li>邮件消息的传输</li>
+<li>结束</li>
+</ul>
+</li>
+<li><p>命令/应答的交互<br>– 命令: ASCII文本格式</p>
+<p>– 应答: 状态码及其短语</p>
+</li>
+<li><p>邮件消息必须是7-bit ASCII</p>
+</li>
+</ul>
+<p>例子:</p>
+<p><img src="10.png" srcset="/img/loading.gif" lazyload alt="10"></p>
+<ul>
+<li>Alice使用用户代理编写邮件消息(给<a href="mailto:&#98;&#x6f;&#x62;&#64;&#x73;&#111;&#x6d;&#101;&#115;&#99;&#104;&#x6f;&#x6f;&#x6c;&#46;&#x65;&#100;&#x75;">&#98;&#x6f;&#x62;&#64;&#x73;&#111;&#x6d;&#101;&#115;&#99;&#104;&#x6f;&#x6f;&#x6c;&#46;&#x65;&#100;&#x75;</a>的)</li>
+</ul>
+<ul>
+<li>Alice的用户代理发送邮件消息 到她的邮件服务器;邮件消息存放在邮件消息队列</li>
+</ul>
+<ul>
+<li><p>Alice<strong>邮件服务器</strong>的SMTP客户端发起建立一个到Bob的邮件服务器的SMTP服务器端的TCP连接,经过应用层握手</p>
+<p>注：</p>
+<ul>
+<li>如果此时Bob的邮件服务器没有开机，那么Alice的邮件服务器会在稍后继续进行尝试</li>
+<li>Alice的邮件服务器和Bob的与邮件服务器总是直接连接，他们不使用中间邮件服务器</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>SMTP客户在这个TCP连接上发送Alice的邮件消息</li>
+</ul>
+<ul>
+<li>Bob服务器存放邮件消息存到 Bob的邮箱</li>
+</ul>
+<ul>
+<li>Bob调用他的用户代理读邮件消息</li>
+</ul>
+<p>下面是一个使用telnet发送邮件的例子</p>
+<p><img src="11.png" srcset="/img/loading.gif" lazyload alt="11"></p>
+<p><strong>SMTP总结</strong></p>
+<ul>
+<li>SMTP使用持续连接</li>
+<li>SMTP 要求邮件消息 (header &amp; body)必须 是7-bit ASCII</li>
+<li>SMTP服务器使用 CRLF.CRLF (rn.rn)来判断邮件消息的结束</li>
+</ul>
+<h4 id="二、与HTTP对比"><a href="#二、与HTTP对比" class="headerlink" title="二、与HTTP对比"></a>二、与HTTP对比</h4><ul>
+<li><p>HTTP是服务器向Web客户传送报文</p>
+</li>
+<li><p>SMTP是邮件服务器向另一个邮件服务器传送报文</p>
+</li>
+<li><p>HTTP是<strong>拉协议</strong></p>
+<p>在服务器开机的时候，用户使用HTTP从Web服务器上拉取信息,TCP是由想连接文件发起的</p>
+</li>
+<li><p>SMTP是<strong>推协议</strong></p>
+<p>发送邮件服务器使用SMTP把文件推向接收文件服务器,TCP连接是由要发送文件的机器发起的</p>
+</li>
+<li><p>HTTP把每个对象封装到它自己的响应报文中</p>
+<p>SMTP把所有对象都放到一个响应报文中</p>
+</li>
+</ul>
+<h4 id="三、邮件报文格式"><a href="#三、邮件报文格式" class="headerlink" title="三、邮件报文格式"></a>三、邮件报文格式</h4><p><strong>首部行</strong></p>
+<ul>
+<li><p>To: </p>
+</li>
+<li><p>From:</p>
+</li>
+<li><p>Subject:</p>
+<p>…</p>
+<p>首部必须包含From和To,其他的首部行则是可选的</p>
+</li>
+</ul>
+<p><strong>分隔符</strong></p>
+<p>使用回车换行==CRLF==将首部行与body分割</p>
+<p><strong>报文体</strong></p>
+<p>使用ASCII码格式</p>
+<h4 id="四、邮件访问协议"><a href="#四、邮件访问协议" class="headerlink" title="四、邮件访问协议"></a>四、邮件访问协议</h4><p><img src="12.png" srcset="/img/loading.gif" lazyload alt="12"></p>
+<ul>
+<li>邮件接收方通过POP3(第三版邮局协议)、IMAP(因特网邮件访问协议)、HTTP等协议将邮件从自身的邮件服务器拉取到自己的主机上</li>
+</ul>
+<p><strong>POP3</strong></p>
+<p>当用户代理打开了一个到邮件服务器端口110上的TCP连接后，POP3协议开始发挥作用</p>
+<p>POP3按照三个阶段发挥作用:</p>
+<ul>
+<li><p>授权(authorization)</p>
+<p>用户代理以明文形式向服务器发送用户名(user)以及口令(pass)用来鉴别自身身份</p>
+</li>
+<li><p>事务处理</p>
+<p>用户取得报文(retr)，同时还能进行以下操作</p>
+<ul>
+<li>对报文做删除标记(dele)</li>
+<li>取消删除标记</li>
+<li>获取邮件数量以及各自大小(list)</li>
+</ul>
+</li>
+<li><p>更新</p>
+<p>使用quit指令，POP3对话将会结束，邮件服务器将会是删除那些被标记为删除的报文</p>
+</li>
+</ul>
+<p><strong>IMAP</strong></p>
+<ul>
+<li><p>POP3在服务器上不能为用户创建任何远程文件夹</p>
+</li>
+<li><p>IMAP服务器会把报文和每一个文件夹联系起来，当报文第一次到达服务器时，会被存放到收件人的INBOX文件夹中，</p>
+<p>收件人则能够把邮件移动到一个新的文件夹中(邮件服务器上)，用户能够对邮件进行删除，阅读等操作, IMAP提供了这些命令</p>
+</li>
+<li><p>IMAP还能允许用户代理获取报文的某些部分，比如首部行</p>
+</li>
+</ul>
+<p><strong>HTTP</strong></p>
+<p>当使用Web进行邮件的接受时，用户代理就是普通的浏览器，用户与远程服务之间通过HTTP协议进行通信</p>
+<h3 id="四、DNS"><a href="#四、DNS" class="headerlink" title="四、DNS"></a>四、DNS</h3><p><strong>什么是DNS</strong></p>
+<p>DNS(Domain Name System,<strong>域名系统</strong>)有两重身份</p>
+<ul>
+<li>一个由分层的DNS服务器实现的DNS数据库</li>
+<li>一个使得主机能够查询分布式数据库的应用层协议</li>
+</ul>
+<p><strong>DNS运行在UDP之上，使用53号端口</strong></p>
+<p><strong>域名与IP地址</strong></p>
+<p>以<a target="_blank" rel="noopener" href="http://www.baidu.com为例,baidu.com就是域名,它的ip地址为/">www.baidu.com为例，baidu.com就是域名,它的IP地址为</a> 220.181.38.148</p>
+<p>域名是面向用户的，具有可读性，IP地址是面向网络的，具有规范性</p>
+<h4 id="1-DNS提供的服务"><a href="#1-DNS提供的服务" class="headerlink" title="1.DNS提供的服务"></a>1.DNS提供的服务</h4><ul>
+<li><p>DNS被其他应用层协议，包括HTTP,STMP,FTP等所使用，<strong>将用户提供的主机名(域名)解析为IP地址</strong></p>
+</li>
+<li><p>主机别名</p>
+<p>一台主机只有一个<strong>规范主机名</strong>，但它可能有多个<strong>别名</strong>，应用程序可以调用DNS来取得主机别名对应的规范主机名，以及IP地址</p>
+</li>
+<li><p>邮件服务器别名</p>
+<p>邮件服务器也可以使用别名，甚至一个公共邮件服务器的别名可以和Web服务器使用相同的别名，应用程序可以调用DNS来取得主机别名对应的规范主机名，以及IP地址</p>
+</li>
+<li><p>负载分配</p>
+<p>一个站点(如cnn.com)可以被分布在多台服务器上，一台服务器也可以运行在多台端系统上，因此，一个<strong>IP地址集合</strong>可以与同一个规范主机名相联系,DNS数据库存储这这些IP地址集合</p>
+<p>每次用户总是向IP地址排在第一个的服务器发送HTTP请求报文，DNS在每次回答中都会循环这些地址次序，以此做到循环分配负载</p>
+</li>
+</ul>
+<h4 id="2-DNS工作机理"><a href="#2-DNS工作机理" class="headerlink" title="2.DNS工作机理"></a>2.DNS工作机理</h4><p><strong>域名的分级</strong></p>
+<p><img src="13.png" srcset="/img/loading.gif" lazyload alt="13"></p>
+<p><strong>分布式、层次数据库</strong></p>
+<ul>
+<li>DNS使用了大量的DNS服务器，以层次的方式在全世界的范围内进行组织</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>分类</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>根域名服务器</td>
+<td>最高层次的域名服务器，本地域名服务器解析不了的域名就会向其求助</td>
+</tr>
+<tr>
+<td>顶级域名服务器</td>
+<td>负责管理在该顶级域名服务器下注册的二级域名</td>
+</tr>
+<tr>
+<td>权威域名服务器</td>
+<td>负责一个区的域名解析工作</td>
+</tr>
+<tr>
+<td>本地域名服务器</td>
+<td>当一个主机发出DNS查询请求时，这个查询请求首先发给本地域名服务器</td>
+</tr>
+</tbody></table>
+<p><strong>域名的解析流程</strong></p>
+<p>域名解析总体可分为以下过程：<br>(1)输入域名后, 先查找自己主机对应的域名服务器，域名服务器先查找自己的数据库中的数据.<br>(2) 如果没有， 就向上级域名服务器进行查找， 依次类推<br>(3) 最多回溯到根域名服务器, 肯定能找到这个域名的IP地址<br>(4) 域名服务器自身也会进行一些缓存， 把曾经访问过的域名和对应的IP地址缓存起来, 可以加速查找过程<br>具体可描述如下：</p>
+<ol>
+<li>主机先向本地域名服务器进行<strong>递归查询</strong></li>
+<li>本地域名服务器采用<strong>迭代查询</strong>，向一个根域名服务器进行查询</li>
+<li>根域名服务器根据域名的顶级域名部分，告诉本地域名服务器，<strong>下一次应该查询的顶级域名服务器的IP地址</strong></li>
+<li>本地域名服务器向顶级域名服务器进行查询</li>
+<li>顶级域名服务器告诉本地域名服务器，下一步查询权威服务器的IP地址</li>
+<li>本地域名服务器向权威服务器进行查询</li>
+<li>权威服务器告诉本地域名服务器所查询的主机的IP地址</li>
+<li>本地域名服务器最后把查询结果告诉主机<br>如图所示：</li>
+</ol>
+<p><img src="14.png" srcset="/img/loading.gif" lazyload alt="14"></p>
+<p><strong>递归查询与迭代查询</strong></p>
+<ul>
+<li><p>递归查询</p>
+<p>本机向本地域名服务器发出一次查询请求，就静待最终的结果，这次查询被称为递归查询。如果本地域名服务器无法解析，自己会以DNS客户机的身份向其它域名服务器查询，直到得到最终的IP地址告诉本机</p>
+</li>
+<li><p>迭代查询</p>
+<p>本地域名服务器向根域名服务器查询，根域名服务器告诉它下一步到哪里去查询，然后它再去查，每次它都是以客户机的身份去各个服务器查询，本地域名服务器进行的三次查询被称为迭代查询</p>
+</li>
+</ul>
+<p><strong>DNS缓存</strong></p>
+<p>DNS缓存可以改善时延性能并减少在因特网上到处传播的DNS报文</p>
+<ul>
+<li><p>工作机理</p>
+<p>当服务器接收到另外一台主机发送的响应报文(包含域名到IP地址的映射)后，会将该映射保存在缓存中，下一次当查询相同域名的请求报文发送到该主机时，可以直接从缓存中拿出并发送</p>
+</li>
+<li><p>DNS服务器一般会在两天后丢弃缓存信息</p>
+</li>
+</ul>
+<h4 id="3-DNS记录和报文"><a href="#3-DNS记录和报文" class="headerlink" title="3.DNS记录和报文"></a>3.DNS记录和报文</h4><p>所有的DNS服务器中都存储了资源记录<strong>RR(Resource Record)</strong></p>
+<p><strong>RR的内容</strong></p>
+<p>RR是一个包含了四个字段的四元组:==(Name,Value,Type,TTL)==</p>
+<ul>
+<li>TTL是该记录的生存时间，它记录了资源记录应当从缓存中删除的时间</li>
+</ul>
+<p>下面详细介绍Name,Value和Type</p>
+<ul>
+<li>Type=A,则Name是主机名，Value是该主机名对应的IP地址</li>
+<li>Type=NS,则Name是域，Value是该域对应的权威DNS服务器的主机名</li>
+<li>Type=CNAME,则Value是别名为Name的服务器的规范主机名</li>
+<li>Type=MX，则Value是个别名为Name的邮件服务器的规范主机名</li>
+</ul>
+<p><strong>DNS报文</strong></p>
+<p><img src="15.png" srcset="/img/loading.gif" lazyload alt="15"></p>
+<p>DNS的查询报文与响应报文格式相同，均为上表所示</p>
+<ul>
+<li><p>前12个字节是首部区域，包含6个字段</p>
+<ul>
+<li><p>事务ID，也称标识符，用来标记该查询，该标识符会被复制到响应报文中，以便让客户能够匹配它接收到的和请求的回答</p>
+</li>
+<li><p>标志</p>
+<p>常见的标志如下:</p>
+<ul>
+<li><p>查询/回答标志(0/1)</p>
+<p>指出该报文是查询还是回答</p>
+</li>
+<li><p>“权威的”标志</p>
+<p>当该报文是权威DNS服务器的响应报文时，应该在首部行加上”权威的”标志</p>
+</li>
+<li><p>“希望递归”标志</p>
+<p>表明客户希望对该域名进行递归查询</p>
+</li>
+<li><p>“递归可用”标志</p>
+<p>如果递归服务器支持递归查询，会加上”递归可用”标志</p>
+</li>
+</ul>
+</li>
+<li><p>另外四个字段记录了另外最后四个字段的RR数目</p>
+</li>
+</ul>
+</li>
+<li><p>查询问题区域</p>
+<p>包含Name字段和Type字段，用来表明需查询的信息</p>
+</li>
+<li><p>回答问题区域</p>
+<p>包含了回答的信息，即RR</p>
+<p>由于一个服务器可能对应多个IP，所以回答字段可以包含多个RR</p>
+</li>
+<li><p>权威区域</p>
+<p>包含了其他权威服务器的信息</p>
+</li>
+<li><p>附加区域</p>
+<p>如果回答区域有一条RR记录了服务器的规范主机名，则在附加区域会补充一条类型A记录</p>
+</li>
+</ul>
+<p>下面是一个wireshark抓包的例子</p>
+<p><img src="16.png" srcset="/img/loading.gif" lazyload alt="16"></p>
+<p><strong>在域名数据库中插入记录</strong></p>
+<p>如今购买域名以及设置DNS已经十分简单，下面是我在腾讯云设置DNS解析的例子</p>
+<p><img src="17.png" srcset="/img/loading.gif" lazyload alt="17"></p>
+<ul>
+<li><p>主机记录: RR中的Name字段</p>
+<ul>
+<li><p>www: 解析后的域名为<code>www.liver0377.xyz</code></p>
+</li>
+<li><p>@: 直接解析主域名, 如liver0377.xyz</p>
+</li>
+<li><p><em>: 泛解析，匹配所有域名, 如</em>.liver0377.xyz</p>
+</li>
+</ul>
+</li>
+<li><p>记录类型： 就是RR中的type字段</p>
+</li>
+</ul>
+<blockquote>
+<p>拒绝攻击服务(DDoS):</p>
+<p>攻击者对DNS服务器发送大量分组，导致大多数合法DNS请求得不到回答</p>
+</blockquote>
+<h3 id="五、P2P"><a href="#五、P2P" class="headerlink" title="五、P2P"></a>五、P2P</h3><p>P2P协议(peer to peer), 与客户-服务器体系不同，资源被分散存储在网络的各个用户上，每个用户既是下载者，也是上传者</p>
+<ul>
+<li>P2P与C/S体系的分发时间对比</li>
+</ul>
+<p><img src="18.png" srcset="/img/loading.gif" lazyload alt="18"></p>
+<p>最流行的协议是<code>BitTorrent</code>， 可以看看这篇科普博客(<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/87327257">https://zhuanlan.zhihu.com/p/87327257</a>)</p>
+<h3 id="六、CDN"><a href="#六、CDN" class="headerlink" title="六、CDN"></a>六、CDN</h3><p>对如<code>youtube</code>之类的因特网视频公司，提供视频服务最直接的方法是建立单一大规模数据中心，但是这种方法有三个缺点</p>
+<ol>
+<li>如果客户远离数据中心，时延就会很大</li>
+<li>流行的视频可能会在相同的通信链路上发送很多次，这会浪费网络带宽，同时也会使得公司向ISP服务商提供更高的费用</li>
+<li>如果中心节点故障，将会造成整个链路崩溃</li>
+</ol>
+<ul>
+<li><p>CDN</p>
+<p>如今大多数公司使用<strong>内容分发网(Content Distribution Network, CDN)</strong>, CDN的基本策略就是在世界各地建立服务器集群，当用户发出请求时，会自动将其定向到一个提供最好用户体验的CDN服务器集群</p>
+</li>
+<li><p>分类</p>
+<p>CDN分为<strong>私有</strong>与<strong>第三方</strong>两类，私有即内容提供商私人拥有，如google就拥有很多自己的私人数据中心, 第三方CDN则可以代表多个内容提供商分发内容</p>
+</li>
+</ul>
+<h4 id="1-服务器安置策略"><a href="#1-服务器安置策略" class="headerlink" title="1. 服务器安置策略"></a>1. 服务器安置策略</h4><p>CDN通常有两种不同的服务器安置策略</p>
+<ul>
+<li><p>深入</p>
+<p>在遍及全球的接入ISP部署服务器集群来<strong>深入</strong>到ISP的<strong>接入网</strong>当中，这样做可以更加靠近用户，但缺点是需要很多集群，会带来管理不便</p>
+</li>
+<li><p>邀请做客</p>
+<p>在少量关键位置建造大集群来邀请客户到ISP做客，通常是在因特网交换点(IXP)， 这是如今普遍使用的方式</p>
+<p>注: ISP  &lt;==&gt; IXP &lt;==&gt; CDN服务器</p>
+</li>
+</ul>
+<p><strong>实现</strong></p>
+<p>当用户向服务器发送请求时，CDN通常会截取请求，并:</p>
+<ul>
+<li>确定此时适合该用户的CDN集群</li>
+<li>将用户的请求重定向到适合于该用户的CDN服务器集群</li>
+</ul>
+<p>通常，CDN会与DNS提供商进行合作，来进行用户请求的截获与重定向</p>
+<ul>
+<li><p>例子</p>
+<ul>
+<li><p>用户访问<code>NetCiema</code>的Web网页</p>
+</li>
+<li><p>当用户点击视频链接<code>http://video.netcinema.com/XXXXXX</code>时，用户主机发送了一个对于video.netcinema.com的DNS请求</p>
+</li>
+<li><p>用户的本地DNS服务器(LDNS)将该DNS请求中继到一台用于NetCinema的权威DNS服务器</p>
+<p>NetCinema权威DNS服务器向LDNS<strong>返回一个KingCDN域的主机名，而不是IP地址</strong>，如a1105.kingcdn.com</p>
+</li>
+<li><p>DNS请求进入KingCDN专用DNS基础设施，LDNS发送对a1101.kingcdn.com的DNS请求</p>
+<p>KingCDN的DNS请求进行重定向操作，返回需要的KingCDN内容服务器的IP地址</p>
+</li>
+<li><p>LDNS向用户主机转发IP地址</p>
+</li>
+<li><p>用户主机与指定IP地址的主机创建TCP连接，获取到内容</p>
+</li>
+</ul>
+<p><img src="19.png" srcset="/img/loading.gif" lazyload alt="19"></p>
+</li>
+</ul>
+<h4 id="2-集群选择策略"><a href="#2-集群选择策略" class="headerlink" title="2. 集群选择策略"></a>2. 集群选择策略</h4><ul>
+<li>地理位置最接近</li>
+<li>实时测量时延</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/07/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E5%88%9D%E6%AD%A5/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[TCP/IP详解]:TCP初步</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/02/28/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B-%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%8E%E5%9B%A0%E7%89%B9%E7%BD%91/">
+                        <span class="hidden-mobile">[计算机网络_自顶向下]:计算机与因特网</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

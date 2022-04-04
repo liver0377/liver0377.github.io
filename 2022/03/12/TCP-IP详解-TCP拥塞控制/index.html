@@ -1,0 +1,631 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="介绍 TCP采取了拥塞控制算法来防止网络因为大规模的通信负载而瘫痪，基本方法就是当认为网络已经或者即将陷入拥塞状态时减缓TCP发送速率或者是丢弃一部分数据 当路由器无法处理高速到达的流量而被迫丢弃数据信息的现象称为拥塞   1. TCP拥塞检测当网络处于拥塞状态时，共用一条网络传输路径的多个TCP连接需要重传更多的数据报，这好比火上浇油 对于TCP而言，没有一个明确的信号告诉它网络发生了拥塞，丢">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[TCP&#x2F;IP详解]:TCP拥塞控制">
+<meta property="og:url" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="介绍 TCP采取了拥塞控制算法来防止网络因为大规模的通信负载而瘫痪，基本方法就是当认为网络已经或者即将陷入拥塞状态时减缓TCP发送速率或者是丢弃一部分数据 当路由器无法处理高速到达的流量而被迫丢弃数据信息的现象称为拥塞   1. TCP拥塞检测当网络处于拥塞状态时，共用一条网络传输路径的多个TCP连接需要重传更多的数据报，这好比火上浇油 对于TCP而言，没有一个明确的信号告诉它网络发生了拥塞，丢">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/1.png">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/2.png">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/3.png">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/4.png">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/5.png">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/6.png">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/7.png">
+<meta property="og:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/8.png">
+<meta property="article:published_time" content="2022-03-12T05:24:04.000Z">
+<meta property="article:modified_time" content="2022-03-12T05:25:19.131Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/12/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6/1.png">
+  
+  <title>[TCP/IP详解]:TCP拥塞控制 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[TCP/IP详解]:TCP拥塞控制">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-12 13:24" pubdate>
+        2022年3月12日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.8k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      6 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[TCP/IP详解]:TCP拥塞控制</h1>
+            
+            <div class="markdown-body">
+              <ul>
+<li><p>介绍</p>
+<p>TCP采取了拥塞控制算法来防止网络因为大规模的通信负载而瘫痪，基本方法就是当认为网络已经或者即将陷入拥塞状态时减缓TCP发送速率或者是丢弃一部分数据</p>
+<p>当路由器无法处理高速到达的流量而被迫丢弃数据信息的现象称为<strong>拥塞</strong></p>
+</li>
+</ul>
+<h4 id="1-TCP拥塞检测"><a href="#1-TCP拥塞检测" class="headerlink" title="1. TCP拥塞检测"></a>1. TCP拥塞检测</h4><p>当网络处于拥塞状态时，共用一条网络传输路径的多个TCP连接需要重传更多的数据报，这好比火上浇油</p>
+<p>对于TCP而言，没有一个明确的信号告诉它网络发生了拥塞，<strong>丢包</strong>常常被用作判断拥塞发生的指标</p>
+<ul>
+<li><p>拥塞窗口</p>
+<p>TCP引入了一个叫做<strong>拥塞窗口</strong>的变量<code>cwnd</code>来调节发送速率, 发送端实际可用的窗口<code>W=min(awnd, cwnd)</code>, awnd是接收端发过来的通知窗口</p>
+<blockquote>
+<p>当不使用SACK时，W的限制作用体现为发送端发送的报文段序列不能大于ACK号的最大值和W之和</p>
+<p>当使用SACK时，W被用来限制在外数据量，即那些已经发送但是还没有收到ACK的数据</p>
+</blockquote>
+<p>变量<code>W</code>, <code>cwnd</code>, <code>awnd</code>的值都要根据经验设定并动态调节, 通常希望W的值接近<strong>带宽延时积(Bandwidth-Delay Product, BDP)</strong>, 这也被称作<strong>最佳窗口大小</strong>, 其值为<code>RTT X 通信链路上的瓶颈速率</code></p>
+</li>
+</ul>
+<h4 id="2-经典算法"><a href="#2-经典算法" class="headerlink" title="2. 经典算法"></a>2. 经典算法</h4><p>当TCP连接建立之初，TCP通过与接收方交换一个报文段就能够获取awnd的值，而获取cwnd的唯一方法就是以越来越快的速率来不断发送数据，直到发生丢包</p>
+<ul>
+<li><p>数据包守恒和ACK时钟原理</p>
+<p>稳定状态下的TCP拥塞行为，其实是视图使在网络传输路径上的数据包守恒</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+<p>上面的通道是数据包通道，下面的通道是ACK通道，数据包的发送速率会根据ACK的到达速率而调整</p>
+</li>
+</ul>
+<h5 id="1-慢启动算法"><a href="#1-慢启动算法" class="headerlink" title="1.慢启动算法"></a>1.慢启动算法</h5><ul>
+<li><p>触发条件</p>
+<p>新建立TCP连接或者发生超时重传时</p>
+</li>
+<li><p>目的</p>
+<p>在传输开始阶段，由于对于当前网络的拥塞情况位置，如果直接注入大量数据可能会导致拥塞，所以需要缓慢探测可以用传输资源</p>
+</li>
+<li><p>规则</p>
+<p>慢启动的规则很简单: <strong>发送方每收到一个好的ACK, cwnd窗口就会加1</strong>，从效果上看，cwnd呈<strong>指数级增长</strong></p>
+<blockquote>
+<p>好的ACK:</p>
+<p>ACK号大于之前收到的ACK号</p>
+</blockquote>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<p>cwnd的初始大小可能是一个或几个数据包(k * SMSS)， 被称为<strong>初始窗口IW(Initial Window)</strong></p>
+<blockquote>
+<p>SMSS为接收方发送的MSS选项和MTU(最大传输单元)的较小者</p>
+</blockquote>
+<ul>
+<li><p>停止</p>
+<p>慢启动会一直持续直到cwnd到达一个阙值为止，该值被称作<strong>慢启动阙值(slow start threshold, ssthresh)</strong></p>
+<ul>
+<li>当cwnd &lt; ssthresh时，使用慢启动算法</li>
+<li>当cwnd &gt; ssthresh时，使用拥塞避免算法</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h5 id="2-拥塞避免算法"><a href="#2-拥塞避免算法" class="headerlink" title="2. 拥塞避免算法"></a>2. 拥塞避免算法</h5><ul>
+<li><p>触发条件</p>
+<p>拥塞窗口cwnd &gt; ssthresh 时</p>
+</li>
+<li><p>目的</p>
+<p>当cwnd 到达阙值后，意味着继续增长cwnd可能就会导致网络拥塞， 此时需要减缓cwnd的增长</p>
+</li>
+<li><p>规则</p>
+<p>在该阶段中，cwnd的计算公式如下:</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>如果$cwnd_t$为$k * SMSS$, 那么$cwnd_t$就为$(k + 1/k) * SMSS$, 是一种<strong>线性增长</strong>, 增长速率取决于k </p>
+<p><img src="4.png" srcset="/img/loading.gif" lazyload alt="4"> </p>
+</li>
+</ul>
+<ul>
+<li><p>重传时sshthresh以及cwnd的确定</p>
+<p>拥塞避免算法假设由于比特错误而导致的丢包概率很小(小于1%), 因此在该算法当中<strong>丢包(重传) == 拥塞</strong></p>
+<p>重传分为快速重传和超时重传两种, 当发生重传时, ssthresh和 cwnd的值都会发生响应改变</p>
+<ul>
+<li><p>ssthresh</p>
+<p>在两种重传模式下， ssthresh的值都是以相同的模式改变</p>
+<p>慢启动阙值的初始值可以随意设置，因为不清楚网络的拥塞情况，当发生重传时, ssthresh的值就会按照如下公式改变</p>
+</li>
+</ul>
+<p><img src="5.png" srcset="/img/loading.gif" lazyload alt="5"></p>
+<p>   <strong>解释</strong></p>
+<pre><code>    `在外数据值/2`代表着上一次的发送窗口大小
+</code></pre>
+<p>​        <code>2 * SMSS</code>则限定了拥塞窗口的大小</p>
+<p>通常情况下ssthresh的值会被减半，即ssthresh = sshtresh / 2</p>
+<ul>
+<li><p>cwnd</p>
+<ul>
+<li><p>超时重传</p>
+<p>cwnd = 1 SMSS</p>
+</li>
+<li><p>快速重传</p>
+<p>cwnd = cwnd / 2</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h5 id="3-快速恢复算法"><a href="#3-快速恢复算法" class="headerlink" title="3. 快速恢复算法"></a>3. 快速恢复算法</h5><ul>
+<li><p>触发条件</p>
+<p>发生快速重传时，与慢启动算法触发条件有所差异</p>
+</li>
+</ul>
+<p>首先看一下慢启动算法</p>
+<p><img src="6.png" srcset="/img/loading.gif" lazyload alt="6"></p>
+<blockquote>
+<p>慢启动算法会直接将cwnd降到1，对于有较大BDP的链路来说，会使得带宽利用率低下</p>
+</blockquote>
+<ul>
+<li><p>快速恢复算法规则</p>
+<p>快速重传会受到3个ACK, TCP认为网络没有那么糟糕， 所以没有必要像超时重传那样激烈</p>
+<ul>
+<li><p>ssthresh 与 cwnd</p>
+<p>经过前面的说明，当触发快速重传时:</p>
+<p> <img src="7.png" srcset="/img/loading.gif" lazyload alt="7"></p>
+<p>一般情况下就是:</p>
+<ul>
+<li><p>cwnd = cwnd / 2</p>
+</li>
+<li><p>ssthresh = cwnd</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>之后，会正式进入快速恢复算法, 会执行以下行为</p>
+<ul>
+<li>拥塞窗⼝ cwnd = ssthresh + 3 (3 的意思是确认有 3个发送的数据报被收到了）</li>
+<li>重传丢失的数据报 (这是快速重传的行为)</li>
+<li>每接收到一个冗余ACK,  就将cwnd的值<strong>暂时</strong>增加1 SMSS</li>
+<li>当接收到一个好的ACK, 算法结束, 将cwnd重设为ssthresh, <strong>进入拥塞避免状态</strong></li>
+</ul>
+<p><img src="8.png" srcset="/img/loading.gif" lazyload alt="8"></p>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/14/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E4%BF%9D%E6%B4%BB%E6%9C%BA%E5%88%B6/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[TCP/IP详解]:TCP保活机制</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/10/TCP-IP%E8%AF%A6%E8%A7%A3-TCP%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%8E%E7%AA%97%E5%8F%A3%E7%AE%A1%E7%90%86/">
+                        <span class="hidden-mobile">[TCP/IP详解]:TCP数据流与窗口管理</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

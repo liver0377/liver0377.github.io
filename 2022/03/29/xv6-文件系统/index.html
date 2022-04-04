@@ -1,0 +1,823 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="总览  xv6的文件系统是一个类Linux文件系统，具体分为7个层次，下面是xv6的文件系统层次图  文件系统层次图  磁盘结构方面，同样是Linux的简化版本，分为了6个区块  磁盘结构图   boot  存放boot sector, 即启动引导程序, 具体就是mkfs(mkfs.c)  super block 包含了文件系统的元数据,  包括文件系统大小，数据块大小，日志区域大小，inod">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[xv6]:文件系统">
+<meta property="og:url" content="http://example.com/2022/03/29/xv6-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="总览  xv6的文件系统是一个类Linux文件系统，具体分为7个层次，下面是xv6的文件系统层次图  文件系统层次图  磁盘结构方面，同样是Linux的简化版本，分为了6个区块  磁盘结构图   boot  存放boot sector, 即启动引导程序, 具体就是mkfs(mkfs.c)  super block 包含了文件系统的元数据,  包括文件系统大小，数据块大小，日志区域大小，inod">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/1.png">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/2.png">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/3.png">
+<meta property="article:published_time" content="2022-03-29T03:14:39.000Z">
+<meta property="article:modified_time" content="2022-03-29T03:19:36.595Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="xv6">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/29/xv6-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/1.png">
+  
+  <title>[xv6]:文件系统 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[xv6]:文件系统">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-29 11:14" pubdate>
+        2022年3月29日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      28k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      86 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[xv6]:文件系统</h1>
+            
+            <div class="markdown-body">
+              <ul>
+<li><ol>
+<li>总览</li>
+</ol>
+<p>xv6的文件系统是一个类Linux文件系统，具体分为7个层次，下面是xv6的文件系统层次图</p>
+<ul>
+<li>文件系统层次图<br><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></li>
+</ul>
+<p>磁盘结构方面，同样是Linux的简化版本，分为了6个区块</p>
+<ul>
+<li><p>磁盘结构图</p>
+<p><img src="2.png" srcset="/img/loading.gif" lazyload alt="2"></p>
+<ul>
+<li><p>boot </p>
+<p>存放boot sector, 即启动引导程序, 具体就是mkfs(mkfs.c)</p>
+</li>
+<li><p>super block</p>
+<p>包含了文件系统的元数据,  包括文件系统大小，数据块大小，日志区域大小，inode数量</p>
+<ul>
+<li><p>实际结构</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">superblock</span> &#123;</span><br>  uint magic;        <span class="hljs-comment">// Must be FSMAGIC</span><br>  uint size;         <span class="hljs-comment">// Size of file system image (blocks)</span><br>  uint nblocks;      <span class="hljs-comment">// Number of data blocks</span><br>  uint ninodes;      <span class="hljs-comment">// Number of inodes.</span><br>  uint nlog;         <span class="hljs-comment">// Number of log blocks</span><br>  uint logstart;     <span class="hljs-comment">// Block number of first log block</span><br>  uint inodestart;   <span class="hljs-comment">// Block number of first inode block</span><br>  uint bmapstart;    <span class="hljs-comment">// Block number of first free map block</span><br>&#125;;<br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>bit map</p>
+<p>用于指示哪些块正在被使用, 这里的块是磁盘中的所有块</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-Buffer-cache"><a href="#2-Buffer-cache" class="headerlink" title="2. Buffer cache"></a>2. Buffer cache</h3><p>xv6中 <code>buffer cache</code>相关代码位于<code>bio.c</code>文件, <code>buffer cache</code>有两项工作：</p>
+<ol>
+<li>同步访问磁盘块，以确保磁盘块在内存中只有一个buffer缓存，并且一次只有一个内核线程能使用该buffer缓存</li>
+<li>缓存使用较多的块，这样它们就不需要从慢速磁盘中重新读取</li>
+</ol>
+<ul>
+<li><p>bio.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;types.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;param.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;spinlock.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;sleeplock.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;riscv.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;defs.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;fs.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&quot;buf.h&quot;</span></span><br><br><span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">spinlock</span> <span class="hljs-title">lock</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> <span class="hljs-title">buf</span>[<span class="hljs-title">NBUF</span>];</span><br><br>  <span class="hljs-comment">// Linked list of all buffers, through prev/next.</span><br>  <span class="hljs-comment">// Sorted by how recently the buffer was used.</span><br>  <span class="hljs-comment">// head.next is most recent, head.prev is least.</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> <span class="hljs-title">head</span>;</span><br>&#125; bcache;<br><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">binit</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">b</span>;</span><br><br>  initlock(&amp;bcache.lock, <span class="hljs-string">&quot;bcache&quot;</span>);<br><br>  <span class="hljs-comment">// Create linked list of buffers</span><br>  bcache.head.prev = &amp;bcache.head;<br>  bcache.head.next = &amp;bcache.head;<br>  <span class="hljs-keyword">for</span>(b = bcache.buf; b &lt; bcache.buf+NBUF; b++)&#123;<br>    b-&gt;next = bcache.head.next;<br>    b-&gt;prev = &amp;bcache.head;<br>    initsleeplock(&amp;b-&gt;lock, <span class="hljs-string">&quot;buffer&quot;</span>);<br>    bcache.head.next-&gt;prev = b;<br>    bcache.head.next = b;<br>  &#125;<br>&#125;<br><br><span class="hljs-comment">// Look through buffer cache for block on device dev.</span><br><span class="hljs-comment">// If not found, allocate a buffer.</span><br><span class="hljs-comment">// In either case, return locked buffer.</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> struct buf*</span><br><span class="hljs-function"><span class="hljs-title">bget</span><span class="hljs-params">(uint dev, uint blockno)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">b</span>;</span><br><br>  acquire(&amp;bcache.lock);<br><br>  <span class="hljs-comment">// Is the block already cached?</span><br>  <span class="hljs-keyword">for</span>(b = bcache.head.next; b != &amp;bcache.head; b = b-&gt;next)&#123;<br>    <span class="hljs-keyword">if</span>(b-&gt;dev == dev &amp;&amp; b-&gt;blockno == blockno)&#123;<br>      b-&gt;refcnt++;<br>      release(&amp;bcache.lock);<br>      acquiresleep(&amp;b-&gt;lock);<br>      <span class="hljs-keyword">return</span> b;<br>    &#125;<br>  &#125;<br><br>  <span class="hljs-comment">// Not cached.</span><br>  <span class="hljs-comment">// Recycle the least recently used (LRU) unused buffer.</span><br>  <span class="hljs-keyword">for</span>(b = bcache.head.prev; b != &amp;bcache.head; b = b-&gt;prev)&#123;<br>    <span class="hljs-keyword">if</span>(b-&gt;refcnt == <span class="hljs-number">0</span>) &#123;<br>      b-&gt;dev = dev;<br>      b-&gt;blockno = blockno;<br>      b-&gt;valid = <span class="hljs-number">0</span>;<br>      b-&gt;refcnt = <span class="hljs-number">1</span>;<br>      release(&amp;bcache.lock);<br>      acquiresleep(&amp;b-&gt;lock);<br>      <span class="hljs-keyword">return</span> b;<br>    &#125;<br>  &#125;<br>  panic(<span class="hljs-string">&quot;bget: no buffers&quot;</span>);<br>&#125;<br><br><span class="hljs-comment">// Return a locked buf with the contents of the indicated block.</span><br><span class="hljs-function">struct buf*</span><br><span class="hljs-function"><span class="hljs-title">bread</span><span class="hljs-params">(uint dev, uint blockno)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">b</span>;</span><br><br>  b = bget(dev, blockno);<br>  <span class="hljs-keyword">if</span>(!b-&gt;valid) &#123;<br>    virtio_disk_rw(b, <span class="hljs-number">0</span>);<br>    b-&gt;valid = <span class="hljs-number">1</span>;<br>  &#125;<br>  <span class="hljs-keyword">return</span> b;<br>&#125;<br><br><span class="hljs-comment">// Write b&#x27;s contents to disk.  Must be locked.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">bwrite</span><span class="hljs-params">(struct buf *b)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span>(!holdingsleep(&amp;b-&gt;lock))<br>    panic(<span class="hljs-string">&quot;bwrite&quot;</span>);<br>  virtio_disk_rw(b, <span class="hljs-number">1</span>);<br>&#125;<br><br><span class="hljs-comment">// Release a locked buffer.</span><br><span class="hljs-comment">// Move to the head of the most-recently-used list.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">brelse</span><span class="hljs-params">(struct buf *b)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span>(!holdingsleep(&amp;b-&gt;lock))<br>    panic(<span class="hljs-string">&quot;brelse&quot;</span>);<br><br>  releasesleep(&amp;b-&gt;lock);<br><br>  acquire(&amp;bcache.lock);<br>  b-&gt;refcnt--;<br>  <span class="hljs-keyword">if</span> (b-&gt;refcnt == <span class="hljs-number">0</span>) &#123;<br>    <span class="hljs-comment">// no one is waiting for it.</span><br>    b-&gt;next-&gt;prev = b-&gt;prev;<br>    b-&gt;prev-&gt;next = b-&gt;next;<br>    b-&gt;next = bcache.head.next;<br>    b-&gt;prev = &amp;bcache.head;<br>    bcache.head.next-&gt;prev = b;<br>    bcache.head.next = b;<br>  &#125;<br>  <br>  release(&amp;bcache.lock);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">bpin</span><span class="hljs-params">(struct buf *b)</span> </span>&#123;<br>  acquire(&amp;bcache.lock);<br>  b-&gt;refcnt++;<br>  release(&amp;bcache.lock);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">bunpin</span><span class="hljs-params">(struct buf *b)</span> </span>&#123;<br>  acquire(&amp;bcache.lock);<br>  b-&gt;refcnt--;<br>  release(&amp;bcache.lock);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>代码分析</p>
+<ul>
+<li><p>bcache</p>
+<p>xv6使用了一个数据结构<code>bcache</code>用于维护整个缓存，其使用了一把大锁来保证缓存的并发访问的正确性</p>
+</li>
+<li><p>buf</p>
+<p>xv6使用<code>buf</code>结构体来表示单个缓存块</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> &#123;</span><br>  <span class="hljs-keyword">int</span> valid;   <span class="hljs-comment">// 其中的数据是否有效(可以刷回磁盘)</span><br>  <span class="hljs-keyword">int</span> disk;    <span class="hljs-comment">// does disk &quot;own&quot; buf?</span><br>  uint dev;   <br>  uint blockno; <span class="hljs-comment">// 缓存块对应的设备文件以及设备上的磁盘块号</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sleeplock</span> <span class="hljs-title">lock</span>;</span><br>  uint refcnt;  <span class="hljs-comment">// 引用计数，表示当前是否有进程正在使用该buufer</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">prev</span>;</span> <span class="hljs-comment">// LRU cache list</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">next</span>;</span><br>  uchar data[BSIZE];<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>每个缓存块都有一把自己的<code>sleeplock</code>, 如果一个进程想要使用该<code>buffer</code>块, 必须要拿到<code>buffer</code>块的锁，然后将<code>refcnt</code>++</p>
+</li>
+<li><p>内存布局</p>
+<p>xv6中使用了一个双向链表来维护所有的缓存块，该链表是一个LRU链表，链表头部的<code>buffer</code>块是最新被使用的<code>buffer</code>块</p>
+<p>在这里，满足LRU的缓存块的条件就是<code>refcnt == 0</code>且最靠近链表尾部</p>
+</li>
+<li><p>API</p>
+<ul>
+<li><p>binit():  初始化整个缓存区域</p>
+</li>
+<li><p>bget():  返回某个设备上的某个磁盘块对应的<code>buffer</code>块，如果没有，那么就创建一个<code>buffer</code>块，并不覆盖其中的内容</p>
+<p>该函数只会被<code>bread()</code>调用</p>
+</li>
+<li><p>bread(): 调用bread(), 并且如果没有对应<code>buffer</code>块的话，会使用磁盘块的内容覆盖得到的<code>buffer</code>块</p>
+</li>
+<li><p>bwrite(): 覆写一个<code>bufffer</code>块</p>
+</li>
+<li><p>brelse(): 每当进程使用完一个<code>buffer</code>块之后，就需要调用<code>breles()</code>将其释放回LRU链表</p>
+</li>
+</ul>
+<blockquote>
+<p>注意这里的LRU链表只有增加块而没有减少块</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-Logging"><a href="#3-Logging" class="headerlink" title="3. Logging"></a>3. Logging</h3><p>xv6中采用了日志系统来进行崩溃恢复</p>
+<ul>
+<li><p>磁盘日志结构</p>
+<p>在xv6的实现中，磁盘中的Log区域由<code>logheader</code>以及很多<code>logged block</code>构成, <code>logged block</code>是更新之后的缓存块的副本</p>
+<ul>
+<li><p>logheader</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">logheader</span> &#123;</span><br>  <span class="hljs-keyword">int</span> n;              <span class="hljs-comment">// 当前日志块的数量, 每一个块都是一个完整的事务提交</span><br>  <span class="hljs-keyword">int</span> block[LOGSIZE]; <span class="hljs-comment">// 日志块(扇区号)数组, block[i]表示该block要写入的磁盘的扇区号</span><br>&#125;;<br></code></pre></td></tr></table></figure></li>
+<li><p>全局log结构</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">log</span> &#123;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">spinlock</span> <span class="hljs-title">lock</span>;</span><br>  <span class="hljs-keyword">int</span> start;       <span class="hljs-comment">// logheader 块在磁盘中对应的blockno</span><br>  <span class="hljs-keyword">int</span> size;        <span class="hljs-comment">// log区域的大小</span><br>  <span class="hljs-keyword">int</span> outstanding; <span class="hljs-comment">// how many FS sys calls are executing.</span><br>  <span class="hljs-keyword">int</span> committing;  <span class="hljs-comment">// in commit(), please wait.</span><br>  <span class="hljs-keyword">int</span> dev;         <span class="hljs-comment">// 该log区域对应的是哪个磁盘设备</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">logheader</span> <span class="hljs-title">lh</span>;</span>  <span class="hljs-comment">// logheader</span><br>&#125;;<br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>代码分析</p>
+<p>先从底层函数开始描述，然后逐渐过渡到顶层</p>
+<p><strong>日志记录</strong></p>
+<ul>
+<li><p><code>write_log()</code>: 将所有<code>logged block</code>刷新回磁盘</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 将内存Logged block拷贝到磁盘log区域</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">write_log</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> tail;<br><br>  <span class="hljs-comment">// 这里并没有直接调用磁盘接口，而是将logged内容覆盖到了磁盘log块在内存中的缓存</span><br>  <span class="hljs-comment">// 然后再将缓存刷新回磁盘</span><br>  <span class="hljs-keyword">for</span> (tail = <span class="hljs-number">0</span>; tail &lt; <span class="hljs-built_in">log</span>.lh.n; tail++) &#123;<br>    <span class="hljs-comment">// 遍历所有的Loggded block</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">to</span> =</span> bread(<span class="hljs-built_in">log</span>.dev, <span class="hljs-built_in">log</span>.start+tail+<span class="hljs-number">1</span>);     <span class="hljs-comment">// log block</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">from</span> =</span> bread(<span class="hljs-built_in">log</span>.dev, <span class="hljs-built_in">log</span>.lh.block[tail]); <span class="hljs-comment">// cache block</span><br>    memmove(to-&gt;data, from-&gt;data, BSIZE);<br>    bwrite(to);  <span class="hljs-comment">// write the log</span><br>    brelse(from);<br>    brelse(to);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p><code>write_head()</code>: 将<code>logheader</code>刷新回磁盘</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">write_head</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">buf</span> =</span> bread(<span class="hljs-built_in">log</span>.dev, <span class="hljs-built_in">log</span>.start);<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">logheader</span> *<span class="hljs-title">hb</span> =</span> (struct logheader *) (buf-&gt;data);  <span class="hljs-comment">// 磁盘logheader对应的内存缓存</span><br>  <span class="hljs-keyword">int</span> i;<br>  hb-&gt;n = <span class="hljs-built_in">log</span>.lh.n;<br>  <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">log</span>.lh.n; i++) &#123;<br>    hb-&gt;block[i] = <span class="hljs-built_in">log</span>.lh.block[i];                         <span class="hljs-comment">// 更改磁盘Logheader内存buffer</span><br>  &#125;<br>  <span class="hljs-comment">/********** commit point !! ***********/</span><br>  <span class="hljs-comment">// 在bwrite 之前，如果发生crash, 那么并不会发生redo操作</span><br>  <span class="hljs-comment">// 在bwrite 之后，logheadr已经被刷新回磁盘，此时恢复程序就可以从磁盘中获取到</span><br>  <span class="hljs-comment">// 已经commit的事务，然后进行redo(此时恢复程序只知道已经commit, </span><br>  <span class="hljs-comment">// 但是不知道数据究竟有没有被刷回磁盘, 所以可能会发生重复redo)</span><br>  bwrite(buf);                                              <span class="hljs-comment">// 磁盘Logheader刷回磁盘</span><br>  brelse(buf);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>注意这里的第16行， 该函数是真正意义上的<code>commit point</code>, <code>bwrite(buf)</code>会将<code>logheader</code>刷新回磁盘，一旦该操作完成，就意味着该事务已经<code>commit</code>了</p>
+<p>在该行执行之前，一旦<code>crash</code>, 那么恢复系统将不会在磁盘中对该事务进行<code>redo</code>, 因为根本没有<code>logheader</code>的记录</p>
+<p>在此之后，一旦<code>crash</code>, 那么恢复系统就会对该事务进行<code>redo</code></p>
+<p>即, <strong>一旦logheader被刷新回磁盘事务就提交成功</strong></p>
+</li>
+<li><p><code>install_trans()</code>: 应用事务，即将修改数据在log区域中的缓存刷新回磁盘</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 将log 区域中缓存的内容真正刷新回磁盘</span><br><span class="hljs-comment">// 即应用事务</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">install_trans</span><span class="hljs-params">(<span class="hljs-keyword">int</span> recovering)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> tail;<br>  <span class="hljs-keyword">for</span> (tail = <span class="hljs-number">0</span>; tail &lt; <span class="hljs-built_in">log</span>.lh.n; tail++) &#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">lbuf</span> =</span> bread(<span class="hljs-built_in">log</span>.dev, <span class="hljs-built_in">log</span>.start+tail+<span class="hljs-number">1</span>);   <span class="hljs-comment">// read log block</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">dbuf</span> =</span> bread(<span class="hljs-built_in">log</span>.dev, <span class="hljs-built_in">log</span>.lh.block[tail]); <span class="hljs-comment">// read dst</span><br>    memmove(dbuf-&gt;data, lbuf-&gt;data, BSIZE);                <span class="hljs-comment">// copy block to dst</span><br>    bwrite(dbuf);                                          <span class="hljs-comment">// write dst to disk</span><br>    <span class="hljs-keyword">if</span>(recovering == <span class="hljs-number">0</span>)<br>      bunpin(dbuf);<br>    brelse(lbuf);<br>    brelse(dbuf);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<blockquote>
+<p>处于简单考虑， xv6中并没有直接将使用virtio_disk_rw()缓存数据刷新回磁盘，而是使用bread() + bwrite()的形式</p>
+</blockquote>
+<ul>
+<li><p><code>commit()</code>: 提交事务， 然后清除日志</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">commit</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">log</span>.lh.n &gt; <span class="hljs-number">0</span>) &#123;<br>    write_log();     <span class="hljs-comment">// Write modified blocks from cache to log</span><br>                     <span class="hljs-comment">// 将内存的Logged block写入磁盘的log区域</span><br>    write_head();    <span class="hljs-comment">// Write header to disk -- the real commit</span><br>                     <span class="hljs-comment">// 将内存中的logheader写入磁盘当中</span><br>    install_trans(<span class="hljs-number">0</span>); <span class="hljs-comment">// Now install writes to home locations</span><br>    <span class="hljs-built_in">log</span>.lh.n = <span class="hljs-number">0</span>;     <span class="hljs-comment">// clear log</span><br>    write_head();    <span class="hljs-comment">// Erase the transaction from the log</span><br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>该函数是上面函数的整合，先将<code>log</code>刷回磁盘，然后将<code>log</code>中缓存的修改数据刷新回磁盘，最后执行<code>clear log</code></p>
+</li>
+<li><p><code>begin_op()</code>: 代表事务开始</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 表示事务的开始</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">begin_op</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  acquire(&amp;<span class="hljs-built_in">log</span>.lock);<br>  <span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>)&#123;<br>    <span class="hljs-keyword">if</span>(<span class="hljs-built_in">log</span>.committing)&#123;<br>      sleep(&amp;<span class="hljs-built_in">log</span>, &amp;<span class="hljs-built_in">log</span>.lock);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-built_in">log</span>.lh.n + (<span class="hljs-built_in">log</span>.outstanding+<span class="hljs-number">1</span>)*MAXOPBLOCKS &gt; LOGSIZE)&#123;<br>      <span class="hljs-comment">// this op might exhaust log space; wait for commit.</span><br>      sleep(&amp;<span class="hljs-built_in">log</span>, &amp;<span class="hljs-built_in">log</span>.lock);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      <span class="hljs-built_in">log</span>.outstanding += <span class="hljs-number">1</span>;<br>      release(&amp;<span class="hljs-built_in">log</span>.lock);<br>      <span class="hljs-keyword">break</span>;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p><code>end_op()</code>: 代表事务结束</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 表示事务的结束</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">end_op</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> do_commit = <span class="hljs-number">0</span>;<br><br>  acquire(&amp;<span class="hljs-built_in">log</span>.lock);<br>  <span class="hljs-built_in">log</span>.outstanding -= <span class="hljs-number">1</span>;<br>  <span class="hljs-keyword">if</span>(<span class="hljs-built_in">log</span>.committing)<br>    panic(<span class="hljs-string">&quot;log.committing&quot;</span>);<br>  <span class="hljs-keyword">if</span>(<span class="hljs-built_in">log</span>.outstanding == <span class="hljs-number">0</span>)&#123;<br>    do_commit = <span class="hljs-number">1</span>;<br>    <span class="hljs-built_in">log</span>.committing = <span class="hljs-number">1</span>;<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-comment">// begin_op() may be waiting for log space,</span><br>    <span class="hljs-comment">// and decrementing log.outstanding has decreased</span><br>    <span class="hljs-comment">// the amount of reserved space.</span><br>    wakeup(&amp;<span class="hljs-built_in">log</span>);<br>  &#125;<br>  release(&amp;<span class="hljs-built_in">log</span>.lock);<br><br>  <span class="hljs-keyword">if</span>(do_commit)&#123;<br>    <span class="hljs-comment">// call commit w/o holding locks, since not allowed</span><br>    <span class="hljs-comment">// to sleep with locks.</span><br>    commit();<br>    acquire(&amp;<span class="hljs-built_in">log</span>.lock);<br>    <span class="hljs-built_in">log</span>.committing = <span class="hljs-number">0</span>;<br>    wakeup(&amp;<span class="hljs-built_in">log</span>);<br>    release(&amp;<span class="hljs-built_in">log</span>.lock);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p>基本上每一个与文件系统相关的系统调用都会在开始使用<code>begin_op()</code>, 然后在最后调用<code>end_op()</code>，</p>
+<p><strong>崩溃恢复</strong></p>
+<p>依旧是从底层函数开始</p>
+<ul>
+<li><p><code>read_head()</code>: 从磁盘中读取<code>logheader</code>到内存的<code>logheader</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">read_head</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">buf</span> =</span> bread(<span class="hljs-built_in">log</span>.dev, <span class="hljs-built_in">log</span>.start);<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">logheader</span> *<span class="hljs-title">lh</span> =</span> (struct logheader *) (buf-&gt;data);<br>  <span class="hljs-keyword">int</span> i;<br>  <span class="hljs-built_in">log</span>.lh.n = lh-&gt;n;<br>  <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">log</span>.lh.n; i++) &#123;<br>    <span class="hljs-built_in">log</span>.lh.block[i] = lh-&gt;block[i];<br>  &#125;<br>  brelse(buf);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p><code>recover_from_log()</code>: 日志恢复</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">recover_from_log</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  read_head();<br>  install_trans(<span class="hljs-number">1</span>); <span class="hljs-comment">// if committed, copy from log to disk</span><br>  <span class="hljs-built_in">log</span>.lh.n = <span class="hljs-number">0</span>;<br>  write_head(); <span class="hljs-comment">// clear the log</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>恢复过程比较简单，首先读取磁盘<code>logheadr</code>，因为此时内存中的<code>logheader</code>是无效的或者说根本就没有，然后再将<code>log</code>中的修改数据刷新回磁盘，进而<code>clear log</code></p>
+</li>
+<li><p><code>init_log()</code>: 初始化日志, 在xv6重启时会自动调用</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">initlog</span><span class="hljs-params">(<span class="hljs-keyword">int</span> dev, struct superblock *sb)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">sizeof</span>(struct logheader) &gt;= BSIZE)<br>    panic(<span class="hljs-string">&quot;initlog: too big logheader&quot;</span>);<br><br>  initlock(&amp;<span class="hljs-built_in">log</span>.lock, <span class="hljs-string">&quot;log&quot;</span>);<br>  <span class="hljs-built_in">log</span>.start = sb-&gt;logstart;<br>  <span class="hljs-built_in">log</span>.size = sb-&gt;nlog;<br>  <span class="hljs-built_in">log</span>.dev = dev;<br>  recover_from_log();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>只是简单地对<code>recover_from_log()</code>进行了封装而已</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>  <strong>Block Allocator</strong><br>  下面是xv6 fs 有关磁盘块分配与释放的代码</p>
+<ul>
+<li><p>balloc()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">static</span> uint</span><br><span class="hljs-function"><span class="hljs-title">balloc</span><span class="hljs-params">(uint dev)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> b, bi, m;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br><br>  bp = <span class="hljs-number">0</span>;<br>  <span class="hljs-comment">// 这里xv6貌似采用了可拓展的方案？</span><br>  <span class="hljs-comment">// 因为xv6的bit map只有一个block, 因此该循环至多也就执行一次</span><br>  <span class="hljs-keyword">for</span>(b = <span class="hljs-number">0</span>; b &lt; sb.size; b += BPB)&#123;<br>    <span class="hljs-comment">// 读出bitmap block</span><br>    bp = bread(dev, BBLOCK(b, sb));<br>    <span class="hljs-keyword">for</span>(bi = <span class="hljs-number">0</span>; bi &lt; BPB &amp;&amp; b + bi &lt; sb.size; bi++)&#123;<br>      <span class="hljs-comment">// bp-&gt;[]得到的是8bit的一个字节</span><br>      <span class="hljs-comment">// 因此使用m表示bi正为于其所在字节的哪一位</span><br>      m = <span class="hljs-number">1</span> &lt;&lt; (bi % <span class="hljs-number">8</span>);<br>      <span class="hljs-keyword">if</span>((bp-&gt;data[bi/<span class="hljs-number">8</span>] &amp; m) == <span class="hljs-number">0</span>)&#123;  <span class="hljs-comment">// Is block free?</span><br>        <span class="hljs-comment">// 将位图的该位标记位已经使用</span><br>        bp-&gt;data[bi/<span class="hljs-number">8</span>] |= m;  <span class="hljs-comment">// Mark block in use.</span><br>        log_write(bp);<br>        brelse(bp);<br>        bzero(dev, b + bi);<br>        <span class="hljs-keyword">return</span> b + bi;         <span class="hljs-comment">// 这里b肯定就是0</span><br>      &#125;<br>    &#125;<br>    brelse(bp);<br>  &#125;<br>  panic(<span class="hljs-string">&quot;balloc: out of blocks&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>bfree()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 释放一个磁盘块</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param dev  指定设备</span><br><span class="hljs-comment"> * @param b    指定block num</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">bfree</span><span class="hljs-params">(<span class="hljs-keyword">int</span> dev, uint b)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br>  <span class="hljs-keyword">int</span> bi, m;<br><br>  bp = bread(dev, BBLOCK(b, sb));<br>  bi = b % BPB;                <span class="hljs-comment">// 这里肯定就是bi本身</span><br>  m = <span class="hljs-number">1</span> &lt;&lt; (bi % <span class="hljs-number">8</span>);<br>  <span class="hljs-keyword">if</span>((bp-&gt;data[bi/<span class="hljs-number">8</span>] &amp; m) == <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;freeing free block&quot;</span>);<br>  bp-&gt;data[bi/<span class="hljs-number">8</span>] &amp;= ~m;        <span class="hljs-comment">// 将bitmap中的该位置0</span><br>  log_write(bp);<br>  brelse(bp);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="4-inode"><a href="#4-inode" class="headerlink" title="4. inode"></a>4. inode</h3><p>xv6中的<code>inode</code>分为磁盘中的<code>dinode</code>以及内存中的<code>inode</code>, 内存中的<code>inode</code>包含了更多内核所需要的额外信息</p>
+<ul>
+<li><p>dinode</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dinode</span> &#123;</span><br>  <span class="hljs-keyword">short</span> type;             <span class="hljs-comment">// File type</span><br>  <span class="hljs-keyword">short</span> major;            <span class="hljs-comment">// Major device number (T_DEVICE only)</span><br>  <span class="hljs-keyword">short</span> minor;            <span class="hljs-comment">// Minor device number (T_DEVICE only)</span><br>  <span class="hljs-keyword">short</span> nlink;            <span class="hljs-comment">// Number of links to inode in file system(硬链接)</span><br>  uint size;              <span class="hljs-comment">// Size of file (bytes)</span><br>  uint addrs[NDIRECT+<span class="hljs-number">2</span>];   <span class="hljs-comment">// Data block addresses</span><br>&#125;;<br></code></pre></td></tr></table></figure></li>
+<li><p>inode</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">inode</span> &#123;</span><br>  uint dev;           <span class="hljs-comment">// Device number</span><br>  uint inum;          <span class="hljs-comment">// Inode number</span><br>  <span class="hljs-keyword">int</span> ref;            <span class="hljs-comment">// Reference count</span><br>                      <span class="hljs-comment">// 这里的引用计数是指在内存中有多少指针正指向该inode</span><br>                      <span class="hljs-comment">// 如果ref == 0, 那么内核救护清除inode在内存中的副本</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sleeplock</span> <span class="hljs-title">lock</span>;</span> <span class="hljs-comment">// protects everything below here</span><br>  <span class="hljs-keyword">int</span> valid;          <span class="hljs-comment">// inode has been read from disk?</span><br><br>  <span class="hljs-keyword">short</span> type;         <span class="hljs-comment">// copy of disk inode</span><br>  <span class="hljs-keyword">short</span> major;<br>  <span class="hljs-keyword">short</span> minor;<br>  <span class="hljs-keyword">short</span> nlink;<br>  uint size;<br>  uint addrs[NDIRECT+<span class="hljs-number">2</span>];  <br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>注意这里<code>nlink</code>与<code>ref</code>的区别:</p>
+<p><code>nlink</code>代表有多少目录块正包含该<code>inode</code>, 这些目录块的数据块都存储在磁盘当中</p>
+<p><code>ref</code>代表内存中引用该<code>inode</code>的指针数目，断电之后这些指针就会消失</p>
+</li>
+</ul>
+<p>xv6同样使用了一个数据结构来维护内存中的整个<code>inode</code>区域</p>
+<ul>
+<li><p>icache</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">spinlock</span> <span class="hljs-title">lock</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">inode</span> <span class="hljs-title">inode</span>[<span class="hljs-title">NINODE</span>];</span>    <span class="hljs-comment">// NINODE == 50</span><br>&#125; icache;<br></code></pre></td></tr></table></figure>
+
+<p>使用了一把全局锁来保护所有的<code>inode</code></p>
+</li>
+</ul>
+<p>下面对<code>inode</code>的相关代码进行分析:</p>
+<ul>
+<li><p>iupdate(): 将更新后的内存<code>inode block</code>写回磁盘</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">iupdate</span><span class="hljs-params">(struct inode *ip)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// 每次更改icache中inode副本，都需要调用iupdate写入到磁盘</span><br><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dinode</span> *<span class="hljs-title">dip</span>;</span><br><br>  bp = bread(ip-&gt;dev, IBLOCK(ip-&gt;inum, sb));<br>  dip = (struct dinode*)bp-&gt;data + ip-&gt;inum%IPB;<br><br>  <span class="hljs-comment">// ip是新的inode缓存副本，dip是旧的磁盘inode</span><br>  dip-&gt;type = ip-&gt;type;<br>  dip-&gt;major = ip-&gt;major;<br>  dip-&gt;minor = ip-&gt;minor;<br>  dip-&gt;nlink = ip-&gt;nlink;<br>  dip-&gt;size = ip-&gt;size;<br>  memmove(dip-&gt;addrs, ip-&gt;addrs, <span class="hljs-keyword">sizeof</span>(ip-&gt;addrs));<br>  <span class="hljs-comment">// 此次更新写入log</span><br>  log_write(bp);<br>  brelse(bp);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>注意，这里并没有真的写回磁盘，而只是将对<code>inode</code>块的修改写入了LOG中</p>
+</li>
+<li><p>itrunc(): 释放一个<code>inode</code>块以及其执行的<code>data</code>块</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">itrunc</span><span class="hljs-params">(struct inode *ip)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> i, j;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br>  uint *a;<br>  <span class="hljs-comment">// 直接block块</span><br>  <span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; NDIRECT; i++)&#123;<br>    <span class="hljs-keyword">if</span>(ip-&gt;addrs[i])&#123;<br>      bfree(ip-&gt;dev, ip-&gt;addrs[i]);<br>      ip-&gt;addrs[i] = <span class="hljs-number">0</span>;<br>    &#125;<br>  &#125;<br>  <span class="hljs-comment">// 间接block块</span><br>  <span class="hljs-keyword">if</span>(ip-&gt;addrs[NDIRECT])&#123;<br>    bp = bread(ip-&gt;dev, ip-&gt;addrs[NDIRECT]);<br>    a = (uint*)bp-&gt;data;<br>    <span class="hljs-keyword">for</span>(j = <span class="hljs-number">0</span>; j &lt; NINDIRECT; j++)&#123;<br>      <span class="hljs-keyword">if</span>(a[j])<br>        bfree(ip-&gt;dev, a[j]);<br>    &#125;<br>    brelse(bp);<br>    bfree(ip-&gt;dev, ip-&gt;addrs[NDIRECT]);<br>    ip-&gt;addrs[NDIRECT] = <span class="hljs-number">0</span>;<br>  &#125;<br>  <span class="hljs-comment">// 双重间接block</span><br>  <span class="hljs-keyword">if</span>(ip-&gt;addrs[NDIRECT+<span class="hljs-number">1</span>])&#123;<br>    bp = bread(ip-&gt;dev, ip-&gt;addrs[NDIRECT+<span class="hljs-number">1</span>]);<br>    a = (uint*)bp-&gt;data;<br>    <span class="hljs-keyword">for</span>(j = <span class="hljs-number">0</span>; j &lt; NINDIRECT; j++)&#123;<br>      <span class="hljs-keyword">if</span>(a[j]) &#123;<br>        <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp2</span> =</span> bread(ip-&gt;dev, a[j]);<br>        uint *a2 = (uint*)bp2-&gt;data;<br>        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">int</span> k = <span class="hljs-number">0</span>; k &lt; NINDIRECT; k++)&#123;<br>          <span class="hljs-keyword">if</span>(a2[k])<br>            bfree(ip-&gt;dev, a2[k]);<br>        &#125;<br>        brelse(bp2);<br>        bfree(ip-&gt;dev, a[j]);<br>      &#125;<br>    &#125;<br>    brelse(bp);<br>    bfree(ip-&gt;dev, ip-&gt;addrs[NDIRECT+<span class="hljs-number">1</span>]);<br>    ip-&gt;addrs[NDIRECT] = <span class="hljs-number">0</span>;<br>  &#125;<br><br>  ip-&gt;size = <span class="hljs-number">0</span>;<br>  iupdate(ip);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里的代码是<code>lab8</code>中的代码，使用了双重间接指针</p>
+</li>
+<li><p>iget(): 从内存中获取inode的副本，如果没有就为其分配一个</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">static</span> struct inode*</span><br><span class="hljs-function"><span class="hljs-title">iget</span><span class="hljs-params">(uint dev, uint inum)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">inode</span> *<span class="hljs-title">ip</span>, *<span class="hljs-title">empty</span>;</span><br><br>  acquire(&amp;icache.lock);<br><br>  <span class="hljs-comment">// Is the inode already cached?</span><br>  <span class="hljs-comment">// empty负责记住一个空的inode slot</span><br>  empty = <span class="hljs-number">0</span>;<br>  <span class="hljs-keyword">for</span>(ip = &amp;icache.inode[<span class="hljs-number">0</span>]; ip &lt; &amp;icache.inode[NINODE]; ip++)&#123;<br>    <span class="hljs-comment">// ip-&gt;ref &gt; 0 才能表示该inode是有效的数据</span><br>    <span class="hljs-keyword">if</span>(ip-&gt;ref &gt; <span class="hljs-number">0</span> &amp;&amp; ip-&gt;dev == dev &amp;&amp; ip-&gt;inum == inum)&#123;<br>      ip-&gt;ref++;<br>      release(&amp;icache.lock);<br>      <span class="hljs-keyword">return</span> ip;<br>    &#125;<br>    <span class="hljs-keyword">if</span>(empty == <span class="hljs-number">0</span> &amp;&amp; ip-&gt;ref == <span class="hljs-number">0</span>)    <span class="hljs-comment">// Remember empty slot.</span><br>      empty = ip;<br>  &#125;<br><br>  <span class="hljs-comment">// Recycle an inode cache entry.</span><br>  <span class="hljs-keyword">if</span>(empty == <span class="hljs-number">0</span>)<br>    panic(<span class="hljs-string">&quot;iget: no inodes&quot;</span>);<br><br>  <span class="hljs-comment">// 在inode当中分配一个新的inode</span><br>  <span class="hljs-comment">// 但这里其实只是改了一些状态变量而已</span><br>  <span class="hljs-comment">// inode的真正数据还没有修改, 在ilock()中会进行数据的分配</span><br>  ip = empty;<br>  ip-&gt;dev = dev;<br>  ip-&gt;inum = inum;<br>  ip-&gt;ref = <span class="hljs-number">1</span>;<br>  ip-&gt;valid = <span class="hljs-number">0</span>;<br>  release(&amp;icache.lock);<br><br>  <span class="hljs-keyword">return</span> ip;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>iput(): 解除一个<code>inode</code>的引用</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 解除一个inode block在内存中的引用</span><br><span class="hljs-comment"> *        如果ref为0， 那么inode cache就可以将其替换出去了</span><br><span class="hljs-comment"> *        如果ref为0且nlinks为0， 即已经没有文件正在使用该</span><br><span class="hljs-comment"> *        inode了， 那么此时磁盘上的对应dinode就应该被释放 </span><br><span class="hljs-comment"> * @param ip </span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">iput</span><span class="hljs-params">(struct inode *ip)</span></span><br><span class="hljs-function"></span>&#123;<br>  acquire(&amp;icache.lock);<br><br>  <span class="hljs-keyword">if</span>(ip-&gt;ref == <span class="hljs-number">1</span> &amp;&amp; ip-&gt;valid &amp;&amp; ip-&gt;nlink == <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-comment">// inode has no links and no other references: truncate and free.</span><br><br>    <span class="hljs-comment">// ip-&gt;ref == 1 means no other process can have ip locked,</span><br>    <span class="hljs-comment">// so this acquiresleep() won&#x27;t block (or deadlock).</span><br>    acquiresleep(&amp;ip-&gt;lock);<br><br>    release(&amp;icache.lock);<br><br>    itrunc(ip);<br>    ip-&gt;type = <span class="hljs-number">0</span>;<br>    iupdate(ip);<br>    ip-&gt;valid = <span class="hljs-number">0</span>;<br><br>    releasesleep(&amp;ip-&gt;lock);<br><br>    acquire(&amp;icache.lock);<br>  &#125;<br><br>  ip-&gt;ref--;<br>  release(&amp;icache.lock);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>关于<code>iput()</code>有一些需要注意的点:</p>
+<ul>
+<li><p><code>iput()</code>中只给出了一个条件<code>if(ip-&gt;ref == 1 &amp;&amp; ip-&gt;valid &amp;&amp; ip-&gt;nlink == 0)</code></p>
+<p>仅当上面条件满足时才会释放<code>inode</code>的数据块</p>
+</li>
+<li><p>假设如下情况发生:<br>系统删除了所有某个文件的所有目录，此时其<code>nlink == 0</code>, 但是目前内存中仍有进程在读取该文件，即<code>ref != 0</code>, 那么当调用</p>
+<p><code>iput()</code>时就不会释放该文件的数据(没有<code>itrunc()</code>, <code>ip-&gt;valid == 1</code>)</p>
+<p>此时，如果突然<code>crash</code>, 那么当进程重启时，<code>ip-&gt;valid == 1</code>, 这也就意味着该<code>inode</code>块正在被使用，但是系统中却没有正在引用该<code>inode</code> 块的进程，此时<strong>xv6就永远失去了一些磁盘空间</strong></p>
+</li>
+<li><p>有两种方式处理这种情况：</p>
+<p>一个简单的方法是，在系统启动的恢复阶段，文件系统扫描磁盘上的整个文件系统，检查是否有文件标记被分配，但是没有任何目录条目包含它，然后如果有，就删除释放这些文件</p>
+<p>第二个方法是不需要扫描整个文件系统，而是在磁盘的某个位置上（例如超级块中），记录硬链接数为0，而指向其的指针数不为0的文件的<code>inode</code>号。如果该文件最后确实被删除释放了，那么就从该记录列表中移出相应的inode号。然后在系统启动的恢复阶段，不扫描整个文件系统，而是简单地扫描该列表，删除释放该列表中的文件即可</p>
+</li>
+<li></li>
+</ul>
+</li>
+<li><p>ialloc(): 分配一个<code>inode</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 在指定设备上分配一个inode</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param dev  指定设备</span><br><span class="hljs-comment"> * @param type  inode所代表文件的类型</span><br><span class="hljs-comment"> * @return struct inode*  分配的inode的指针，该inode处于 unlocked 且 referenced的状态</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">struct inode*</span><br><span class="hljs-function"><span class="hljs-title">ialloc</span><span class="hljs-params">(uint dev, <span class="hljs-keyword">short</span> type)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> inum;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dinode</span> *<span class="hljs-title">dip</span>;</span><br><br>  <span class="hljs-comment">// 遍历所有inode, 找到一个空闲的inode，然后将其分配</span><br>  <span class="hljs-keyword">for</span>(inum = <span class="hljs-number">1</span>; inum &lt; sb.ninodes; inum++)&#123;<br>    <span class="hljs-comment">// 读取inode block</span><br>    bp = bread(dev, IBLOCK(inum, sb));<br>    dip = (struct dinode*)bp-&gt;data + inum%IPB;<br>    <span class="hljs-keyword">if</span>(dip-&gt;type == <span class="hljs-number">0</span>)&#123;  <span class="hljs-comment">// a free inode</span><br>      <span class="hljs-built_in">memset</span>(dip, <span class="hljs-number">0</span>, <span class="hljs-keyword">sizeof</span>(*dip));<br>      dip-&gt;type = type;<br>      log_write(bp);   <span class="hljs-comment">// mark it allocated on the disk</span><br>      brelse(bp);<br>      <span class="hljs-keyword">return</span> iget(dev, inum);<br>    &#125;<br>    brelse(bp);<br>  &#125;<br>  panic(<span class="hljs-string">&quot;ialloc: no inodes&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>ilock(): 锁住给定的inode</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 锁住给定的inode, 必要时从磁盘读取inode</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param ip 指定inode</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">ilock</span><span class="hljs-params">(struct inode *ip)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dinode</span> *<span class="hljs-title">dip</span>;</span><br><br>  <span class="hljs-keyword">if</span>(ip == <span class="hljs-number">0</span> || ip-&gt;ref &lt; <span class="hljs-number">1</span>)<br>    panic(<span class="hljs-string">&quot;ilock&quot;</span>);<br><br>  acquiresleep(&amp;ip-&gt;lock);<br><br>  <span class="hljs-comment">// ip-&gt;valid = 0表示inode虽然在内存Inode区域分配了</span><br>  <span class="hljs-comment">// 但是其内容还是无效的，没有与磁盘上的数据同步</span><br>  <span class="hljs-keyword">if</span>(ip-&gt;valid == <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-comment">// 读取对应inode block</span><br>    bp = bread(ip-&gt;dev, IBLOCK(ip-&gt;inum, sb));<br>    <span class="hljs-comment">// 读取block中的对应条目</span><br>    <span class="hljs-comment">// bp-&gt;data[ip-&gt;inum%IPB]</span><br>    dip = (struct dinode*)bp-&gt;data + ip-&gt;inum%IPB;<br>    ip-&gt;type = dip-&gt;type;<br>    ip-&gt;major = dip-&gt;major;<br>    ip-&gt;minor = dip-&gt;minor;<br>    ip-&gt;nlink = dip-&gt;nlink;<br>    ip-&gt;size = dip-&gt;size;<br>    <span class="hljs-comment">// 拷贝</span><br>    memmove(ip-&gt;addrs, dip-&gt;addrs, <span class="hljs-keyword">sizeof</span>(ip-&gt;addrs));<br>    brelse(bp);  <span class="hljs-comment">// 释放之前获取的临时inode block缓存</span><br>    ip-&gt;valid = <span class="hljs-number">1</span>;<br>    <span class="hljs-keyword">if</span>(ip-&gt;type == <span class="hljs-number">0</span>)<br>      panic(<span class="hljs-string">&quot;ilock: no type&quot;</span>);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>iunlock(): 解锁给定的<code>inode</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">iunlock</span><span class="hljs-params">(struct inode *ip)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">if</span>(ip == <span class="hljs-number">0</span> || !holdingsleep(&amp;ip-&gt;lock) || ip-&gt;ref &lt; <span class="hljs-number">1</span>)<br>    panic(<span class="hljs-string">&quot;iunlock&quot;</span>);<br><br>  releasesleep(&amp;ip-&gt;lock);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>Inode Content</strong></p>
+<ul>
+<li><p>inode 数据块布局</p>
+<p><img src="3.png" srcset="/img/loading.gif" lazyload alt="3"></p>
+<p>xv6中的<code>dinode</code>中包含了12个直接块，1个间接块，每个间接块指向256个数据块</p>
+</li>
+</ul>
+<p>下面是代码分析:</p>
+<ul>
+<li><p>bmap(): 返回<code>inode</code>中的第<code>bn</code>个块的磁盘地址</p>
+<p>这里由于采用了间接指针，所以必要时需要递归的访问</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 返回inode中的第bn个块的磁盘地址</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param ip  给定inode</span><br><span class="hljs-comment"> * @param bn 第n个块</span><br><span class="hljs-comment"> * @return uint  数据块地址</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> uint</span><br><span class="hljs-function"><span class="hljs-title">bmap</span><span class="hljs-params">(struct inode *ip, uint bn)</span></span><br><span class="hljs-function"></span>&#123;<br>  uint addr, *a;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br><br>  <span class="hljs-keyword">if</span>(bn &lt; NDIRECT)&#123;<br>    <span class="hljs-keyword">if</span>((addr = ip-&gt;addrs[bn]) == <span class="hljs-number">0</span>)<br>      ip-&gt;addrs[bn] = addr = balloc(ip-&gt;dev);<br>    <span class="hljs-keyword">return</span> addr;<br>  &#125;<br>  bn -= NDIRECT;<br><br>  <span class="hljs-keyword">if</span>(bn &lt; NINDIRECT)&#123;<br>    <span class="hljs-comment">// Load indirect block, allocating if necessary.</span><br>    <span class="hljs-keyword">if</span>((addr = ip-&gt;addrs[NDIRECT]) == <span class="hljs-number">0</span>)<br>      ip-&gt;addrs[NDIRECT] = addr = balloc(ip-&gt;dev);<br>    bp = bread(ip-&gt;dev, addr);<br>    a = (uint*)bp-&gt;data;<br>    <span class="hljs-keyword">if</span>((addr = a[bn]) == <span class="hljs-number">0</span>)&#123;<br>      a[bn] = addr = balloc(ip-&gt;dev);<br>      log_write(bp);<br>    &#125;<br>    brelse(bp);<br>    <span class="hljs-keyword">return</span> addr;<br>  &#125;<br><br>  panic(<span class="hljs-string">&quot;bmap: out of range&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>readi(): 将inode数据块的内容拷贝到<code>dst</code>中</p>
+<p>开始时先检查读取是否合法，不能读超过文件大小的字节。然后主循环就会不断地读出文件相应的数据块，并把数据块的内容从<code>Buffer Cache</code>拷贝到<code>dst</code>中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief  从inode当中读取数据</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param ip        inode pointer</span><br><span class="hljs-comment"> * @param user_dst  为1表示dst是用户虚拟地址，否则表示dst是内核物理地址</span><br><span class="hljs-comment"> * @param dst       目的地址</span><br><span class="hljs-comment"> * @param off       相对于ip-&gt;addr的偏移量</span><br><span class="hljs-comment"> * @param n         拷贝的字节数</span><br><span class="hljs-comment"> * @return int      实际拷贝的字节数</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">readi</span><span class="hljs-params">(struct inode *ip, <span class="hljs-keyword">int</span> user_dst, uint64 dst, uint off, uint n)</span></span><br><span class="hljs-function"></span>&#123;<br>  uint tot, m;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br><br>  <span class="hljs-keyword">if</span>(off &gt; ip-&gt;size || off + n &lt; off)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  <span class="hljs-keyword">if</span>(off + n &gt; ip-&gt;size)<br>    n = ip-&gt;size - off;<br><br>  <span class="hljs-keyword">for</span>(tot=<span class="hljs-number">0</span>; tot&lt;n; tot+=m, off+=m, dst+=m)&#123;<br>    bp = bread(ip-&gt;dev, bmap(ip, off/BSIZE));<br>    m = min(n - tot, BSIZE - off%BSIZE);<br>    <span class="hljs-keyword">if</span>(either_copyout(user_dst, dst, bp-&gt;data + (off % BSIZE), m) == <span class="hljs-number">-1</span>) &#123;<br>      brelse(bp);<br>      tot = <span class="hljs-number">-1</span>;<br>      <span class="hljs-keyword">break</span>;<br>    &#125;<br>    brelse(bp);<br>  &#125;<br>  <span class="hljs-keyword">return</span> tot;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>writei()</p>
+<p><strong>writei</strong>如下，和<code>readi()</code>的架构相似，但有几个不同之处：</p>
+<ul>
+<li><p>writei可以超出文件大小，从而增长文件</p>
+</li>
+<li><p>与readi相反，writei拷贝数据到Buffer Cache中</p>
+</li>
+<li><p>一旦文件增长，就要更新其inode的大小信息</p>
+</li>
+</ul>
+<p>值得一提的是，即便文件大小没有增长，也照样调用iupdate将inode写入磁盘，因为在调用bmap时可能分配了新的数据块，从而inode的addrs[ ]会被改变</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">writei</span><span class="hljs-params">(struct inode *ip, <span class="hljs-keyword">int</span> user_src, uint64 src, uint off, uint n)</span></span><br><span class="hljs-function"></span>&#123;<br>  uint tot, m;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">buf</span> *<span class="hljs-title">bp</span>;</span><br><br>  <span class="hljs-keyword">if</span>(off &gt; ip-&gt;size || off + n &lt; off)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>  <span class="hljs-keyword">if</span>(off + n &gt; MAXFILE*BSIZE)<br>    <span class="hljs-comment">// off可以等于ip-&gt;size,这样就相当于增长文件，但off+n即期望文件总大小不能超过规定的</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br><br>  <span class="hljs-comment">// copies data into the buffers </span><br>  <span class="hljs-keyword">for</span>(tot=<span class="hljs-number">0</span>; tot&lt;n; tot+=m, off+=m, src+=m)&#123;<br>    bp = bread(ip-&gt;dev, bmap(ip, off/BSIZE));<br>    m = min(n - tot, BSIZE - off%BSIZE);<br>    <span class="hljs-keyword">if</span>(either_copyin(bp-&gt;data + (off % BSIZE), user_src, src, m) == <span class="hljs-number">-1</span>) &#123;<br>      brelse(bp);<br>      <span class="hljs-keyword">break</span>;<br>    &#125;<br>    <span class="hljs-comment">// 缓存块被修改，将更新写入日志</span><br>    log_write(bp);<br>    brelse(bp);<br>  &#125;<br><br>  <span class="hljs-keyword">if</span>(n &gt; <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-keyword">if</span>(off &gt; ip-&gt;size)<br>      ip-&gt;size = off;<br>    <span class="hljs-comment">// write the i-node back to disk even if the size didn&#x27;t change</span><br>    <span class="hljs-comment">// because the loop above might have called bmap() and added a new</span><br>    <span class="hljs-comment">// block to ip-&gt;addrs[].</span><br>    iupdate(ip);<br>  &#125;<br><br>  <span class="hljs-keyword">return</span> n;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>stati(): 将inode的元数据拷贝到位于内存中的struct stat，为上层的用户进程提供访问该inode元数据的接口</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">stati</span><span class="hljs-params">(struct inode *ip, struct stat *st)</span></span><br><span class="hljs-function"></span>&#123;<br>  st-&gt;dev = ip-&gt;dev;<br>  st-&gt;ino = ip-&gt;inum;<br>  st-&gt;type = ip-&gt;type;<br>  st-&gt;nlink = ip-&gt;nlink;<br>  st-&gt;size = ip-&gt;size;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>stat结构</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">stat</span> &#123;</span><br>  <span class="hljs-keyword">int</span> dev;     <span class="hljs-comment">// File system&#x27;s disk device</span><br>  uint ino;    <span class="hljs-comment">// Inode number</span><br>  <span class="hljs-keyword">short</span> type;  <span class="hljs-comment">// Type of file</span><br>  <span class="hljs-keyword">short</span> nlink; <span class="hljs-comment">// Number of links to file</span><br>  uint64 size; <span class="hljs-comment">// Size of file in bytes</span><br>&#125;;<br><br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<h3 id="5-directory"><a href="#5-directory" class="headerlink" title="5. directory"></a>5. directory</h3><p>目录的实现机制与文件比较类似，它的<strong>inode</strong>类型是<strong>T_DIR</strong>，目录的<code>data</code>块中存储的是<code>dirent</code>结构的序列, <code>dirent</code>结构如下:</p>
+<ul>
+<li><p>dirent</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 目录条目结构</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dirent</span> &#123;</span><br>  ushort inum;                <span class="hljs-comment">// 目录的inode num</span><br>  <span class="hljs-keyword">char</span> name[DIRSIZ];          <span class="hljs-comment">// 条目名 </span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>即一个简单的{inum, name}对</p>
+</li>
+</ul>
+<p><code>inode</code>为0的目录项是空闲的，在进行目录项的遍历是要将其忽略</p>
+<p>下面介绍目录有关API</p>
+<ul>
+<li><p>dirlookup()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 在指定目录文件当中寻找一个目录条目</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param dp  目录的inode pointer</span><br><span class="hljs-comment"> * @param name  寻找的条目名称</span><br><span class="hljs-comment"> * @param[out] poff 寻找到的条目在数据块中的偏移量</span><br><span class="hljs-comment"> * @return struct inode*  找到的条目所对应的inode的内存副本指针</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">struct inode*</span><br><span class="hljs-function"><span class="hljs-title">dirlookup</span><span class="hljs-params">(struct inode *dp, <span class="hljs-keyword">char</span> *name, uint *poff)</span></span><br><span class="hljs-function"></span>&#123;<br>  uint off, inum;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dirent</span> <span class="hljs-title">de</span>;</span><br><br>  <span class="hljs-keyword">if</span>(dp-&gt;type != T_DIR)<br>    panic(<span class="hljs-string">&quot;dirlookup not DIR&quot;</span>);<br><br>  <span class="hljs-comment">// 遍历所有的条目，查找指定文件</span><br>  <span class="hljs-keyword">for</span>(off = <span class="hljs-number">0</span>; off &lt; dp-&gt;size; off += <span class="hljs-keyword">sizeof</span>(de))&#123;<br>    <span class="hljs-keyword">if</span>(readi(dp, <span class="hljs-number">0</span>, (uint64)&amp;de, off, <span class="hljs-keyword">sizeof</span>(de)) != <span class="hljs-keyword">sizeof</span>(de))<br>      panic(<span class="hljs-string">&quot;dirlookup read&quot;</span>);<br>    <span class="hljs-comment">// inode号为0的目录项是空闲的</span><br>    <span class="hljs-keyword">if</span>(de.inum == <span class="hljs-number">0</span>)<br>      <span class="hljs-keyword">continue</span>;<br>    <span class="hljs-keyword">if</span>(namecmp(name, de.name) == <span class="hljs-number">0</span>)&#123;<br>      <span class="hljs-comment">// entry matches path element</span><br>      <span class="hljs-keyword">if</span>(poff)<br>        *poff = off;<br>      inum = de.inum;<br>      <span class="hljs-keyword">return</span> iget(dp-&gt;dev, inum);<br>    &#125;<br>  &#125;<br><br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>dirlink</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 将一个新的目录条目写入指定目录的data block中</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param dp  待写入的目录</span><br><span class="hljs-comment"> * @param name  条目name</span><br><span class="hljs-comment"> * @param inum  条目inum</span><br><span class="hljs-comment"> * @return int  0代表成功， -1代表失败</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">dirlink</span><span class="hljs-params">(struct inode *dp, <span class="hljs-keyword">char</span> *name, uint inum)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> off;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dirent</span> <span class="hljs-title">de</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">inode</span> *<span class="hljs-title">ip</span>;</span><br><br>  <span class="hljs-comment">// Check that name is not present.</span><br>  <span class="hljs-keyword">if</span>((ip = dirlookup(dp, name, <span class="hljs-number">0</span>)) != <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-comment">// 如果条目已经存在的话认为是错误</span><br>    iput(ip);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>  &#125;<br><br>  <span class="hljs-comment">// Look for an empty dirent.</span><br>  <span class="hljs-keyword">for</span>(off = <span class="hljs-number">0</span>; off &lt; dp-&gt;size; off += <span class="hljs-keyword">sizeof</span>(de))&#123;<br>    <span class="hljs-keyword">if</span>(readi(dp, <span class="hljs-number">0</span>, (uint64)&amp;de, off, <span class="hljs-keyword">sizeof</span>(de)) != <span class="hljs-keyword">sizeof</span>(de))<br>      panic(<span class="hljs-string">&quot;dirlink read&quot;</span>);<br>    <span class="hljs-keyword">if</span>(de.inum == <span class="hljs-number">0</span>)<br>      <span class="hljs-keyword">break</span>;<br>  &#125;<br><br>  <span class="hljs-comment">// 找到一个空闲条目，将给定条目写入</span><br>  <span class="hljs-built_in">strncpy</span>(de.name, name, DIRSIZ);<br>  de.inum = inum;<br>  <span class="hljs-keyword">if</span>(writei(dp, <span class="hljs-number">0</span>, (uint64)&amp;de, off, <span class="hljs-keyword">sizeof</span>(de)) != <span class="hljs-keyword">sizeof</span>(de))<br>    panic(<span class="hljs-string">&quot;dirlink&quot;</span>);<br><br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="6-path-name"><a href="#6-path-name" class="headerlink" title="6. path name"></a>6. path name</h3><p><code>path name</code>本身概念上没有什么可说的，主要是解析路径字符串的API较为繁杂</p>
+<ul>
+<li><p>skipelem()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 返回path对应的首元素, 将其(字符串)拷贝到name中 </span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param path  给定路径名</span><br><span class="hljs-comment"> * @param name[out] path对应的首元素 </span><br><span class="hljs-comment"> * @return char* 首元素后面的路径</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span>*</span><br><span class="hljs-function"><span class="hljs-title">skipelem</span><span class="hljs-params">(<span class="hljs-keyword">char</span> *path, <span class="hljs-keyword">char</span> *name)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// 以a/bb/c为例</span><br>  <span class="hljs-keyword">char</span> *s;<br>  <span class="hljs-keyword">int</span> len;<br><br>  <span class="hljs-keyword">while</span>(*path == <span class="hljs-string">&#x27;/&#x27;</span>)<br>    path++;<br>  <span class="hljs-keyword">if</span>(*path == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  s = path; <span class="hljs-comment">// s == a</span><br>  <span class="hljs-keyword">while</span>(*path != <span class="hljs-string">&#x27;/&#x27;</span> &amp;&amp; *path != <span class="hljs-number">0</span>)<br>    path++;<br>  len = path - s; <span class="hljs-comment">// len == 1</span><br>  <span class="hljs-keyword">if</span>(len &gt;= DIRSIZ)<br>    memmove(name, s, DIRSIZ);<br>  <span class="hljs-keyword">else</span> &#123;<br>    memmove(name, s, len);  <span class="hljs-comment">// name &lt;- &quot;a&quot;</span><br>    name[len] = <span class="hljs-number">0</span>;<br>  &#125;<br>  <span class="hljs-keyword">while</span>(*path == <span class="hljs-string">&#x27;/&#x27;</span>)<br>    path++;<br>  <span class="hljs-keyword">return</span> path;    <span class="hljs-comment">// path == &quot;bb/c&quot;</span><br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>namex():  工具函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 查找并返回一个路径名对应的inode</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param path  给定的路径</span><br><span class="hljs-comment"> * @param nameiparent  如果nameiparent不为0， 那么会返回最后一个元素的父路径的inode, 并且</span><br><span class="hljs-comment"> *                     拷贝最后一个路径元素到name中</span><br><span class="hljs-comment"> *                     如a/b/c, 此时如果nameiparent !=0, 那么name = c, 返回的是a/b的inode</span><br><span class="hljs-comment"> * @param name[out]    写出的文件名 </span><br><span class="hljs-comment"> * @return struct inode* </span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> struct inode*</span><br><span class="hljs-function"><span class="hljs-title">namex</span><span class="hljs-params">(<span class="hljs-keyword">char</span> *path, <span class="hljs-keyword">int</span> nameiparent, <span class="hljs-keyword">char</span> *name)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">inode</span> *<span class="hljs-title">ip</span>, *<span class="hljs-title">next</span>;</span><br><br>  <span class="hljs-comment">// 如果路径名以&#x27;/&#x27;开头则从根目录开始, 否则从当前工作目录开始</span><br>  <span class="hljs-keyword">if</span>(*path == <span class="hljs-string">&#x27;/&#x27;</span>)<br>    ip = iget(ROOTDEV, ROOTINO);<br>  <span class="hljs-keyword">else</span><br>    ip = idup(myproc()-&gt;cwd);<br><br>  <span class="hljs-comment">// 以&quot;/a/b&quot;, nameiparent == 1为例</span><br>  <span class="hljs-keyword">while</span>((path = skipelem(path, name)) != <span class="hljs-number">0</span>)&#123;  <span class="hljs-comment">// 1. path == b, name = a</span><br>    ilock(ip);                                <span class="hljs-comment">// 2. paht == &#x27;0&#x27;, name = b</span><br>    <span class="hljs-keyword">if</span>(ip-&gt;type != T_DIR)&#123;<br>      iunlockput(ip);<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-keyword">if</span>(nameiparent &amp;&amp; *path == <span class="hljs-string">&#x27;0&#x27;</span>)&#123;<br>      <span class="hljs-comment">// Stop one level early.                // 2. stop! ip == &quot;/a&quot;对应的inode</span><br>      iunlock(ip);<br>      <span class="hljs-keyword">return</span> ip;<br>    &#125;<br>    <span class="hljs-keyword">if</span>((next = dirlookup(ip, name, <span class="hljs-number">0</span>)) == <span class="hljs-number">0</span>)&#123; <span class="hljs-comment">// 1. next: &quot;/a&quot;的inode</span><br>      iunlockput(ip);<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>    iunlockput(ip);<br>    ip = next;                                <br>  &#125;<br>  <br>  <span class="hljs-comment">// 正常情况下nameiparent应该在主循环中返回</span><br>  <span class="hljs-comment">// 如果nameiparent运行到这就说明提前退出</span><br>  <span class="hljs-comment">// 由于iget()阶段refcnt++, 所以这里要复原</span><br>  <span class="hljs-keyword">if</span>(nameiparent)&#123;<br>    iput(ip);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  &#125;<br>  <span class="hljs-keyword">return</span> ip;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>nameiparent()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 返回path对应的父目录的inode</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param path  给定目录</span><br><span class="hljs-comment"> * @param name[out] 最底层元素</span><br><span class="hljs-comment"> * @return struct inode*  </span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">struct inode*</span><br><span class="hljs-function"><span class="hljs-title">nameiparent</span><span class="hljs-params">(<span class="hljs-keyword">char</span> *path, <span class="hljs-keyword">char</span> *name)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">return</span> namex(path, <span class="hljs-number">1</span>, name);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>namei()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief  返回path的inode</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param path </span><br><span class="hljs-comment"> * @return struct inode* </span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">struct inode*</span><br><span class="hljs-function"><span class="hljs-title">namei</span><span class="hljs-params">(<span class="hljs-keyword">char</span> *path)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">char</span> name[DIRSIZ];<br>  <span class="hljs-keyword">return</span> namex(path, <span class="hljs-number">0</span>, name);<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="7-file-descriptor"><a href="#7-file-descriptor" class="headerlink" title="7. file descriptor"></a>7. file descriptor</h3><p>xv6中使用了两张表来维护所有打开的文件，一张是每个进程自身的<strong>打开文件表</strong><code>ofile</code></p>
+<ul>
+<li><p>proc</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span>&#123;</span><br>  <span class="hljs-comment">// ...</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span> *<span class="hljs-title">ofile</span>[<span class="hljs-title">NOFILE</span>];</span>  <span class="hljs-comment">// Open files, NOFILE = 16</span><br>  <span class="hljs-comment">// ...</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>其实就是一个数组, 数组的每个条目是进程打开的文件</p>
+</li>
+</ul>
+<p>另一张是<strong>全局打开文件表</strong><code>ftable</code></p>
+<ul>
+<li><p>ftable</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> &#123;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">spinlock</span> <span class="hljs-title">lock</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span> <span class="hljs-title">file</span>[<span class="hljs-title">NFILE</span>];</span>  <span class="hljs-comment">// NFILE == 100</span><br>&#125; ftable;<br></code></pre></td></tr></table></figure>
+
+<p>该表中记录了系统中正处于打开状态的所有文件实例, xv6中最多能同时打开100个文件</p>
+</li>
+</ul>
+<p>并不是每一个文件都有一个与之对应的<code>file</code>结构体，而是每个<strong>打开的</strong>文件都有一个对应的<code>file</code>结构体, 如果一个文件被打开(open())多次，那么它就会有多个<code>file</code>实例</p>
+<ul>
+<li><p>file</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span> &#123;</span><br>  <span class="hljs-class"><span class="hljs-keyword">enum</span> &#123;</span> FD_NONE, FD_PIPE, FD_INODE, FD_DEVICE &#125; type;<br>  <span class="hljs-keyword">int</span> ref;            <span class="hljs-comment">// reference count</span><br>  <span class="hljs-keyword">char</span> readable;<br>  <span class="hljs-keyword">char</span> writable;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">pipe</span> *<span class="hljs-title">pipe</span>;</span> <span class="hljs-comment">// FD_PIPE</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">inode</span> *<span class="hljs-title">ip</span>;</span>  <span class="hljs-comment">// FD_INODE and FD_DEVICE</span><br>  uint off;          <span class="hljs-comment">// FD_INODE</span><br>  <span class="hljs-keyword">short</span> major;       <span class="hljs-comment">// FD_DEVICE</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>每个打开的文件在内存中对应的<code>file</code>实例维护了文件的打开状态，包括</p>
+<ol>
+<li><p>文件类型</p>
+<p>xv6将文件类型分为了4类：</p>
+<ol>
+<li>FD_NONE: 已关闭文件</li>
+<li>FD_PIPE: 管道文件</li>
+<li>FD_INODE: 普通文件</li>
+<li>FD_DEVICE: 设备文件</li>
+</ol>
+</li>
+<li><p>文件权限(r/w)</p>
+</li>
+<li><p>文件偏移量</p>
+<p>由于每个进程打开一个文件后都会产生一个对应的file实例，因此多个进程会有着不同的文件偏移量</p>
+</li>
+</ol>
+</li>
+</ul>
+<p>下面介绍相关函数</p>
+<ul>
+<li><p>filealloc()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 分配一个file结构体</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @return struct file*  分配的file结构体</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">struct file*</span><br><span class="hljs-function"><span class="hljs-title">filealloc</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span> *<span class="hljs-title">f</span>;</span><br><br>  acquire(&amp;ftable.lock);<br>  <span class="hljs-comment">// 遍历全局打开文件表，寻找空闲槽位，然后将其标记位可用</span><br>  <span class="hljs-keyword">for</span>(f = ftable.file; f &lt; ftable.file + NFILE; f++)&#123;<br>    <span class="hljs-keyword">if</span>(f-&gt;ref == <span class="hljs-number">0</span>)&#123;<br>      f-&gt;ref = <span class="hljs-number">1</span>;<br>      release(&amp;ftable.lock);<br>      <span class="hljs-keyword">return</span> f;<br>    &#125;<br>  &#125;<br>  release(&amp;ftable.lock);<br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>filedup()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 创建一个打开文件的副本</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param f  给定打开文件</span><br><span class="hljs-comment"> * @return struct file*  打开文件结构</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">struct file*</span><br><span class="hljs-function"><span class="hljs-title">filedup</span><span class="hljs-params">(struct file *f)</span></span><br><span class="hljs-function"></span>&#123;<br>  acquire(&amp;ftable.lock);<br>  <span class="hljs-keyword">if</span>(f-&gt;ref &lt; <span class="hljs-number">1</span>)<br>    panic(<span class="hljs-string">&quot;filedup&quot;</span>);<br>  f-&gt;ref++;<br>  release(&amp;ftable.lock);<br>  <span class="hljs-keyword">return</span> f;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里所做的操作很简单，只是将打开文件的引用计数+1, 然后返回相同的<code>file</code>结构体指针</p>
+</li>
+<li><p>fileclose()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief  关闭文件f</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param f  被关闭的文件</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">fileclose</span><span class="hljs-params">(struct file *f)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">file</span> <span class="hljs-title">ff</span>;</span><br><br>  acquire(&amp;ftable.lock);<br>  <span class="hljs-keyword">if</span>(f-&gt;ref &lt; <span class="hljs-number">1</span>)<br>    panic(<span class="hljs-string">&quot;fileclose&quot;</span>);<br>  <span class="hljs-comment">// 仅当引用计数为0时才真正地做释放操作</span><br>  <span class="hljs-keyword">if</span>(--f-&gt;ref &gt; <span class="hljs-number">0</span>)&#123;<br>    release(&amp;ftable.lock);<br>    <span class="hljs-keyword">return</span>;<br>  &#125;<br>  ff = *f;      <span class="hljs-comment">// 获取一份拷贝</span><br>  f-&gt;ref = <span class="hljs-number">0</span>;<br>  f-&gt;type = FD_NONE;<br>  release(&amp;ftable.lock);<br><br><br>  <span class="hljs-comment">// 根据文件的不用类型做出判断</span><br>  <span class="hljs-keyword">if</span>(ff.type == FD_PIPE)&#123;<br>    pipeclose(ff.pipe, ff.writable);<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(ff.type == FD_INODE || ff.type == FD_DEVICE)&#123;<br>    begin_op();<br>    iput(ff.ip);<br>    end_op();<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>filestat()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief  获取文件的相关状态</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param f    待访问文件</span><br><span class="hljs-comment"> * @param addr struct stat的地址</span><br><span class="hljs-comment"> * @return int  成功返回0， 否则返回-1</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">filestat</span><span class="hljs-params">(struct file *f, uint64 addr)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">stat</span> <span class="hljs-title">st</span>;</span><br>  <br>  <span class="hljs-keyword">if</span>(f-&gt;type == FD_INODE || f-&gt;type == FD_DEVICE)&#123;<br>    ilock(f-&gt;ip);<br>    stati(f-&gt;ip, &amp;st);<br>    iunlock(f-&gt;ip);<br>    <span class="hljs-keyword">if</span>(copyout(p-&gt;pagetable, addr, (<span class="hljs-keyword">char</span> *)&amp;st, <span class="hljs-keyword">sizeof</span>(st)) &lt; <span class="hljs-number">0</span>)<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>只允许获取普通文件或者设备文件的状态</p>
+</li>
+<li><p>fileread()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 从文件读取内容</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param f  待读取文件</span><br><span class="hljs-comment"> * @param addr 缓冲区地址</span><br><span class="hljs-comment"> * @param n 读取字节数</span><br><span class="hljs-comment"> * @return int  读取的字节数，失败的话返回-1</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">fileread</span><span class="hljs-params">(struct file *f, uint64 addr, <span class="hljs-keyword">int</span> n)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> r = <span class="hljs-number">0</span>;<br><br>  <span class="hljs-keyword">if</span>(f-&gt;readable == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br><br>  <span class="hljs-keyword">if</span>(f-&gt;type == FD_PIPE)&#123;<br>    r = piperead(f-&gt;pipe, addr, n);<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(f-&gt;type == FD_DEVICE)&#123;<br>    <span class="hljs-keyword">if</span>(f-&gt;major &lt; <span class="hljs-number">0</span> || f-&gt;major &gt;= NDEV || !devsw[f-&gt;major].read)<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    r = devsw[f-&gt;major].read(<span class="hljs-number">1</span>, addr, n);<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(f-&gt;type == FD_INODE)&#123;<br>    ilock(f-&gt;ip);<br>    <span class="hljs-comment">// 从文件的当前偏移量开始读取, 由于偏移量off会被更新，因此加锁</span><br>    <span class="hljs-keyword">if</span>((r = readi(f-&gt;ip, <span class="hljs-number">1</span>, addr, f-&gt;off, n)) &gt; <span class="hljs-number">0</span>)<br>         f-&gt;off += r;<br>    iunlock(f-&gt;ip);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    panic(<span class="hljs-string">&quot;fileread&quot;</span>);<br>  &#125;<br><br>  <span class="hljs-keyword">return</span> r;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>fwrite()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 向文件写内容</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param f  待写入文件</span><br><span class="hljs-comment"> * @param addr  缓冲区地址</span><br><span class="hljs-comment"> * @param n     写入字节数</span><br><span class="hljs-comment"> * @return int 写入的字节数</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">filewrite</span><span class="hljs-params">(struct file *f, uint64 addr, <span class="hljs-keyword">int</span> n)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> r, ret = <span class="hljs-number">0</span>;<br><br>  <span class="hljs-keyword">if</span>(f-&gt;writable == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br><br>  <span class="hljs-keyword">if</span>(f-&gt;type == FD_PIPE)&#123;<br>    ret = pipewrite(f-&gt;pipe, addr, n);<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(f-&gt;type == FD_DEVICE)&#123;<br>    <span class="hljs-keyword">if</span>(f-&gt;major &lt; <span class="hljs-number">0</span> || f-&gt;major &gt;= NDEV || !devsw[f-&gt;major].write)<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    ret = devsw[f-&gt;major].write(<span class="hljs-number">1</span>, addr, n);<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(f-&gt;type == FD_INODE)&#123;<br>    <span class="hljs-comment">// write a few blocks at a time to avoid exceeding</span><br>    <span class="hljs-comment">// the maximum log transaction size, including</span><br>    <span class="hljs-comment">// i-node, indirect block, allocation blocks,</span><br>    <span class="hljs-comment">// and 2 blocks of slop for non-aligned writes.</span><br>    <span class="hljs-comment">// this really belongs lower down, since writei()</span><br>    <span class="hljs-comment">// might be writing a device like the console.</span><br>    <span class="hljs-comment">// 这里采用小批量多次写的操作来完成</span><br>    <span class="hljs-comment">// 因为日志区域优先，一次性写入太多可能会导致日志区域</span><br>    <span class="hljs-comment">// 不够</span><br>    <span class="hljs-keyword">int</span> max = ((MAXOPBLOCKS<span class="hljs-number">-1</span><span class="hljs-number">-1</span><span class="hljs-number">-2</span>) / <span class="hljs-number">2</span>) * BSIZE;<br>    <span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">while</span>(i &lt; n)&#123;<br>      <span class="hljs-keyword">int</span> n1 = n - i;<br>      <span class="hljs-keyword">if</span>(n1 &gt; max)<br>        n1 = max;<br><br>      begin_op();<br>      ilock(f-&gt;ip);<br>      <span class="hljs-keyword">if</span> ((r = writei(f-&gt;ip, <span class="hljs-number">1</span>, addr + i, f-&gt;off, n1)) &gt; <span class="hljs-number">0</span>)<br>        f-&gt;off += r;<br>      iunlock(f-&gt;ip);<br>      end_op();<br><br>      <span class="hljs-keyword">if</span>(r != n1)&#123;<br>        <span class="hljs-comment">// error from writei</span><br>        <span class="hljs-keyword">break</span>;<br>      &#125;<br>      i += r;<br>    &#125;<br>    ret = (i == n ? n : <span class="hljs-number">-1</span>);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    panic(<span class="hljs-string">&quot;filewrite&quot;</span>);<br>  &#125;<br><br>  <span class="hljs-keyword">return</span> ret;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+<li><p>fdalloc()</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @brief 给一个打开的文件分配一个文件描述符</span><br><span class="hljs-comment"> * </span><br><span class="hljs-comment"> * @param f </span><br><span class="hljs-comment"> * @return int </span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span></span><br><span class="hljs-function"><span class="hljs-title">fdalloc</span><span class="hljs-params">(struct file *f)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-keyword">int</span> fd;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br><br>  <span class="hljs-keyword">for</span>(fd = <span class="hljs-number">0</span>; fd &lt; NOFILE; fd++)&#123;<br>    <span class="hljs-keyword">if</span>(p-&gt;ofile[fd] == <span class="hljs-number">0</span>)&#123;<br>      p-&gt;ofile[fd] = f;<br>      <span class="hljs-keyword">return</span> fd;<br>    &#125;<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>从该函数中我们可以看出，当一个进程打开文件时，分配到的文件描述符永远是当前自己可以获得的最小文件描述符，与打开什么文件没有关系</p>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/xv6/">xv6</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/29/UNP-%E7%AB%AF%E5%8F%A3%E4%B8%8E%E5%B9%B6%E5%8F%91%E6%9C%8D%E5%8A%A1%E5%99%A8/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[UNP]:端口与并发服务器</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-pipe/">
+                        <span class="hidden-mobile">[xv6]:pipe</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

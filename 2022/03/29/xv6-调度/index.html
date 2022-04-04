@@ -1,0 +1,621 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  <meta name="description" content="1. xv中的线程与进程 分时复用 xv6中采用的也是分时复用，即每个进程在CPU上运行一段时间，计时器超时过后引发trap,  然后再由调度器调度其它进程在CPU上运行，使得每个进程以为自己独占CPU   内核线程与调度线程 在xv6中，每个进程只有一个线程，该线程运行在内核当中，被称为内核线程, 这样做主要是为了简单，Linux这种复杂系统中，除了内核线程之外还拥有用户线程. 在每个CPU当中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[xv6]:调度">
+<meta property="og:url" content="http://example.com/2022/03/29/xv6-%E8%B0%83%E5%BA%A6/index.html">
+<meta property="og:site_name" content="liver0377">
+<meta property="og:description" content="1. xv中的线程与进程 分时复用 xv6中采用的也是分时复用，即每个进程在CPU上运行一段时间，计时器超时过后引发trap,  然后再由调度器调度其它进程在CPU上运行，使得每个进程以为自己独占CPU   内核线程与调度线程 在xv6中，每个进程只有一个线程，该线程运行在内核当中，被称为内核线程, 这样做主要是为了简单，Linux这种复杂系统中，除了内核线程之外还拥有用户线程. 在每个CPU当中">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/03/29/xv6-%E8%B0%83%E5%BA%A6/1.png">
+<meta property="article:published_time" content="2022-03-29T03:09:44.000Z">
+<meta property="article:modified_time" content="2022-03-29T03:10:49.520Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="xv6">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/03/29/xv6-%E8%B0%83%E5%BA%A6/1.png">
+  
+  <title>[xv6]:调度 - liver0377</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.12","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"PntrlLKLdq8SGWnNk0fAj3MA-gzGzoHsz","app_key":"0TlODH05v37nL1cmzGGbhzdw","server_url":null,"path":"window.location.pathname"}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>纸条屋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/default.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="[xv6]:调度">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-03-29 11:09" pubdate>
+        2022年3月29日 上午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      6.6k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      21 分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- LeanCloud 统计文章PV -->
+      <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="leancloud-page-views"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">[xv6]:调度</h1>
+            
+            <div class="markdown-body">
+              <h3 id="1-xv中的线程与进程"><a href="#1-xv中的线程与进程" class="headerlink" title="1. xv中的线程与进程"></a>1. xv中的线程与进程</h3><ul>
+<li><p>分时复用</p>
+<p>xv6中采用的也是分时复用，即每个进程在CPU上运行一段时间，计时器超时过后引发<code>trap</code>,  然后再由调度器调度其它进程在CPU上运行，使得<strong>每个进程以为自己独占CPU</strong> </p>
+</li>
+<li><p>内核线程与调度线程</p>
+<p>在xv6中，每个进程只有一个线程，该线程运行在内核当中，被称为<strong>内核线程</strong>, 这样做主要是为了简单，Linux这种复杂系统中，除了内核线程之外还拥有用户线程.</p>
+<p>在每个CPU当中，还运行着一个<strong>调度线程</strong>，该线程负责不同内核线程之间的调度，当一个内核线程<code>t1</code>发生定时器中断时，就会自愿放弃CPU, 此时内核线程会首先切换为调度线程，然后调度线程再找出合适的其它内核线程<code>t2</code>，然后将CPU让给该内核线程</p>
+<p>在xv6中，对于CPU来说，在任意时刻只能有一个线程正在运行，该线程只能是以下线程中的一个:</p>
+<ul>
+<li>内核线程</li>
+<li>调度线程</li>
+</ul>
+</li>
+<li><p>xv中的上下文(context)</p>
+<p>所谓的上下文其实就是一系列寄存器, xv中的<code>context</code>结构体如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">context</span> &#123;</span><br>  uint64 ra;          <span class="hljs-comment">// 返回地址寄存器, 通过该寄存器，swtch会返回到不同线程当中</span><br>  uint64 sp;          <span class="hljs-comment">// stack pointer</span><br><br>  <span class="hljs-comment">// callee-saved     // 被调用者保存寄存器</span><br>  uint64 s0;<br>  uint64 s1;<br>  uint64 s2;<br>  uint64 s3;<br>  uint64 s4;<br>  uint64 s5;<br>  uint64 s6;<br>  uint64 s7;<br>  uint64 s8;<br>  uint64 s9;<br>  uint64 s10;<br>  uint64 s11;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p> 所谓的<strong>上下文切换</strong>其实就是保存旧进程的寄存器值，加载新进程的寄存器的值, 这些值都会被保存在进程的<code>trapframe</code>中</p>
+<p><strong>xv6中并没有使用一种特定的结构体来表示，而是使用了<code>proc</code>结构体中的<code>context</code>字段来表示该进程对应的内核线程</strong>, 因此在xv6中中，进程与线程的区别不是太大</p>
+</li>
+</ul>
+<h3 id="2-调度实现"><a href="#2-调度实现" class="headerlink" title="2. 调度实现"></a>2. 调度实现</h3><ul>
+<li><p>线程调度示意图</p>
+<p><img src="1.png" srcset="/img/loading.gif" lazyload alt="1"></p>
+</li>
+</ul>
+<p>下面是对xv6中进程/线程调度流程的简要分析:</p>
+<ul>
+<li><p>进程<code>p1</code>的时间分片结束，计时器产生中断，陷入<code>trap</code></p>
+</li>
+<li><p><code>trap handler</code>发现为计时器中断，调用<code>yield()</code>计时器中断处理程序</p>
+</li>
+<li><p><code>yield()</code>将进程的状态由<code>RUNNING</code>改为<code>RUNABLE</code>，表示其在调度完毕之后可以被重新调度</p>
+<p>紧接着调用<code>sched()</code></p>
+</li>
+<li><p><code>sched()</code>会对原进程的状态进行检查，然后跳转到<code>swtch.S</code>进行真正的上下文切换，切换到CPU的调度线程<code>scheduler</code></p>
+</li>
+<li><p>当跳转到<code>scheduler</code>中时，并不是直接跳转到函数首部，而是跳转到<code>scheduler</code>中的<code>swtch</code>调用后面的一条指令</p>
+<p>接下来，在<code>scheduler</code>中会在全局进程表中挑选出可调度(<code>RUNABLE</code>)的新进程，再次调用<code>swtch</code>,切换到新进程</p>
+</li>
+<li><p>此时，会再次跳转到<code>sched()</code>中的<code>swtch.S</code>, 不过此时在CPU上运行的已经是新进程了</p>
+</li>
+</ul>
+<p>在上面的例子中， <code>swtch</code>调用就像是一个传送门，从旧线程的<code>swtch</code>(p1)会跳转到<code>scheduler</code>的<code>swtch</code>(p2), 然后再从<code>scheduler</code>中的第二次<code>swtch</code>(p3)中跳转到(p1), 不过此时已经是新进程了</p>
+<p>下面进行具体代码分析:</p>
+<ul>
+<li><p>kernel/trap.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// give up the CPU if this is a timer interrupt.</span><br>  <span class="hljs-comment">// 计时器中断</span><br>  <span class="hljs-keyword">if</span>(which_dev == <span class="hljs-number">2</span>)<br>    yield();<br></code></pre></td></tr></table></figure>
+
+<p><code>trap</code>处理程序发现为计时器中断, 调用<code>yield()</code></p>
+</li>
+<li><p>kernel/proc.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// Give up the CPU for one scheduling round.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">yield</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// 让出CPU</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br>  acquire(&amp;p-&gt;lock);<br>  <span class="hljs-comment">// 该lock将会一直持有，直到sched()返回一个新进程</span><br>  <span class="hljs-comment">// 这里lock的作用有三个:</span><br>  <span class="hljs-comment">// 1.保护p-&gt;state为RNNNABLE</span><br>  <span class="hljs-comment">// 2.保护trapframe中的寄存器不被更改</span><br>  <span class="hljs-comment">// 3.停止使用当前进程的内核栈，防止两个CPU使用同一个内核栈</span><br>  <span class="hljs-comment">// 总结： 1. 防止其它CPU的调度器调度这个进程，因为该进程正处于调度当中</span><br>  <span class="hljs-comment">//       2. acquire会关中断，防止swtch过程被中断导致寄存器保存不完整</span><br>  <span class="hljs-comment">// 将进程的状态改为RUNNABLE, 表示其可被调度</span><br>  p-&gt;state = RUNNABLE;<br>  <span class="hljs-comment">//************************************旧进程******************************//</span><br>  sched();<br>  <span class="hljs-comment">//************************************新进程*****************************//</span><br>  <span class="hljs-comment">// 运行到此时为新进程了，接下来释放原进程的lock</span><br>  release(&amp;p-&gt;lock);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>yield()</code>的作用包括:</p>
+<ul>
+<li>获取旧进程的锁</li>
+<li>将旧进程的状态改为<code>RUNNABLE</code></li>
+<li>调用<code>sched()</code>, 变为新进程</li>
+<li>释放掉原进程的锁</li>
+</ul>
+</li>
+<li><p>kernel/proc.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">sched</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-comment">// 进程调度</span><br>  <span class="hljs-keyword">int</span> intena;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span> =</span> myproc();<br><br>  <span class="hljs-comment">// 检查是否持有锁, 持有其它锁时无法放弃CPU</span><br>  <span class="hljs-keyword">if</span>(!holding(&amp;p-&gt;lock))<br>    panic(<span class="hljs-string">&quot;sched p-&gt;lock&quot;</span>);<br><br>  <span class="hljs-comment">// 检测中断嵌套的层数，因为acquire会关闭中断，且中断可以叠加</span><br>  <span class="hljs-comment">// 其实本质上是在看旧线程acquire()获得锁的个数，这里一定得是1个</span><br>  <span class="hljs-comment">// 主要是为了预防死锁发生，因为如果旧线程还有其它锁m, 那么当调度到</span><br>  <span class="hljs-comment">// 新线程时，新线程可能也会尝试获取锁m, 此时就有可能会导致死锁发生</span><br>  <span class="hljs-keyword">if</span>(mycpu()-&gt;noff != <span class="hljs-number">1</span>)<br>    panic(<span class="hljs-string">&quot;sched locks&quot;</span>);<br>  <br>  <span class="hljs-comment">// 检查运行状态</span><br>  <span class="hljs-keyword">if</span>(p-&gt;state == RUNNING)<br>    panic(<span class="hljs-string">&quot;sched running&quot;</span>);<br><br>  <span class="hljs-comment">// 检查中断状态</span><br>  <span class="hljs-keyword">if</span>(intr_get())<br>    panic(<span class="hljs-string">&quot;sched interruptible&quot;</span>);<br><br>  intena = mycpu()-&gt;intena;  <span class="hljs-comment">// 在push_off之前是否interrupt enable</span><br>  <span class="hljs-comment">// 开始进行调度，准备切换上下文/线程</span><br>  <span class="hljs-comment">// 注意这里使用的新上下文是mycpu()-&gt;context, 即CPU的swtch调度线程</span><br>  <span class="hljs-comment">//*****************旧线程********************************//</span><br>  swtch(&amp;p-&gt;context, &amp;mycpu()-&gt;context);<br>  <span class="hljs-comment">//*****************新线程*******************************//</span><br>  <span class="hljs-comment">// 当执行到这时，已经切换到新内核线程了, 接下来会返回yield</span><br>  mycpu()-&gt;intena = intena;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>sched()</code>中所做的工作包括:</p>
+<ul>
+<li>检查当前CPU的持有进程(旧进程)的各种状态:<ol>
+<li>是否持有旧进程的锁</li>
+<li>是否仅持有一个锁</li>
+<li>是否关闭了中断</li>
+</ol>
+</li>
+<li>调用<code>swtch</code>汇编代码，切换到<strong>调度线程</strong></li>
+</ul>
+</li>
+<li><p><code>switch.S</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs asm"># 上下文的切换<br># 保存旧线程的寄存器，然后加载新线程的寄存器<br># 这里的寄存器与proc.h中的context.h<br><br>.globl swtch<br>swtch:<br>        sd ra, 0(a0)<br>        sd sp, 8(a0)<br>        sd s0, 16(a0)<br>        sd s1, 24(a0)<br>        sd s2, 32(a0)<br>        sd s3, 40(a0)<br>        sd s4, 48(a0)<br>        sd s5, 56(a0)<br>        sd s6, 64(a0)<br>        sd s7, 72(a0)<br>        sd s8, 80(a0)<br>        sd s9, 88(a0)<br>        sd s10, 96(a0)<br>        sd s11, 104(a0)<br><br>        ld ra, 0(a1)   // 关键点, ra为 return address返回地址寄存器<br>        ld sp, 8(a1)<br>        ld s0, 16(a1)<br>        ld s1, 24(a1)<br>        ld s2, 32(a1)<br>        ld s3, 40(a1)<br>        ld s4, 48(a1)<br>        ld s5, 56(a1)<br>        ld s6, 64(a1)<br>        ld s7, 72(a1)<br>        ld s8, 80(a1)<br>        ld s9, 88(a1)<br>        ld s10, 96(a1)<br>        ld s11, 104(a1)<br>        <br>        ret<br><br></code></pre></td></tr></table></figure>
+
+<p>该段代码的工作包括:</p>
+<ul>
+<li>保存<strong>被调用者保存寄存器</strong>，因为这些寄存器在调度线程/新进程中可能会被修改</li>
+<li>切换上下文，即加载<strong>调度线程</strong>的寄存器，关键点在于<code>ra</code>寄存器，这是接下来要返回的地址</li>
+</ul>
+<p>执行完毕之后，原线程切换为<strong>调度线程</strong>， <code>ra</code>的值通常是<code>scheduler</code>中的<code>swtch</code>调用的下一条地址</p>
+</li>
+<li><p>kernel/proc.c</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 每个CPU都有的进程调度器</span><br><span class="hljs-comment">// scheduler永远不会返回, 它的操作包括:</span><br><span class="hljs-comment">// 1. 选择一个进程</span><br><span class="hljs-comment">// 2. 切换到该进程</span><br><span class="hljs-comment">// 3. 新进程运行完毕之后最终通过swtch归还控制权</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">scheduler</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">proc</span> *<span class="hljs-title">p</span>;</span><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">cpu</span> *<span class="hljs-title">c</span> =</span> mycpu();<br>  <br>  <span class="hljs-comment">// c-&gt;proc为正在该cpu上运行的进程</span><br>  c-&gt;proc = <span class="hljs-number">0</span>;<br>  <span class="hljs-keyword">for</span>(;;)&#123;<br>    <span class="hljs-comment">// Avoid deadlock by ensuring that devices can interrupt.</span><br>    <span class="hljs-comment">// 开中断以避免死锁</span><br>    intr_on();<br>    <br>    <span class="hljs-keyword">int</span> nproc = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">for</span>(p = proc; p &lt; &amp;proc[NPROC]; p++) &#123;<br>      <span class="hljs-comment">// 新进程的锁</span><br>      acquire(&amp;p-&gt;lock);<br>      <span class="hljs-comment">// ??</span><br>      <span class="hljs-keyword">if</span>(p-&gt;state != UNUSED) &#123;<br>        nproc++;<br>      &#125;<br>      <span class="hljs-comment">// RUNNABLE表示进程可以被调度</span><br>      <span class="hljs-keyword">if</span>(p-&gt;state == RUNNABLE) &#123;<br>        <span class="hljs-comment">// Switch to chosen process.  It is the process&#x27;s job</span><br>        <span class="hljs-comment">// to release its lock and then reacquire it</span><br>        <span class="hljs-comment">// before jumping back to us.</span><br>        p-&gt;state = RUNNING;<br>        c-&gt;proc = p;<br>        <span class="hljs-comment">// 从CPU的调度线程切换到挑选出的新进程的内核线程</span><br>        <span class="hljs-comment">// 由于ra返回地址寄存器改变了，因此接下来应该会跳转到sched()函数的swtch行</span><br>        swtch(&amp;c-&gt;context, &amp;p-&gt;context);<br><br>        <span class="hljs-comment">// Process is done running for now.</span><br>        <span class="hljs-comment">// It should have changed its p-&gt;state before coming back.</span><br>        c-&gt;proc = <span class="hljs-number">0</span>;<br>      &#125;<br>      release(&amp;p-&gt;lock);<br>    &#125;<br>    <span class="hljs-keyword">if</span>(nproc &lt;= <span class="hljs-number">2</span>) &#123;   <span class="hljs-comment">// only init and sh exist</span><br>      intr_on();<br>      <span class="hljs-function"><span class="hljs-keyword">asm</span> <span class="hljs-title">volatile</span><span class="hljs-params">(<span class="hljs-string">&quot;wfi&quot;</span>)</span></span>;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>紧接着上面，程序应该会跳转到40行，然后在经过一个循环之后</p>
+<ul>
+<li><p>从全局进程表中找出可以被调度的进程作为新进程</p>
+</li>
+<li><p>设置新进程的状态为<code>RUNNING</code>，<code>cpu-&gt;proc</code></p>
+</li>
+<li><p>调用<code>swtch</code>, 由<strong>调度线程</strong>切换为<strong>新线程</strong>，接下来会从上一次的<code>swtch</code>调用点返回, 即<code>sched()</code></p>
+<p>在<code>sched()</code>中释放完旧线程的锁之后，整个调度过程结束</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>例外:</p>
+<p>ra并不总是指向<code>scheduler</code>，当一个进程刚被创建时，它的ra在<strong>allocproc</strong>中被设置为forkret，因此scheduler在调度执行一个新创建的进程时，会返回到forkret中，然后就从usertrapret直接返回到用户空间中</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-function"><span class="hljs-keyword">static</span> struct proc*</span><br><span class="hljs-function"><span class="hljs-title">allocproc</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br><span class="hljs-comment">// ...</span><br><br><span class="hljs-comment">// Set up new context to start executing at forkret,</span><br><span class="hljs-comment">// which returns to user space.</span><br><span class="hljs-built_in">memset</span>(&amp;p-&gt;context, <span class="hljs-number">0</span>, <span class="hljs-keyword">sizeof</span>(p-&gt;context));<br>p-&gt;context.ra = (uint64)forkret;<br><br><span class="hljs-comment">// ...</span><br>&#125;<br><br><span class="hljs-comment">// A fork child&#x27;s very first scheduling by scheduler()</span><br><span class="hljs-comment">// will swtch to forkret.</span><br><span class="hljs-function"><span class="hljs-keyword">void</span></span><br><span class="hljs-function"><span class="hljs-title">forkret</span><span class="hljs-params">(<span class="hljs-keyword">void</span>)</span></span><br><span class="hljs-function"></span>&#123;<br><span class="hljs-comment">// ...</span><br><br><span class="hljs-comment">// Still holding p-&gt;lock from scheduler.</span><br>release(&amp;myproc()-&gt;lock);<br><br><span class="hljs-comment">// ...</span><br>usertrapret();<br>&#125;<br></code></pre></td></tr></table></figure>
+</blockquote>
+<p><strong>调度过程中的lock</strong></p>
+<blockquote>
+<p>一是为什么从调用yield开始，持有p-&gt;lock直到在scheduler中释放；或者是从scheduler开始，持有p-&gt;lock直到在yield的出口处释放。</p>
+</blockquote>
+<p>以从<code>yield</code>到<code>scheduler</code>为例，<code>p-&gt;lock</code>保护三件事情：</p>
+<ul>
+<li>改变进程状态为RUNNABLE，防止进程状态的不一致。</li>
+<li>swtch发生的上下文切换，防止保存和恢复寄存器不完整。</li>
+<li>停止使用当前内核线程的内核栈，因此防止两个CPU使用同一个内核栈</li>
+</ul>
+<p>因此，p-&gt;lock的一个作用就是，在整个调度过程完成之前，不能让其它的调度器调度执行旧的进程，因为它处于一种<strong>不稳定的中间态</strong>：我们在yield中标记了该进程为<code>RUNNABLE</code>，但是实际上我们还在执行该进程的内核线程，若此时其它CPU发现了它，并且调度执行它，那么就会有两个CPU在执行该进程，这是一个严重的错误</p>
+<p>因此，通过一直持有<code>p-&gt;lock</code>直到返回<code>scheduler</code>中，我们可以避免以上情况发生，因为就算其它CPU上的调度器发现该进程，即将调度执行它时，也会阻塞在<code>acquire(p-&gt;lock)</code>上。从<code>scheduler</code>回到<code>sched</code>或者用户空间中也是类似的，要持有<code>p-&gt;lock</code>直到新的内核线程已经在运行，则可以在<code>yield</code>中释放该锁。</p>
+<ul>
+<li><strong>中断相关</strong></li>
+</ul>
+<p>此外，通过<code>acquire(p-&gt;lock)</code>，中断也被关闭，因此保证了调度过程的<strong>原子性</strong>。对于在<code>swtch</code>中发生的上下文切换，在中断关闭的情况下可以放心地完成整个<code>wtch</code>的过程。否则，中断发生时进程会呈现出一种奇怪的运行状态，例如状态虽然为<code>RUNNING</code>，但是相关的寄存器还没有加载完全，然后时钟中断导致<code>swtch</code>时，将没有完成初始化的寄存器存进了<code>context</code>中，从而覆盖了该进程真正的寄存器值，这也是一个严重的错误。</p>
+<p>总的来说，<code>p-&gt;lock</code>保证了取消调度和调度这两个过程的原子执行：</p>
+<ul>
+<li>如果进程状态是<code>RUNNING</code>，那么时钟中断导致的<code>yield</code>可以安全地，从这个进程的内核线程，切换到调度线程的调度器中。在这个过程中，CPU寄存器要保持着该进程的寄存器值，<code>c-&gt;proc</code>要保持指向该进程。</li>
+<li>如果进程状态是<code>RUNNABLE</code>，那么调度器可以安全地，调度执行这个进程。在这个过程中，<code>p-&gt;context</code>要保持着该进程的寄存器值，没有CPU使用该进程的内核栈，而且没有CPU的<code>c-&gt;proc</code>指向该进程。</li>
+</ul>
+<blockquote>
+<p>二是为什么在sched中检查，在调用swtch前，除了持有p-&gt;lock以外，不能持有其它锁</p>
+</blockquote>
+<p>这个问题的原因是可能会导致死锁</p>
+<p>如果在单CPU上，一个内核线程持有了除<code>p-&gt;lock</code>以外的其它锁<code>m</code>，然后<code>swtch</code>到调度器，调度器再<code>swtch</code>执行一个新的内核线程，假如新的内核线程也要获取锁<code>m</code>的话，那么死锁就发生了</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/xv6/">xv6</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-sleep-and-wakeup/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[xv6]:sleep-and-wakeup</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/29/xv6-%E6%8E%A7%E5%88%B6%E5%8F%B0%E4%B8%AD%E6%96%AD/">
+                        <span class="hidden-mobile">[xv6]:控制台中断</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- LeanCloud 统计PV -->
+        <span id="leancloud-site-pv-container" style="display: none">
+            总访问量 
+            <span id="leancloud-site-pv"></span>
+             次
+          </span>
+      
+      
+        <!-- LeanCloud 统计UV -->
+        <span id="leancloud-site-uv-container" style="display: none">
+            总访客数 
+            <span id="leancloud-site-uv"></span>
+             人
+          </span>
+      
+
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+    <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
