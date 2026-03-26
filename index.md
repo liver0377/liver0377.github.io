@@ -1,4 +1,4 @@
 ---
 layout: home
-title: Home
+index_posts: 5
 ---

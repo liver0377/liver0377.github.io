@@ -1,6 +1,27 @@
+theme: jekyll-theme-chirpy
+
 title: liver0377's blog
-description: 我的个人博客 
-theme: minima
+tagline: 我的个人博客
+description: 我的个人博客
+url: "https://liver0377.github.io"
 lang: zh-CN
 timezone: Asia/Shanghai
-markdown: kramdown
+
+github_metadata:
+  user: liver0377
+  repo: liver0377.github.io
+
+toc: true
+
+paginate: 10
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
