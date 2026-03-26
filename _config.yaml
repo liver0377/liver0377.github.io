@@ -4,17 +4,58 @@ title: liver0377's blog
 tagline: 我的个人博客
 description: 我的个人博客
 url: "https://liver0377.github.io"
+baseurl: ""
 lang: zh-CN
 timezone: Asia/Shanghai
 avatar: /assets/images/avatar.png
 
-github_metadata:
-  user: liver0377
-  repo: liver0377.github.io
+github:
+  username: liver0377
+
+social:
+  name: liver0377
+  email: 
+  links:
+    - https://github.com/liver0377
 
 toc: true
 
 paginate: 10
+
+collections:
+  tabs:
+    output: true
+    sort_by: order
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+      comments: true
+      toc: true
+      permalink: /posts/:title/
+  - scope:
+      path: ""
+      type: tabs
+    values:
+      layout: page
+      permalink: /:title/
+
+kramdown:
+  footnote_backlink: "&#8617;&#xfe0e;"
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: highlight
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+      start_line: 1
+
+sass:
+  style: compressed
 
 plugins:
   - jekyll-feed
@@ -26,3 +67,5 @@ exclude:
   - Gemfile.lock
   - node_modules
   - vendor
+  - "*.gem"
+  - "*.gemspec"
