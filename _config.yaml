@@ -1,12 +1,9 @@
 theme: jekyll-theme-chirpy
-
-title: liver0377's blog
-tagline: 我的个人博客
-description: 我的个人博客
-url: "https://liver0377.github.io"
-baseurl: ""
 lang: zh-CN
 timezone: Asia/Shanghai
+
+url: "https://liver0377.github.io"
+baseurl: ""
 avatar: /assets/images/avatar.png
 
 github:
@@ -14,7 +11,6 @@ github:
 
 social:
   name: liver0377
-  email: 
   links:
     - https://github.com/liver0377
 
